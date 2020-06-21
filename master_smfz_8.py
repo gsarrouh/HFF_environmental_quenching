@@ -18,11 +18,20 @@ Created on Wed May 31 14:28:35 2017
 ## v4 creates SMFs by cluster, and calculates completeness correction by cluster for false pos/neg
 ##    and attempts compute the completeness correction on a cluster-by-cluster basis.
 ##    this approach was abandoned in favour of a single set of correciton factors 
-##    for the entire sample, justified by the fact that mass completeness limits are nearly the same for all clusters. 
+##    for the entire sample, justified by the fact that mass completeness limits are nearly the 
+##    same for all clusters. 
 ## v5 removes individual cluster code for mass correction in section (v), plots
 ##    correction factors for entire sample treated as single population
 ## v6 moves all totals and SF/Q fractions until AFTER the correction factors 
 ##    have been made, as this changes the counts in each hist & associated poissonian error
+## 
+## v8 COMPLETE OVERHAUL: lists are first sorted by cluster, then each cluster population 
+##    (both SF & Q) are normalized by the total number of galaxies in the cluster 
+##    (i.e. sum(SF)+sum(Q)). 
+##
+##
+##
+#
 #
 import numpy as np
 import matplotlib as mpl
@@ -36,7 +45,7 @@ from scipy.optimize import curve_fit
 # plot stellar mass function:
 ## (i)      collect masses into sorted arrays for SF & Q;
 ## (ii)     bin them as in a histogram
-## (iii)    find midpoints of bins s.t. the # count from hist & # of bins are equal
+## (iii)    normalize, & find midpoints of bins s.t. the # count from hist & # of bins are equal
 ## (iv)     add error bars to scatter plot
 ## (v)      false pos/neg completess correction
 ## (vi)     fit a SCHECHTER function to data
@@ -124,15 +133,15 @@ while counter < size:
 #
 #
 ## SECTION (ii): sort objects into histogram bins for both SF & Q populations, then sum 
-## for 'total' population. use for total pop plot, and for relative fractions
+## for 'total' population. then normalize each cluster SMF by the total cluster mass. compute midbins. use for total pop plot, and for relative fractions
 #
 ## cluster populations arrays: (SF/Q/total)_smf & (SF/Q/total)_field_smf
 #
-range2 = [7.3,12.15]     #sets range for all histrograms to be computer: cluster,field,false pos/neg
-num_bins = 14
-SF_smf, SF_bins = np.histogram(SF_hist, bins=num_bins,range=range2)
-Q_smf, Q_bins = np.histogram(Q_hist, bins=num_bins)      #use same bins for both populations to facilitate comparison
-
+range2 = [7.2,12.2]     #sets range for all histrograms to be computer: cluster,field,false pos/neg
+bin_width = 0.2  # in dex
+num_points = (round((range2[1]-range2[0])/bin_width))+1       # compute # of data points
+num_bins = np.linspace(range2[0],range2[1],num_points)
+#
 ## smf histograms for individual clusters
 #
 SF_smf1, SF_bins = np.histogram(SF_1, bins=num_bins,range=range2)
@@ -147,47 +156,94 @@ Q_smf3, SF_bins = np.histogram(Q_3, bins=num_bins,range=range2)
 Q_smf4, SF_bins = np.histogram(Q_4, bins=num_bins,range=range2)
 Q_smf5, SF_bins = np.histogram(Q_5, bins=num_bins,range=range2)
 Q_smf6, SF_bins = np.histogram(Q_6, bins=num_bins,range=range2)
-
-## parallel field
-#SF_smf_par, SF_bins_par = np.histogram(SF_hist_par, bins=SF_bins,range=range)
-#Q_smf_par, Q_bins_par = np.histogram(Q_hist_par, bins=SF_bins,range=range)      #use same bins for both populations to facilitate comparison
-#total_smf_par = np.empty_like(SF_smf_par, dtype='float64')
-#frac_smf_par = np.empty(shape=(2,len(SF_bins)-1),dtype='float64')       #1st row: SF fraction; 2nd row Q fraction
-#total_smf_par = SF_smf_par + Q_smf_par
-## calculate bin fractions
-#counter = 0
-#size = len(SF_smf_par)#size = frac_smf.shape[1]
-#while counter < size:             #loop to skip bins with no entires. will probably need to reduce range for completeness
-#    if total_smf_par[counter] == 0:
-#        frac_smf_par[0][counter] = 0
-#        frac_smf_par[1][counter] = 0
-#    else: 
-#        frac_smf_par[0][counter] =  SF_smf_par[counter] / total_smf_par[counter]
-#        frac_smf_par[1][counter] =  Q_smf_par[counter] / total_smf_par[counter]
-#    counter +=1 
+#
+# combine SMF lists for SF & Q into total SMF list
+total_raw_smf1 = SF_smf1 + Q_smf1
+total_raw_smf2 = SF_smf2 + Q_smf2
+total_raw_smf3 = SF_smf3 + Q_smf3
+total_raw_smf4 = SF_smf4 + Q_smf4
+total_raw_smf5 = SF_smf5 + Q_smf5
+total_raw_smf6 = SF_smf6 + Q_smf6
 #
 #
-## Section (iii): find midpoints of spec bins, and split hist. into "x" & "y" for scatter plotting
+#
+#
+#
+## Section (iii): Normalize the SMF lists for each cluster by the total mass in that cluster (e.g. SF_smf1 / sum(total_smf1), sum into full SMF list; (iii).1: find midpoints of spec bins, and split hist. into "x" & "y" for scatter plotting; (iii).2: compute correction factors for varying cluster mass completeness limits, and apply correction; 
+#
+#
+## Normalize SMFs
+# by cluster. 
+SF_smf1 = SF_smf1 / np.sum(total_raw_smf1)
+Q_smf1 = Q_smf1 / np.sum(total_raw_smf1)
+SF_smf2 = SF_smf2 / np.sum(total_raw_smf2)
+Q_smf2 = Q_smf2 / np.sum(total_raw_smf2)
+SF_smf3 = SF_smf3 / np.sum(total_raw_smf3)
+Q_smf3 = Q_smf3 / np.sum(total_raw_smf3)
+SF_smf4 = SF_smf4 / np.sum(total_raw_smf4)
+Q_smf4 = Q_smf4 / np.sum(total_raw_smf4)
+SF_smf5 = SF_smf5 / np.sum(total_raw_smf5)
+Q_smf5 = Q_smf5 / np.sum(total_raw_smf5)
+SF_smf6 = SF_smf6 / np.sum(total_raw_smf6)
+Q_smf6 = Q_smf6 / np.sum(total_raw_smf6)
+#
+#
+## combine all clusters into full SMF list
+SF_smf = SF_smf1 + SF_smf2 + SF_smf3 + SF_smf4 + SF_smf5 + SF_smf6
+Q_smf = Q_smf1 + Q_smf2 + Q_smf3 + Q_smf4 + Q_smf5 + Q_smf6
+total_smf = SF_smf + Q_smf
+#
+#
+#
+## section (iii).1: compute midbins
 #
 ## find midpoint of hist. bins. all populations have been binned identically, 
-## so the one 'midbin' will serve for all data arrays to be plotted
+## so the one 'midbin' will serve for all data arrays to be plotted. for visual 
+## clarity when plotting, offset the Q_midpoints by delta_x = 0.05
 #
-def midbins(bins, smf):
-    midbins = np.empty_like(smf,dtype='float64')
+def midbins(bins):
     size = len(bins)-1
-    counter = 0
-    while counter < size:
-    for x in range((len(bins)-1)):
-        midbins[x] = (bins[x] + bins[x+1])/2
-        counter +=1
-    
-SF_midbins = np.empty_like(SF_smf, dtype='float64')
+    x_midbins = np.empty([size,1],dtype='float64')
+    for x in range(size):
+        x_midbins[x] = (bins[x] + bins[(x+1)])/2
+    return x_midbins
 #
-size = len(SF_bins)-1
-counter = 0
-while counter < size:
-    SF_midbins[counter] = (SF_bins[counter] + SF_bins[counter+1])/2
-    counter +=1
+# compute midbins        
+SF_midbins = midbins(SF_bins)
+# offset Q midbins
+Q_midbins = SF_midbins + 0.05
+#
+#
+#
+## section (iii).2: compute correction to low-mass bin points due to varying mass completenesses 
+## of each cluster. The correction factor is: (total # of clusters) / (# of clusters complete at 
+## that mass bin), and will be multiplied by the raw number count of galaxies in each mass bin. 
+#
+## an examination of the limiting mass for each cluster (see list "limiting_mass", above) shows 
+## that the following bin midpoints have the following corresponding number of clusters complete 
+## at that mass: [7.3,7.5,7.7,7.9,8.1] ---> [1,4,4,5,6]. So all 6 clusters are complete at a mass 
+## of 8.1, but only 1 cluster is complete down to 7.3. the corresponding corrections are as follows:
+#
+#mass_completeness_correction = np.array([6,1.5,1.5,1.2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])
+#
+## if we assume all clusters have the same general composition of SF to Q galaxies, i.e. the same
+## relative fraction in each cluster, then if only one cluster is complete, we "scale it up" by a
+## factor of 6. if 4 clusters are complete, we scale it up by (6/4) = 1.5. In this way, its as if each
+## cluster were complete down to the limiting mass of 7.3
+#
+## the following loop automates the above explanation, making the code adaptable should i decide to change the number of bins in future
+mass_completeness_correction = np.zeros_like(SF_midbins)
+for ii in range(len(mass_completeness_correction)):
+    for jj in range(len(limiting_mass)):
+        if limiting_mass[jj] <= SF_midbins[ii]:
+            mass_completeness_correction[ii]+=1
+mass_completeness_correction = 6/mass_completeness_correction  # the correction factor is: (total # of clusters) / (# of clusters complete at that mass bin)
+#
+#
+# apply the correction
+SF_smf = SF_smf * np.transpose(mass_completeness_correction)
+Q_smf = Q_smf * np.transpose(mass_completeness_correction)
+total_smf = total_smf * np.transpose(mass_completeness_correction)
 #
 ## (iv) error bars & relative fractions
 ## Poissonian error bars will be added to the spec. sample only; phot sample 
@@ -201,6 +257,10 @@ while counter < size:
 #
 #
 #
+######### THE FOLLOWING CODE IS DEPRECATED #############
+#
+# I left it in because it was replaced by the few lines of code above. This just shows what I've learned in the two years since I wrote the below code, as it has been replaced by a few lines above.
+#
 ### Mass corrections
 ### compute total number of SF/Q galaxies in all 6 clusters, then for individual 
 ### cluster down to its limiting mass. take the ratio and divide the number count 
@@ -208,136 +268,142 @@ while counter < size:
 ### by cluster
 #
 #
-limmass = [7.5,7.8,8.0,7.5,7.4,7.3]  # limiting mass by cluster as determined by magnitude-to-mass plot
-## cluster 1: macs1149; limiting mass 7.5
-gal_count1 = np.array([0,0],dtype = float)  # [SF, Q]
-total_count1 = np.array([0,0],dtype = float)
-counter = 0
-size = len(master_cat)
-while counter < size:
-    if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==1: #secure member, SF
-        if master_cat[counter]['lmass'] > limmass[0]:
-            total_count1[0] +=1
-            if master_cat[counter]['cluster'] == 1:
-                gal_count1[0] +=1
-    elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==2: #secure member, Q
-        if master_cat[counter]['lmass'] > limmass[0]:
-            total_count1[1] +=1
-            if master_cat[counter]['cluster'] == 1:
-                gal_count1[1] +=1
-    counter +=1
-mass_correction1 = gal_count1/total_count1
-SF_smf1[0] = SF_smf1[0]/mass_correction1[0]
-Q_smf1[0] = Q_smf1[0]/mass_correction1[1]
+##limiting_mass = [7.5,7.8,8.0,7.5,7.4,7.3]  # limiting mass by cluster as determined by magnitude-to-mass plot
+### cluster 1: macs1149; limiting mass 7.5
+#gal_count1 = np.array([0,0],dtype = float)  # [SF, Q]
+#total_count1 = np.array([0,0],dtype = float)
+#counter = 0
+#size = len(master_cat)
+#while counter < size:
+#    if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==1: #secure member, SF
+#        if master_cat[counter]['lmass'] > limiting_mass[0]:
+#            total_count1[0] +=1
+#            if master_cat[counter]['cluster'] == 1:
+#                gal_count1[0] +=1
+#    elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==2: #secure member, Q
+#        if master_cat[counter]['lmass'] > limiting_mass[0]:
+#            total_count1[1] +=1
+#            if master_cat[counter]['cluster'] == 1:
+#                gal_count1[1] +=1
+#    counter +=1
+#mass_correction1 = gal_count1/total_count1
+#SF_smf1[0] = SF_smf1[0]/mass_correction1[0]
+#Q_smf1[0] = Q_smf1[0]/mass_correction1[1]
+##
+#### cluster 2: macs1149; limiting mass 7.8
+#gal_count2 = np.array([0,0],dtype = float)  # [SF, Q]
+#total_count2 = np.array([0,0],dtype = float)
+#counter = 0
+#size = len(master_cat)
+#while counter < size:
+#    if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==1: #secure member, SF
+##        if master_cat[counter]['lmass'] > limiting_mass[1]:
+#            total_count2[0] +=1
+#            if master_cat[counter]['cluster'] == 2:
+#                gal_count2[0] +=1
+##    elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==2: #secure member, SF
+#        if master_cat[counter]['lmass'] > limiting_mass[1]:
+#            total_count2[1] +=1
+#            if master_cat[counter]['cluster'] == 2:
+#                gal_count2[1] +=1
+#    counter +=1
+#mass_correction2 = gal_count2/total_count2
+#SF_smf2[0] = SF_smf2[0]/mass_correction2[0]
+#SF_smf2[1] = SF_smf2[0]/mass_correction2[0]
+#Q_smf2[0] = Q_smf2[1]/mass_correction2[1]
+#Q_smf2[1] = Q_smf2[1]/mass_correction2[1]
+##
+### cluster 3: macs 0717; limiting mass 8.0
+#gal_count3 = np.array([0,0],dtype = float)  # [SF, Q]
+#total_count3 = np.array([0,0],dtype = float)
+#counter = 0
+#size = len(master_cat)
+#while counter < size:
+#    if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==1: #secure member, SF
+#        if master_cat[counter]['lmass'] > limiting_mass[2]:
+#            total_count3[0] +=1
+#            if master_cat[counter]['cluster'] == 3:
+#                gal_count3[0] +=1
+#    elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==2: #secure member, Q
+#        if master_cat[counter]['lmass'] > limiting_mass[2]:
+#            total_count3[1] +=1
+#            if master_cat[counter]['cluster'] == 3:
+#                gal_count3[1] +=1
+#    counter +=1
+#mass_correction3 = gal_count3/total_count3
+#SF_smf3[0] = SF_smf3[0]/mass_correction3[0]
+#SF_smf3[1] = SF_smf3[1]/mass_correction3[1]
+#Q_smf3[0] = Q_smf3[1]/mass_correction3[1]
+#Q_smf3[1] = Q_smf3[1]/mass_correction3[1]
+##
+### cluster 4: abell370; limiting mass 7.5
+#gal_count4 = np.array([0,0],dtype = float)  # [SF, Q]
+#total_count4 = np.array([0,0],dtype = float)
+#counter = 0
+#size = len(master_cat)
+#while counter < size:
+#    if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==1: #secure member, SF
+#        if master_cat[counter]['lmass'] > limiting_mass[3]:
+#            total_count4[0] +=1
+#            if master_cat[counter]['cluster'] == 4:
+##                gal_count4[0] +=1
+#    elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==2: #secure member, SF
+#        if master_cat[counter]['lmass'] > limiting_mass[3]:
+#            total_count4[1] +=1
+#            if master_cat[counter]['cluster'] == 4:
+#                gal_count4[1] +=1
+#    counter +=1
+#mass_correction4 = gal_count4/total_count4
+#SF_smf4[0] = SF_smf4[0]/mass_correction4[0]
+#Q_smf4[0] = Q_smf4[1]/mass_correction4[1]
+##
+### cluster 5: abell1063; limiting mass 7.4
+#gal_count5 = np.array([0,0],dtype = float)  # [SF, Q]
+#total_count5 = np.array([0,0],dtype = float)
+#counter = 0
+#size = len(master_cat)
+#while counter < size:
+#    if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==1: #secure member, SF
+##        if master_cat[counter]['lmass'] > limiting_mass[4]:
+#            total_count5[0] +=1
+#            if master_cat[counter]['cluster'] == 5:
+#                gal_count5[0] +=1
+#    elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==2: #secure member, SF
+#        if master_cat[counter]['lmass'] > limiting_mass[4]:
+#            total_count5[1] +=1
+#            if master_cat[counter]['cluster'] == 5:
+#                gal_count5[1] +=1
+#    counter +=1
+#mass_correction5 = gal_count5/total_count5
+#SF_smf5[0] = SF_smf5[0]/mass_correction5[0]
+#Q_smf5[0] = Q_smf5[1]/mass_correction5[1]
+##
+### cluster 6: abell2744; limiting mass 7.3
+#gal_count6 = np.array([0,0],dtype = float)  # [SF, Q]
+#total_count6 = np.array([0,0],dtype = float)
+#counter = 0
+#size = len(master_cat)
+##while counter < size:
+#    if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==1: #secure member, SF
+##        if master_cat[counter]['lmass'] > limiting_mass[5]:
+#            total_count6[0] +=1
+#            if master_cat[counter]['cluster'] == 6:
+#                gal_count6[0] +=1
+#    elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==2: #secure member, SF
+#        if master_cat[counter]['lmass'] > limiting_mass[5]:
+#            total_count6[1] +=1
+#            if master_cat[counter]['cluster'] == 6:
+#                gal_count6[1] +=1
+#    counter +=1
+#mass_correction6 = gal_count6/total_count6
+#SF_smf6[0] = SF_smf6[0]/mass_correction6[0]
+#Q_smf6[0] = Q_smf6[1]/mass_correction6[1]
+##
 #
-## cluster 2: macs1149; limiting mass 7.8
-gal_count2 = np.array([0,0],dtype = float)  # [SF, Q]
-total_count2 = np.array([0,0],dtype = float)
-counter = 0
-size = len(master_cat)
-while counter < size:
-    if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==1: #secure member, SF
-        if master_cat[counter]['lmass'] > limmass[1]:
-            total_count2[0] +=1
-            if master_cat[counter]['cluster'] == 2:
-                gal_count2[0] +=1
-    elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==2: #secure member, SF
-        if master_cat[counter]['lmass'] > limmass[1]:
-            total_count2[1] +=1
-            if master_cat[counter]['cluster'] == 2:
-                gal_count2[1] +=1
-    counter +=1
-mass_correction2 = gal_count2/total_count2
-SF_smf2[0] = SF_smf2[0]/mass_correction2[0]
-SF_smf2[1] = SF_smf2[0]/mass_correction2[0]
-Q_smf2[0] = Q_smf2[1]/mass_correction2[1]
-Q_smf2[1] = Q_smf2[1]/mass_correction2[1]
+######### END OF DEPRECATED CODE #############
 #
-## cluster 3: macs 0717; limiting mass 8.0
-gal_count3 = np.array([0,0],dtype = float)  # [SF, Q]
-total_count3 = np.array([0,0],dtype = float)
-counter = 0
-size = len(master_cat)
-while counter < size:
-    if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==1: #secure member, SF
-        if master_cat[counter]['lmass'] > limmass[2]:
-            total_count3[0] +=1
-            if master_cat[counter]['cluster'] == 3:
-                gal_count3[0] +=1
-    elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==2: #secure member, Q
-        if master_cat[counter]['lmass'] > limmass[2]:
-            total_count3[1] +=1
-            if master_cat[counter]['cluster'] == 3:
-                gal_count3[1] +=1
-    counter +=1
-mass_correction3 = gal_count3/total_count3
-SF_smf3[0] = SF_smf3[0]/mass_correction3[0]
-SF_smf3[1] = SF_smf3[1]/mass_correction3[1]
-Q_smf3[0] = Q_smf3[1]/mass_correction3[1]
-Q_smf3[1] = Q_smf3[1]/mass_correction3[1]
 #
-## cluster 4: abell370; limiting mass 7.5
-gal_count4 = np.array([0,0],dtype = float)  # [SF, Q]
-total_count4 = np.array([0,0],dtype = float)
-counter = 0
-size = len(master_cat)
-while counter < size:
-    if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==1: #secure member, SF
-        if master_cat[counter]['lmass'] > limmass[3]:
-            total_count4[0] +=1
-            if master_cat[counter]['cluster'] == 4:
-                gal_count4[0] +=1
-    elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==2: #secure member, SF
-        if master_cat[counter]['lmass'] > limmass[3]:
-            total_count4[1] +=1
-            if master_cat[counter]['cluster'] == 4:
-                gal_count4[1] +=1
-    counter +=1
-mass_correction4 = gal_count4/total_count4
-SF_smf4[0] = SF_smf4[0]/mass_correction4[0]
-Q_smf4[0] = Q_smf4[1]/mass_correction4[1]
 #
-## cluster 5: abell1063; limiting mass 7.4
-gal_count5 = np.array([0,0],dtype = float)  # [SF, Q]
-total_count5 = np.array([0,0],dtype = float)
-counter = 0
-size = len(master_cat)
-while counter < size:
-    if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==1: #secure member, SF
-        if master_cat[counter]['lmass'] > limmass[4]:
-            total_count5[0] +=1
-            if master_cat[counter]['cluster'] == 5:
-                gal_count5[0] +=1
-    elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==2: #secure member, SF
-        if master_cat[counter]['lmass'] > limmass[4]:
-            total_count5[1] +=1
-            if master_cat[counter]['cluster'] == 5:
-                gal_count5[1] +=1
-    counter +=1
-mass_correction5 = gal_count5/total_count5
-SF_smf5[0] = SF_smf5[0]/mass_correction5[0]
-Q_smf5[0] = Q_smf5[1]/mass_correction5[1]
-#
-## cluster 6: abell2744; limiting mass 7.3
-gal_count6 = np.array([0,0],dtype = float)  # [SF, Q]
-total_count6 = np.array([0,0],dtype = float)
-counter = 0
-size = len(master_cat)
-while counter < size:
-    if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==1: #secure member, SF
-        if master_cat[counter]['lmass'] > limmass[5]:
-            total_count6[0] +=1
-            if master_cat[counter]['cluster'] == 6:
-                gal_count6[0] +=1
-    elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] ==2: #secure member, SF
-        if master_cat[counter]['lmass'] > limmass[5]:
-            total_count6[1] +=1
-            if master_cat[counter]['cluster'] == 6:
-                gal_count6[1] +=1
-    counter +=1
-mass_correction6 = gal_count6/total_count6
-SF_smf6[0] = SF_smf6[0]/mass_correction6[0]
-Q_smf6[0] = Q_smf6[1]/mass_correction6[1]
 #
 ##  Section (v): caclulate false pos/neg fractions by cluster for completeness 
 ##          corrections in photometric sample
@@ -466,18 +532,6 @@ Q_neg_hist = Q_neg_hist1+Q_neg_hist2+Q_neg_hist3+Q_neg_hist4+Q_neg_hist5+Q_neg_h
 SF_frac = np.empty_like(SF_pos_hist, dtype='float64')
 Q_frac = np.empty_like(Q_pos_hist, dtype='float64')
 #
-#SF_frac1 = np.empty_like(SF_pos_hist1, dtype='float64')
-#Q_frac1 = np.empty_like(Q_pos_hist1, dtype='float64')
-#SF_frac2 = np.empty_like(SF_pos_hist2, dtype='float64')
-#Q_frac2 = np.empty_like(Q_pos_hist2, dtype='float64')
-#SF_frac3 = np.empty_like(SF_pos_hist3, dtype='float64')
-#Q_frac3 = np.empty_like(Q_pos_hist3, dtype='float64')
-#SF_frac4 = np.empty_like(SF_pos_hist4, dtype='float64')
-#Q_frac4 = np.empty_like(Q_pos_hist4, dtype='float64')
-#SF_frac5 = np.empty_like(SF_pos_hist5, dtype='float64')
-#Q_frac5 = np.empty_like(Q_pos_hist5, dtype='float64')
-#SF_frac6 = np.empty_like(SF_pos_hist6, dtype='float64')
-#Q_frac6 = np.empty_like(Q_pos_hist6, dtype='float64')
 #compute fractions
 # total sample
 zero_falseSF = 0
@@ -485,7 +539,7 @@ counter = 0         #SF pop
 size = len(SF_pos_hist)
 while counter < size:
     if SF_pos_hist[counter] ==0 and SF_neg_hist[counter] ==0:
-        SF_frac[counter] = 1
+        SF_frac[counter] = 0
         zero_falseSF +=1
     elif SF_pos_hist[counter] ==0:
         SF_frac[counter] = 10*SF_neg_hist[counter]
@@ -508,48 +562,7 @@ while counter < size:
     counter+=1
 #
 #
-#
-# by cluster
-# 1.
-#counter = 0
-#size = len(SF_pos_hist1)
-#while counter < size:
-#    if SF_pos_hist1[counter] ==0:
-#        SF_frac1[counter] = 10*SF_neg_hist1[counter]
-#    elif SF_neg_hist1[counter] ==0:
-#        SF_frac1[counter] = 100*SF_pos_hist1[counter]
-#    else: SF_frac1[counter] = SF_pos_hist1[counter]/SF_neg_hist1[counter]
-#    counter+=1
-#counter = 0         #Q pop
-#size = len(Q_pos_hist1)
-#while counter < size:
-#    if Q_pos_hist1[counter] ==0:
-#        Q_frac1[counter] = 10*Q_neg_hist1[counter]
-#    elif Q_neg_hist1[counter] ==0:
-#        Q_frac1[counter] = 100*Q_pos_hist1[counter]
-#    else: Q_frac1[counter] = Q_pos_hist1[counter]/Q_neg_hist1[counter]
-#    counter+=1
-# 2.
-#counter = 0
-#size = len(SF_pos_hist2)
-#while counter < size:
-#    if SF_pos_hist2[counter] ==0:
-#        SF_frac2[counter] = 10*SF_neg_hist2[counter]
-#    elif SF_neg_hist2[counter] ==0:
-#        SF_frac2[counter] = 100*SF_pos_hist2[counter]
-#    else: SF_frac2[counter] = SF_pos_hist2[counter]/SF_neg_hist2[counter]
-#    counter+=1
-#counter = 0         #Q pop
-#size = len(Q_pos_hist2)
-#while counter < size:
-#    if Q_pos_hist2[counter] ==0:
-#        Q_frac2[counter] = 10*Q_neg_hist2[counter]
-#    elif Q_neg_hist2[counter] ==0:
-#        Q_frac2[counter] = 100*Q_pos_hist2[counter]
-#    else: Q_frac2[counter] = Q_pos_hist2[counter]/Q_neg_hist2[counter]
-#    counter+=1
-#
-#
+
 #
 # compute midbins
 SF_frac_midbins = np.empty_like(SF_frac, dtype='float64')
