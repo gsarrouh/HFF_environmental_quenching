@@ -80,16 +80,16 @@ for counter in range(len(master_cat)):
         if master_cat[counter]['lmass'] > limiting_mass[0]:    # limiting mass of cluster: 7.5
             if master_cat[counter]['member'] == 0:    # cluster member = 0
                 if master_cat[counter]['type'] == 1:   # SF type = 1
-                    SF_2.append(master_cat[counter]['lmass'])
+                    SF_1.append(master_cat[counter]['lmass'])
                 elif master_cat[counter]['type'] == 2: # Q type = 2
-                    Q_2.append(master_cat[counter]['lmass'])
+                    Q_1.append(master_cat[counter]['lmass'])
     elif master_cat[counter]['cluster'] == 2:    # cluster 2 macs1149
         if master_cat[counter]['lmass'] > limiting_mass[1]:    # limiting mass of cluster: 7.8
             if master_cat[counter]['member'] == 0:    # cluster member = 0
                 if master_cat[counter]['type'] == 1:   # SF type = 1
-                    SF_3.append(master_cat[counter]['lmass'])
+                    SF_2.append(master_cat[counter]['lmass'])
                 elif master_cat[counter]['type'] == 2: # Q type = 2
-                    Q_3.append(master_cat[counter]['lmass'])
+                    Q_2.append(master_cat[counter]['lmass'])
     elif master_cat[counter]['cluster'] == 3:    # cluster 3 macs0717
         if master_cat[counter]['lmass'] > limiting_mass[2]:    # limiting mass of cluster: 8.0
             if master_cat[counter]['member'] == 0:    # cluster member = 0
@@ -199,9 +199,7 @@ total_smf = SF_smf + Q_smf
 #
 ## section (iii).1: compute midbins
 #
-## find midpoint of hist. bins. all populations have been binned identically, 
-## so the one 'midbin' will serve for all data arrays to be plotted. for visual 
-## clarity when plotting, offset the Q_midpoints by delta_x = 0.05
+## find midpoint of hist. bins. all populations have been binned identically, so the one 'midbin' will serve for all data arrays to be plotted. for visual clarity when plotting, offset the Q_midpoints by delta_x = 0.05
 #
 def midbins(bins):
     size = len(bins)-1
@@ -217,21 +215,13 @@ Q_midbins = SF_midbins + 0.05
 #
 #
 #
-## section (iii).2: compute correction to low-mass bin points due to varying mass completenesses 
-## of each cluster. The correction factor is: (total # of clusters) / (# of clusters complete at 
-## that mass bin), and will be multiplied by the raw number count of galaxies in each mass bin. 
+## section (iii).2: compute correction to low-mass bin points due to varying mass completenesses of each cluster. The correction factor is: (total # of clusters) / (# of clusters complete at that mass bin), and will be multiplied by the raw number count of galaxies in each mass bin. 
 #
-## an examination of the limiting mass for each cluster (see list "limiting_mass", above) shows 
-## that the following bin midpoints have the following corresponding number of clusters complete 
-## at that mass: [7.3,7.5,7.7,7.9,8.1] ---> [1,4,4,5,6]. So all 6 clusters are complete at a mass 
-## of 8.1, but only 1 cluster is complete down to 7.3. the corresponding corrections are as follows:
+## an examination of the limiting mass for each cluster (see list "limiting_mass", above) shows that the following bin midpoints have the following corresponding number of clusters complete at that mass: [7.3,7.5,7.7,7.9,8.1] ---> [1,4,4,5,6]. So all 6 clusters are complete at a mass  of 8.1, but only 1 cluster is complete down to 7.3. the corresponding corrections are as follows:
 #
 #mass_completeness_correction = np.array([6,1.5,1.5,1.2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])
 #
-## if we assume all clusters have the same general composition of SF to Q galaxies, i.e. the same
-## relative fraction in each cluster, then if only one cluster is complete, we "scale it up" by a
-## factor of 6. if 4 clusters are complete, we scale it up by (6/4) = 1.5. In this way, its as if each
-## cluster were complete down to the limiting mass of 7.3
+## if we assume all clusters have the same general composition of SF to Q galaxies, i.e. the same relative fraction in each cluster, then if only one cluster is complete, we "scale it up" by a factor of 6. if 4 clusters are complete, we scale it up by (6/4) = 1.5. In this way, its as if each cluster were complete down to the limiting mass of 7.3
 #
 ## the following loop automates the above explanation, making the code adaptable should i decide to change the number of bins in future
 mass_completeness_correction = np.zeros_like(SF_midbins)
@@ -241,27 +231,54 @@ for ii in range(len(mass_completeness_correction)):
             mass_completeness_correction[ii]+=1
 mass_completeness_correction = 6/mass_completeness_correction  # the correction factor is: (total # of clusters) / (# of clusters complete at that mass bin)
 #
+## Now the total area under the total_smf curve (i.e. np.sum(total_smf) is 6, since each cluster of the 6 clusters was normalized to 1. 
 #
 # apply the correction
 SF_smf = SF_smf * np.transpose(mass_completeness_correction)
 Q_smf = Q_smf * np.transpose(mass_completeness_correction)
 total_smf = total_smf * np.transpose(mass_completeness_correction)
 #
-## (iv) error bars & relative fractions
-## Poissonian error bars will be added to the spec. sample only; phot sample 
-## requires MCMC error to account for cluster membership correction
 #
-## Method: treat each bin as its own Poisson distribution, w/ expectation equal
-## to count in each respective bin. the error is then the sqrt of that count
+## Now the total area under the total_smf curve is some arbitrary number (~6.8 for 26 bins). Re-normalize all three curves s.t. the area under the total_smf curve is equal to 1. Recall that by dividing each of SF/Q by the total area under the curve (i.e. np.sum(total_smf)) we preserve the relative fraction of SF-to-Q in each mass bin.
 #
-## *******this is a test code to plot error bars, which will be applied to the 
-## entire field sample. adjustment to be made later to isolate spec sample alone
+#diagnostic to confirm relative fraction of SF-to-Q is preserved
+rel_SF_1 = SF_smf / total_smf
+rel_Q_1 = Q_smf / total_smf
+#
+# display diagnostic initial status
+print('Pre-normalization')
+print('Area under SF_smf: ',str(np.sum(SF_smf)))
+print('Area under Q_smf: ',str(np.sum(Q_smf)))
+print('Area under total_smf: ',str(np.sum(total_smf)))
+#
+# re-normalize the curves
+SF_smf = SF_smf / np.sum(total_smf)
+Q_smf = Q_smf / np.sum(total_smf)
+total_smf = total_smf / np.sum(total_smf)
+#
+# re-calculate relative fraction diagnostic post-normalization
+rel_SF_2 = SF_smf / total_smf
+rel_Q_2 = Q_smf / total_smf
+#
+# display final diagnostic status
+print('\nPost-normalization')
+print('Area under SF_smf: ',str(np.sum(SF_smf)))
+print('Area under Q_smf: ',str(np.sum(Q_smf)))
+print('Area under total_smf: ',str(np.sum(total_smf)))
+diff_SF = rel_SF_1 - rel_SF_2
+diff_Q = rel_Q_1 - rel_Q_2
+print('\nDifference in relative fractions before & after normalization:')
+print('SF: ',str(np.sum(diff_SF)))
+print('Q: ',str(np.sum(diff_Q)))
+#
+#
 #
 #
 #
 ######### THE FOLLOWING CODE IS DEPRECATED #############
 #
-# I left it in because it was replaced by the few lines of code above. This just shows what I've learned in the two years since I wrote the below code, as it has been replaced by a few lines above.
+### I left it in because it was replaced by the few lines of code above in section (iii).2. This just shows what I've learned in the two years since I wrote the below code, as it has been replaced by a few lines above.
+#
 #
 ### Mass corrections
 ### compute total number of SF/Q galaxies in all 6 clusters, then for individual 
@@ -400,9 +417,24 @@ total_smf = total_smf * np.transpose(mass_completeness_correction)
 #mass_correction6 = gal_count6/total_count6
 #SF_smf6[0] = SF_smf6[0]/mass_correction6[0]
 #Q_smf6[0] = Q_smf6[1]/mass_correction6[1]
-##
 #
-######### END OF DEPRECATED CODE #############
+#
+#
+#
+#d######## END OF DEPRECATED CODE #############
+#
+#
+#
+#
+## (iv) error bars & relative fractions
+## Poissonian error bars will be added to the spec. sample only; phot sample 
+## requires MCMC error to account for cluster membership correction
+#
+## Method: treat each bin as its own Poisson distribution, w/ expectation equal
+## to count in each respective bin. the error is then the sqrt of that count
+#
+## *******this is a test code to plot error bars, which will be applied to the 
+## entire field sample. adjustment to be made later to isolate spec sample alone
 #
 #
 #
