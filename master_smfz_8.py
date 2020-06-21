@@ -5,11 +5,10 @@ Created on Wed May 31 14:28:35 2017
 
 @author: gsarrouh
 """
-################## master_smfz_6 ##################
-## This program will plot the Stellar Mass Function (SMF) and Luminosity 
-## ("Schechter") function for the master_dadta file of all six clusters
-## (most current version: 'master_data_7); two plots (SF & Q) segregated 
-## between spectroscopic and photometric subsamples
+################## master_smfz_8 ##################
+## This program will plot the Stellar Mass Function (SMF) for the master_dadta 
+## file of all six clusters (most current version: 'master_data_5_final.py); 
+## two plots (SF & Q) segregated between spectroscopic and photometric subsamples
 #
 ## v2 includes the parallel fields data; 
 ## v3 commented out to produce conference 
@@ -32,16 +31,6 @@ Created on Wed May 31 14:28:35 2017
 ##
 ##
 #
-#
-import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-import astropy
-from astropy.table import Table
-from astropy.table import Column
-from scipy.optimize import curve_fit
-
 # plot stellar mass function:
 ## (i)      collect masses into sorted arrays for SF & Q;
 ## (ii)     bin them as in a histogram
@@ -52,13 +41,22 @@ from scipy.optimize import curve_fit
 ## (vii)    plot that shit
 #
 #
+# Import modules
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+import astropy
+from astropy.table import Table
+from astropy.table import Column
+from scipy.optimize import curve_fit
+#
+#
+#
 ## SECTION (i): collect relevant objects into a single array in order to plot 
-## historgram main arrays: (SF/Q)_hist, (SF/Q)_field_hist, creates list of 
-## samples to be binned & plotted as histogram/scatterplot
+## SF_*/Q_*, creates list of samples to be binned & plotted as histogram/scatterplot
 #
 ## Cluster sample
-other = 0
-counter = 0
 SF_1 = []       #lists of SF/Q by cluster, for flase pos/neg spectroscopic completeness corection
 SF_2 = []
 SF_3 = []
@@ -72,50 +70,54 @@ Q_4 = []
 Q_5 = []
 Q_6 = []
 limiting_mass = [7.5,7.8,8.0,7.5,7.4,7.3] # clusters 1,2,3,4,5,6, see IDs below
-size = len(master_cat)
 #
 # The following loop searches the master catalogue 'master_cat' and separates all objects by 
 # cluster. Then, it looks for all objects above the limiting mass for that cluster. It then 
 # creates two lists: one for SF and one for Q.
 #
-while counter < size:
+for counter in range(len(master_cat)):
     if master_cat[counter]['cluster'] == 1:    # cluster 1 macs0416
         if master_cat[counter]['lmass'] > limiting_mass[0]:    # limiting mass of cluster: 7.5
-            if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] == 1:   # cluster member, SF type
-                SF_1.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] == 2: # cluster member, Q type
-                Q_1.append(master_cat[counter]['lmass'])
+            if master_cat[counter]['member'] == 0:    # cluster member = 0
+                if master_cat[counter]['type'] == 1:   # SF type = 1
+                    SF_2.append(master_cat[counter]['lmass'])
+                elif master_cat[counter]['type'] == 2: # Q type = 2
+                    Q_2.append(master_cat[counter]['lmass'])
     elif master_cat[counter]['cluster'] == 2:    # cluster 2 macs1149
         if master_cat[counter]['lmass'] > limiting_mass[1]:    # limiting mass of cluster: 7.8
-            if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] == 1:   # cluster member, SF type
-                SF_2.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] == 2: # cluster member, Q type
-                Q_2.append(master_cat[counter]['lmass'])
+            if master_cat[counter]['member'] == 0:    # cluster member = 0
+                if master_cat[counter]['type'] == 1:   # SF type = 1
+                    SF_3.append(master_cat[counter]['lmass'])
+                elif master_cat[counter]['type'] == 2: # Q type = 2
+                    Q_3.append(master_cat[counter]['lmass'])
     elif master_cat[counter]['cluster'] == 3:    # cluster 3 macs0717
         if master_cat[counter]['lmass'] > limiting_mass[2]:    # limiting mass of cluster: 8.0
-            if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] == 1:   # cluster member, SF type
-                SF_3.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] == 2: # cluster member, Q type
-                Q_3.append(master_cat[counter]['lmass'])
+            if master_cat[counter]['member'] == 0:    # cluster member = 0
+                if master_cat[counter]['type'] == 1:   # SF type = 1
+                    SF_3.append(master_cat[counter]['lmass'])
+                elif master_cat[counter]['type'] == 2: # Q type = 2
+                    Q_3.append(master_cat[counter]['lmass'])
     elif master_cat[counter]['cluster'] == 4:    # cluster 4 abell 370
         if master_cat[counter]['lmass'] > limiting_mass[3]:    # limiting mass of cluster: 7.5
-            if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] == 1:   # cluster member, SF type
-                SF_4.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] == 2: # cluster member, Q type
-                Q_4.append(master_cat[counter]['lmass'])
+            if master_cat[counter]['member'] == 0:    # cluster member = 0
+                if master_cat[counter]['type'] == 1:   # SF type = 1
+                    SF_4.append(master_cat[counter]['lmass'])
+                elif master_cat[counter]['type'] == 2: # Q type = 2
+                    Q_4.append(master_cat[counter]['lmass'])
     elif master_cat[counter]['cluster'] == 5:    # cluster 5 abell 1063
         if master_cat[counter]['lmass'] > limiting_mass[4]:    # limiting mass of cluster: 7.4
-            if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] == 1:   # cluster member, SF type
-                SF_5.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] == 2: # cluster member, Q type
-                Q_5.append(master_cat[counter]['lmass'])
+            if master_cat[counter]['member'] == 0:    # cluster member = 0
+                if master_cat[counter]['type'] == 1:   # SF type = 1
+                    SF_5.append(master_cat[counter]['lmass'])
+                elif master_cat[counter]['type'] == 2: # Q type = 2
+                    Q_5.append(master_cat[counter]['lmass'])
     elif master_cat[counter]['cluster'] == 6:    # cluster 6 abell 2744
         if master_cat[counter]['lmass'] > limiting_mass[5]:    # limiting mass of cluster: 7.3
-            if master_cat[counter]['member'] == 0 and master_cat[counter]['type'] == 1:   # cluster member, SF type
-                SF_6.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['member'] == 0 and master_cat[counter]['type'] == 2: # cluster member, Q type
-                Q_6.append(master_cat[counter]['lmass'])
-    counter +=1
+            if master_cat[counter]['member'] == 0:    # cluster member = 0
+                if master_cat[counter]['type'] == 1:   # SF type = 1
+                    SF_6.append(master_cat[counter]['lmass'])
+                elif master_cat[counter]['type'] == 2: # Q type = 2
+                    Q_6.append(master_cat[counter]['lmass'])
 #
 #
 #
