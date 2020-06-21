@@ -89,7 +89,6 @@ Created on Mon Jun  5 15:19:59 2017
 ### (4) make membership cuts to spec samples, summarize in "spec_stats"
 ### (5) make membership cuts to phot samples, summarize in "phot_stats"
 #
-##  v4: includes parallel fields
 #
 #
 ###################     Start
@@ -101,7 +100,7 @@ import astropy
 from astropy.table import Table
 from astropy.table import Column
 #
-##Section 1: import all data from HFF team, convert flux to luminosity & gather full 
+##SECTION 1: import all data from HFF team, convert flux to luminosity & gather full 
 ##catalogue into single table "master_cat"; separate objects for which there is no 
 ##redshift data (both photo & spec) as "nodata"
 #
@@ -376,6 +375,7 @@ data6 = Column([len(cat_abell2744),both[0][5],phot_only[0][5],spec_only[0][5],no
 global data
 data_stats = Table([data_names,data0,data1,data2,data3,data4,data5,data6])  
 #
+#
 ##add columns for luminosity calculations to each cluster catalogue individually
 ##for some reason there are problems with simply doing this once to the final master_cat(alogue)
 # 1.macs0416
@@ -511,6 +511,10 @@ global master_cat
 master_cat = Table(np.concatenate((macs0416,macs1149,macs0717,abell370,abell1063,abell2744), axis=0))  #create a master catalogue of all clusters
 #
 #
+#
+#
+#
+#
 ### **Section 2: calulate z's & separate outliers
 ## (i) calculate delta_z for spec subsample; (ii) separate outliers from 
 ## both phot & spec sub-sample;  
@@ -572,6 +576,10 @@ while counter < size:
 z_cluster = [0.396,0.543,0.545,0.375,0.348,0.308]      
 #  [macs0416,macs1149,macs0717,abell370,abell1063,abell2744]   <- order of elements in cluster array, i.e. z_macs0717 = z_cluster[2] = 0.545
 #
+#
+#
+#
+#
 ## calculate z_clusterspec for del_zphot vs del_zspec plot, defined below. these 
 ## will be used to make cuts to spec sample, from which we will use relative 
 ## fractions by mass to correct the photometric sample for 
@@ -579,7 +587,7 @@ z_cluster = [0.396,0.543,0.545,0.375,0.348,0.308]
 counter = 0
 size = len(master_cat)
 while counter < size:
-    if master_cat[counter]['sub'] == 1:         #spec sample del_z plot for cuts: denominator = (1 + z_spec)
+    if master_cat[counter]['sub'] == 1 or master_cat[counter]['sub'] == 3:         #spec sample del_z plot for cuts: denominator = (1 + z_spec)
         if master_cat[counter]['cluster'] == 1:
             master_cat[counter]['z_clusterspec'] = ((master_cat[counter]['z_spec'] - z_cluster[0]) / (1 + master_cat[counter]['z_spec']))
             master_cat[counter]['z_clusterphot'] = ((master_cat[counter]['z_peak'] - z_cluster[0]) / (1 + master_cat[counter]['z_peak']))
@@ -616,7 +624,11 @@ while counter < size:
     else: 
         counter +=1
 #
-## Section 3: separate SF/Q for both subsamples based on van der Burg (2013) 
+#
+#
+#
+#
+## SECTION 3: separate SF/Q for both subsamples based on van der Burg (2013) 
 ## colour criteria;    filter name: 'type'  IDs below
 ##   0 = stars;  1 = SF (star-forming);    2 = Q (quiscient);    3 = outliers
 #
@@ -762,7 +774,15 @@ ph = Column([np.sum(phot_only),np.sum(SF_phot),np.sum(Q_phot),na,clusterphot_std
 macros_type = Table([macro_type,tot,sp,ph],names=('Property','Total','spec','phot'))
 #
 #
-##   **Section 4: apply delta_z cuts to determine membership of z_phot sample based on cut
+#
+#
+#
+#
+#### DEL_Z CUTS ####
+#
+#
+#
+## SECTION 4: apply delta_z cuts to determine membership of z_phot sample based on cut
 ## criteria discussed w/ AM: |del_z phot| < 0.07 & |del_z spec| < 0.01, in the process isolate 
 ## secure field, false pos/neg items from. ID column to identify populations is
 ## called "member"         
