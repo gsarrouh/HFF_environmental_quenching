@@ -32,12 +32,16 @@ Created on Wed May 31 14:28:35 2017
 ##
 #
 # plot stellar mass function:
-## (i)      collect masses into sorted arrays for SF & Q;
-## (ii)     bin them as in a histogram
-## (iii)    normalize, & find midpoints of bins s.t. the # count from hist & # of bins are equal
-## (iv)     add error bars to scatter plot
-## (v)      false pos/neg completess correction
-## (vi)     fit a SCHECHTER function to data
+## (i)      collect masses into SORTED arrays for SF & Q;
+## (ii)     bin into HISTOGRAMS;
+## (iii)    CORRECTIONS to raw counts
+## (iii.1)   calculate limiting MASS COMPLETENESS correction for low-mass bins
+## (iii.2)   calculate false pos/neg (i.e. spectroscopic) completeness correction for all bins
+##           include FIGURE for SPECTROSCOPIC COMPLETENESS
+## (iii.3)   NORMALIZE, & find midpoints of bins s.t. the # count from hist & # of bins are equal
+## (iv)     add ERROR BARS to scatter plot
+## (v)      EMCEE simulation; see emcee_chi2_final.py
+## (vi)     build SCHECTER best-fit models
 ## (vii)    plot that shit
 #
 #
@@ -53,11 +57,11 @@ from scipy.optimize import curve_fit
 #
 #
 #
-## SECTION (i): collect relevant objects into a single array in order to plot 
-## SF_*/Q_*, creates list of samples to be binned & plotted as histogram/scatterplot
+## SECTION (i): collect objects above limiting mass by cluster into a single array in order to plot 
+## SF_*/Q_*, and track sublists of objects which have spec vs those which only have phot, separately for SF/Q; creates list of samples to be binned & plotted as histogram/scatterplot
 #
 ## Cluster sample
-SF_1 = []       #lists of SF/Q by cluster, for flase pos/neg spectroscopic completeness corection
+SF_1 = []       #lists of SF/Q by cluster, for raw counts by cluster
 SF_2 = []
 SF_3 = []
 SF_4 = []
@@ -69,11 +73,35 @@ Q_3 = []
 Q_4 = []
 Q_5 = []
 Q_6 = []
+SF1_spec = []    #lists to track spectrscopic/photometric subsamples within each cluster, by galaxy type
+SF1_phot = []
+SF2_spec = []
+SF2_phot = []
+SF3_spec = []
+SF3_phot = []
+SF4_spec = []
+SF4_phot = []
+SF5_spec = []
+SF5_phot = []
+SF6_spec = []
+SF6_phot = []
+Q1_spec = []
+Q1_phot = []
+Q2_spec = []
+Q2_phot = []
+Q3_spec = []
+Q3_phot = []
+Q4_spec = []
+Q4_phot = []
+Q5_spec = []
+Q5_phot = []
+Q6_spec = []
+Q6_phot = []
 limiting_mass = [7.5,7.8,8.0,7.5,7.4,7.3] # clusters 1,2,3,4,5,6, see IDs below
 #
 # The following loop searches the master catalogue 'master_cat' and separates all objects by 
 # cluster. Then, it looks for all objects above the limiting mass for that cluster. It then 
-# creates two lists: one for SF and one for Q.
+# creates two lists: one for SF and one for Q (e.g. SF_*/Q_*). It further splits these lists into those objects with spectrscopy, and those without (e.g. SF*_spec/phot)
 #
 for counter in range(len(master_cat)):
     if master_cat[counter]['cluster'] == 1:    # cluster 1 macs0416
@@ -81,43 +109,91 @@ for counter in range(len(master_cat)):
             if master_cat[counter]['member'] == 0:    # cluster member = 0
                 if master_cat[counter]['type'] == 1:   # SF type = 1
                     SF_1.append(master_cat[counter]['lmass'])
+                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                        SF1_phot.append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                        SF1_spec.append(master_cat[counter]['lmass'])
                 elif master_cat[counter]['type'] == 2: # Q type = 2
                     Q_1.append(master_cat[counter]['lmass'])
+                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                        Q1_phot.append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                        Q1_spec.append(master_cat[counter]['lmass'])
     elif master_cat[counter]['cluster'] == 2:    # cluster 2 macs1149
         if master_cat[counter]['lmass'] > limiting_mass[1]:    # limiting mass of cluster: 7.8
             if master_cat[counter]['member'] == 0:    # cluster member = 0
                 if master_cat[counter]['type'] == 1:   # SF type = 1
                     SF_2.append(master_cat[counter]['lmass'])
+                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                        SF2_phot.append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                        SF2_spec.append(master_cat[counter]['lmass'])
                 elif master_cat[counter]['type'] == 2: # Q type = 2
                     Q_2.append(master_cat[counter]['lmass'])
+                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                        Q2_phot.append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                        Q2_spec.append(master_cat[counter]['lmass'])
     elif master_cat[counter]['cluster'] == 3:    # cluster 3 macs0717
         if master_cat[counter]['lmass'] > limiting_mass[2]:    # limiting mass of cluster: 8.0
             if master_cat[counter]['member'] == 0:    # cluster member = 0
                 if master_cat[counter]['type'] == 1:   # SF type = 1
                     SF_3.append(master_cat[counter]['lmass'])
+                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                        SF3_phot.append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                        SF3_spec.append(master_cat[counter]['lmass'])
                 elif master_cat[counter]['type'] == 2: # Q type = 2
                     Q_3.append(master_cat[counter]['lmass'])
+                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                        Q3_phot.append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                        Q3_spec.append(master_cat[counter]['lmass'])
     elif master_cat[counter]['cluster'] == 4:    # cluster 4 abell 370
         if master_cat[counter]['lmass'] > limiting_mass[3]:    # limiting mass of cluster: 7.5
             if master_cat[counter]['member'] == 0:    # cluster member = 0
                 if master_cat[counter]['type'] == 1:   # SF type = 1
                     SF_4.append(master_cat[counter]['lmass'])
+                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                        SF4_phot.append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                        SF4_spec.append(master_cat[counter]['lmass'])
                 elif master_cat[counter]['type'] == 2: # Q type = 2
                     Q_4.append(master_cat[counter]['lmass'])
+                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                        Q4_phot.append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                        Q4_spec.append(master_cat[counter]['lmass'])
     elif master_cat[counter]['cluster'] == 5:    # cluster 5 abell 1063
         if master_cat[counter]['lmass'] > limiting_mass[4]:    # limiting mass of cluster: 7.4
             if master_cat[counter]['member'] == 0:    # cluster member = 0
                 if master_cat[counter]['type'] == 1:   # SF type = 1
                     SF_5.append(master_cat[counter]['lmass'])
+                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                        SF5_phot.append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                        SF5_spec.append(master_cat[counter]['lmass'])
                 elif master_cat[counter]['type'] == 2: # Q type = 2
                     Q_5.append(master_cat[counter]['lmass'])
+                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                        Q5_phot.append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                        Q5_spec.append(master_cat[counter]['lmass'])
     elif master_cat[counter]['cluster'] == 6:    # cluster 6 abell 2744
         if master_cat[counter]['lmass'] > limiting_mass[5]:    # limiting mass of cluster: 7.3
             if master_cat[counter]['member'] == 0:    # cluster member = 0
                 if master_cat[counter]['type'] == 1:   # SF type = 1
                     SF_6.append(master_cat[counter]['lmass'])
+                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                        SF6_phot.append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                        SF6_spec.append(master_cat[counter]['lmass'])
                 elif master_cat[counter]['type'] == 2: # Q type = 2
                     Q_6.append(master_cat[counter]['lmass'])
+                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                        Q6_phot.append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                        Q6_spec.append(master_cat[counter]['lmass'])
 #
 #
 #
@@ -167,10 +243,304 @@ total_raw_smf4 = SF_smf4 + Q_smf4
 total_raw_smf5 = SF_smf5 + Q_smf5
 total_raw_smf6 = SF_smf6 + Q_smf6
 #
+# compute raw totals
+SF_raw_smf = SF_smf1 + SF_smf2 + SF_smf3 + SF_smf4 + SF_smf5 + SF_smf6
+Q_raw_smf = Q_smf1 + Q_smf2 + Q_smf3 + Q_smf4 + Q_smf5 + Q_smf6
+total_raw_smf = total_raw_smf1 + total_raw_smf2 + total_raw_smf3 + total_raw_smf4 + total_raw_smf5 + total_raw_smf6
+#
+# Display some data for total, SF, Q: 
+print('RAW totals')
+print('SF: ',str(SF_raw_smf))
+print('Q: ',str(Q_raw_smf))
+print('Total: ',str(total_raw_smf),'\n')
+#
+#
+#
+## SORT the spec/phot subsamples into histograms as well, and confirm that spec + phot = total in each mass bin for each type of galaxy
+
+# sort spec/phot subsamples into histograms for each cluster
+SF1_spec_smf, SF_bins = np.histogram(SF1_spec, bins=num_bins,range=range2)
+SF1_phot_smf, SF_bins = np.histogram(SF1_phot, bins=num_bins,range=range2)
+SF2_spec_smf, SF_bins = np.histogram(SF2_spec, bins=num_bins,range=range2)
+SF2_phot_smf, SF_bins = np.histogram(SF2_phot, bins=num_bins,range=range2)
+SF3_spec_smf, SF_bins = np.histogram(SF3_spec, bins=num_bins,range=range2)
+SF3_phot_smf, SF_bins = np.histogram(SF3_phot, bins=num_bins,range=range2)
+SF4_spec_smf, SF_bins = np.histogram(SF4_spec, bins=num_bins,range=range2)
+SF4_phot_smf, SF_bins = np.histogram(SF4_phot, bins=num_bins,range=range2)
+SF5_spec_smf, SF_bins = np.histogram(SF5_spec, bins=num_bins,range=range2)
+SF5_phot_smf, SF_bins = np.histogram(SF5_phot, bins=num_bins,range=range2)
+SF6_spec_smf, SF_bins = np.histogram(SF6_spec, bins=num_bins,range=range2)
+SF6_phot_smf, SF_bins = np.histogram(SF6_phot, bins=num_bins,range=range2)
+Q1_spec_smf, SF_bins = np.histogram(Q1_spec, bins=num_bins,range=range2)
+Q1_phot_smf, SF_bins = np.histogram(Q1_phot, bins=num_bins,range=range2)
+Q2_spec_smf, SF_bins = np.histogram(Q2_spec, bins=num_bins,range=range2)
+Q2_phot_smf, SF_bins = np.histogram(Q2_phot, bins=num_bins,range=range2)
+Q3_spec_smf, SF_bins = np.histogram(Q3_spec, bins=num_bins,range=range2)
+Q3_phot_smf, SF_bins = np.histogram(Q3_phot, bins=num_bins,range=range2)
+Q4_spec_smf, SF_bins = np.histogram(Q4_spec, bins=num_bins,range=range2)
+Q4_phot_smf, SF_bins = np.histogram(Q4_phot, bins=num_bins,range=range2)
+Q5_spec_smf, SF_bins = np.histogram(Q5_spec, bins=num_bins,range=range2)
+Q5_phot_smf, SF_bins = np.histogram(Q5_phot, bins=num_bins,range=range2)
+Q6_spec_smf, SF_bins = np.histogram(Q6_spec, bins=num_bins,range=range2)
+Q6_phot_smf, SF_bins = np.histogram(Q6_phot, bins=num_bins,range=range2)
+#    
+## DIAGNOSTIC: add spec & phot subsampes together for each cluster, and ensure they equal the total raw count in each mass bin
+diag_flag_1 = 1   # 0=off, i.e. don't do diagnostic; 1=on, i.e. perform diagnostic
+#
+if diag_flag_1 == 1:
+    # compute differences, e.g.: SF_smf1 = SF1_spec_smf + SF1_phot_smf for each mass bin. they should be the same
+    diff_SF1 = SF_smf1 - (SF1_spec_smf + SF1_phot_smf)
+    diff_SF2 = SF_smf2 - (SF2_spec_smf + SF2_phot_smf)
+    diff_SF3 = SF_smf3 - (SF3_spec_smf + SF3_phot_smf)
+    diff_SF4 = SF_smf4 - (SF4_spec_smf + SF4_phot_smf)
+    diff_SF5 = SF_smf5 - (SF5_spec_smf + SF5_phot_smf)
+    diff_SF6 = SF_smf6 - (SF6_spec_smf + SF6_phot_smf)
+    diff_Q1 = Q_smf1 - (Q1_spec_smf + Q1_phot_smf)
+    diff_Q2 = Q_smf2 - (Q2_spec_smf + Q2_phot_smf)
+    diff_Q3 = Q_smf3 - (Q3_spec_smf + Q3_phot_smf)
+    diff_Q4 = Q_smf4 - (Q4_spec_smf + Q4_phot_smf)
+    diff_Q5 = Q_smf5 - (Q5_spec_smf + Q5_phot_smf)
+    diff_Q6 = Q_smf6 - (Q6_spec_smf + Q6_phot_smf)
+    # print differences
+    print('Differences between raw cluster count and (spec + phot) subsamples')
+    print('SF1: ',str(np.sum(diff_SF1)))
+    print('SF2: ',str(np.sum(diff_SF2)))
+    print('SF3: ',str(np.sum(diff_SF3)))
+    print('SF4: ',str(np.sum(diff_SF4)))
+    print('SF5: ',str(np.sum(diff_SF5)))
+    print('SF6: ',str(np.sum(diff_SF6)))
+    print('Q1: ',str(np.sum(diff_Q1)))
+    print('Q2: ',str(np.sum(diff_Q2)))
+    print('Q3: ',str(np.sum(diff_Q3)))
+    print('Q4: ',str(np.sum(diff_Q4)))
+    print('Q5: ',str(np.sum(diff_Q5)))
+    print('Q6: ',str(np.sum(diff_Q6)),'\n')
 #
 #
 #
 #
+## SECTION (iii): calculate corrections to raw counts. There are two separate corrections - one for limiting mass completeness (i.e. correct for the fact that not all clusters are complete down to our lowest mass bin), and one for spectrscopic completeness (i.e. correct for the fact that there are false pos/neg objects in the sample of galaxies which have both spec & phot, and make correction to photometric sample to account for the ratio of false pos/neg)
+#
+#
+## SECTION (iii.1): compute correction to low-mass bin points due to varying mass completenesses of each cluster. The correction factor is: (total # of clusters) / (# of clusters complete at that mass bin), and will be multiplied by the raw number count of galaxies in each mass bin. 
+#
+## an examination of the limiting mass for each cluster (see list "limiting_mass", above) shows that the following bin midpoints have the following corresponding number of clusters complete at that mass: [7.3,7.5,7.7,7.9,8.1] ---> [1,4,4,5,6]. So all 6 clusters are complete at a mass  of 8.1, but only 1 cluster is complete down to 7.3. the corresponding corrections are as follows:
+#
+#mass_completeness_correction = np.array([6,1.5,1.5,1.2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])
+#
+## if we assume all clusters have the same general composition of SF to Q galaxies, i.e. the same relative fraction in each cluster, then if only one cluster is complete, we "scale it up" by a factor of 6 (# of clusters total / # of clusters complete at that mass). if 4 clusters are complete, we scale it up by (6/4) = 1.5. In this way, it's as if each cluster were complete down to the limiting mass of 7.3
+#
+## the following loop automates the above explanation, making the code adaptable should i decide to change the number of bins in future
+#
+mass_completeness_correction = np.zeros_like(SF_midbins)
+for ii in range(len(mass_completeness_correction)):
+    for jj in range(len(limiting_mass)):
+        if limiting_mass[jj] <= SF_midbins[ii]:    # count # of clusters complete at each mass bin
+            mass_completeness_correction[ii]+=1
+mass_completeness_correction = np.transpose(6/mass_completeness_correction)  # the correction factor is: (total # of clusters) / (# of clusters complete at that mass bin); return as a row vector
+#
+#
+# define a function to compute the incremental difference of applying a correction to the raw count lists
+def correction_difference(raw_smf,completeness_correction):
+    corrected_smf = raw_smf*completeness_correction
+    diff = corrected_smf- raw_smf
+    return diff
+#
+# compute how many objects are added to each mass bin as a result of applying the mass_completeness_correction to the *_raw_smf lists. confirm that (# added to SF) + (# added to Q) = (# added to total)
+SF_mass_completeness_diff = correction_difference(SF_raw_smf,mass_completeness_correction)
+Q_mass_completeness_diff = correction_difference(Q_raw_smf,mass_completeness_correction)
+total_mass_completeness_diff = correction_difference(total_raw_smf,mass_completeness_correction)
+#
+# Display correction factors
+print('Mass completeness correction factors by bin: ',str(mass_completeness_correction),'\n')
+#
+# Display some data for total, SF, Q: 
+print('Galaxies added due to MASS COMPLETENESS correction')
+print('SF: ',str(SF_mass_completeness_diff))
+print('Q: ',str(Q_mass_completeness_diff))
+print('Total: ',str(total_mass_completeness_diff),'\n')
+#
+#
+#
+#
+## SECTION (iii.2): calculate SPECTROSCOPIC COMPLETENESS correction. basically, look at all the false positives/false negatives, and sort them by type (i.e. SF/Q). then bin them (i.e. make histograms of false pos/neg for each of SF/Q). take their ratio of false pos to false neg, and plot that ratio. it is the correction factor to be applied to the photometric subsample
+#
+#
+SF_pos = []
+SF_neg = []
+Q_pos = []
+Q_neg = []
+#
+for ii in range(len(master_cat)):
+    if master_cat[ii]['type'] == 1:      # type=1 for SF
+        if master_cat[ii]['member'] == 2:     # member=2 for false pos
+            SF_pos.append(master_cat[ii]['lmass'])
+        elif master_cat[ii]['member'] == 3:   # member=3 for false neg
+            SF_neg.append(master_cat[ii]['lmass'])
+    elif master_cat[ii]['type'] == 2:     # type=2 for Q
+        if master_cat[ii]['member'] == 2:     # member=2 for false pos
+            Q_pos.append(master_cat[ii]['lmass'])
+        elif master_cat[ii]['member'] == 3:   # member=3 for false neg
+            Q_neg.append(master_cat[ii]['lmass'])
+#
+### bin SF & Q, then compute false pos/neg fractions by mass bin for correction factors. 
+### NOTE: that # of bins was determined by trial and error, as the largest number which would ensure that #all bins are populated
+num_binsSF =  4 ##[6,6,6,6,6,6]#[4,4,4,4,4,4]#[5,5,5,5,5,5]#
+num_binsQ = 4 #[6,6,6,6,6,6]#[7,7,7,7,7,7]#[4,4,4,4,4,4]#
+# make histograms
+SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=num_binsSF, range=range2)
+SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_binsSF, range=range2)
+Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=num_binsQ, range=range2)
+Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_binsQ, range=range2)
+#
+#
+## compute false pos/ false neg ratio; there is a diagnostic built in for error handling - since we require that all mass bins be populated by at least one false pos. and one false neg. (so that we may compute their ratio), the program BREAKS when an empty mass bin is encountered, and you are prompted to try a new number of bins 
+SF_frac = np.empty_like(SF_pos_hist, dtype='float32')
+Q_frac = np.empty_like(Q_pos_hist, dtype='float32')
+# compute fractions for SF, exiting loop if a bin value of zero is encountered 
+for ii in range(len(SF_pos_hist)):               
+    if SF_pos_hist[ii] == 0 and SF_neg_hist[ii] == 0:
+        print('Zero false pos. AND zero false neg in bin',str(ii+1))
+        print('Adjust the value of "num_binsSF"')
+        break
+    elif SF_pos_hist[ii] == 0:
+        print('Zero false pos. in bin',str(ii+1))
+        print('Adjust the value of "num_binsSF"')
+        break
+    elif SF_neg_hist[ii] == 0:
+        print('Zero false neg. in bin',str(ii+1))
+        print('Adjust the value of "num_binsSF"')
+        break
+    else:
+        SF_frac[ii] = SF_pos_hist[ii] / SF_neg_hist[ii]
+# compute fractions for Q, exiting loop if a bin value of zero is encountered 
+for ii in range(len(Q_pos_hist)):               
+    if Q_pos_hist[ii] == 0 and Q_neg_hist[ii] == 0:
+        print('Zero false pos. AND zero false neg in bin',str(ii+1))
+        print('Adjust the value of "num_binsQ"')
+        break
+    elif Q_pos_hist[ii] == 0:
+        print('Zero false pos. in bin',str(ii+1))
+        print('Adjust the value of "num_binsQ"')
+        break
+    elif Q_neg_hist[ii] == 0:
+        print('Zero false neg. in bin',str(ii+1))
+        print('Adjust the value of "num_binsQ"')
+        break
+    else:
+        Q_frac[ii] = Q_pos_hist[ii] / Q_neg_hist[ii]        
+#
+## define a function to compute the mid-points of the bins from a histogram
+def midbins(bins):
+    size = len(bins)-1
+    x_midbins = np.empty([size,1],dtype='float64')
+    for x in range(size):
+        x_midbins[x] = (bins[x] + bins[(x+1)])/2
+    return x_midbins
+#
+# compute midbins for spec. mass completeness plot (i.e. plot of false pos/false neg ratios)
+SF_frac_midbins = midbins(bins_SF)
+Q_frac_midbins = midbins(bins_Q)
+#
+#
+## now compute the errors for the spec. completeness plot, which is simply sqrt(N) since the spectroscopic uncertainty is Poissonian in nature. do so by computing the relative error for the false pos & false neg histograms for each of SF/Q, and then sum in quadrature to determine relative error of fractions
+#              
+SF_relerr_pos = (np.sqrt(SF_pos_hist))/SF_pos_hist
+SF_relerr_neg = (np.sqrt(SF_neg_hist))/SF_neg_hist
+Q_relerr_pos = (np.sqrt(Q_pos_hist))/Q_pos_hist
+Q_relerr_neg = (np.sqrt(Q_neg_hist))/Q_neg_hist
+#              
+SF_frac_err = np.sqrt((SF_relerr_pos**2) + (SF_relerr_neg**2))*SF_frac              
+Q_frac_err = np.sqrt((Q_relerr_pos**2) + (Q_relerr_neg**2))*Q_frac              
+#              
+#    
+## FIGURE ##
+#
+plot_flag = 1        # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
+if plot_flag == 1:
+    # plot Spectroscopic completion correction factors 
+    plt.close()
+    MC = plt.figure(num=2)
+    #MC.suptitle('Spectroscopic Completeness Correction Factors')
+    plt.errorbar(SF_frac_midbins,SF_frac,yerr=SF_frac_err, fmt='ob',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
+    plt.errorbar(Q_frac_midbins,Q_frac,yerr=Q_frac_err, fmt='or',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
+    plt.plot(SF_frac_midbins,SF_frac,'-b', linewidth=1.0, label='Star-forming')
+    plt.plot(Q_frac_midbins,Q_frac,'-r', linewidth=1.0, label='Quiescent')
+    plt.plot([0,13],[1,1],'--k',linewidth = 0.5)
+    plt.legend(loc='upper right', frameon=False)
+    plt.xlim=(7.1,12.5)
+    plt.xlabel('$log(M/M_{\odot})$')
+    plt.ylim=(-0.5,4.1)
+    plt.ylabel('Correction factor\n(false pos / false neg)')
+    plt.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='on', labelleft='on')
+    plt.minorticks_on()
+    plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = ':')
+    plt.xlim=(7.1,12.5)
+    #
+## Now interpolate between these data points
+#
+## extrapolating SF at lo- & hi-mass
+m1_SF=(SF_frac[1] - SF_frac[0])/(SF_frac_midbins[1] - SF_frac_midbins[0])    # low-mass slope
+b1_SF = SF_frac[1] - (SF_frac_midbins[1]*m1_SF)            # low-mass y-int
+#
+m2_SF=(SF_frac[3] - SF_frac[2])/(SF_frac_midbins[3] - SF_frac_midbins[2])    # hi-mass slope
+b2_SF = SF_frac[2] - (SF_frac_midbins[2]*m2_SF)            # hi-mass y-int
+#
+SF_spec_completeness_correction = np.empty_like(SF_midbins,dtype='float32')
+for ii in range(len(SF_midbins)):
+    if SF_midbins[ii] < SF_frac_midbins[2]:
+        SF_spec_completeness_correction[ii] = m1_SF*SF_midbins[ii] + b1_SF
+    else:
+        SF_spec_completeness_correction[ii] = m2_SF*SF_midbins[ii] + b2_SF
+#
+## extrapolating Q at lo- & hi-mass
+m1_Q=(Q_frac[1] - Q_frac[0])/(Q_frac_midbins[1] - Q_frac_midbins[0])    # low-mass slope
+b1_Q = Q_frac[1] - (Q_frac_midbins[1]*m1_Q)            # low-mass y-int
+#
+m2_Q=(Q_frac[2] - Q_frac[1])/(Q_frac_midbins[2] - Q_frac_midbins[1])    # hi-mass slope
+b2_Q = Q_frac[2] - (Q_frac_midbins[2]*m2_Q)            # mid-mass y-int
+#
+m3_Q=(Q_frac[3] - Q_frac[2])/(Q_frac_midbins[3] - Q_frac_midbins[2])    # hi-mass slope
+b3_Q = Q_frac[3] - (Q_frac_midbins[3]*m3_Q)            # hi-mass y-int
+#
+Q_spec_completeness_correction = np.empty_like(Q_midbins,dtype='float32')
+for ii in range(len(Q_midbins)):
+    if Q_midbins[ii] < Q_frac_midbins[1]:
+        Q_spec_completeness_correction[ii] = m1_Q*Q_midbins[ii] + b1_Q
+    elif Q_midbins[ii] < Q_frac_midbins[2] and Q_midbins[ii] < Q_frac_midbins[3]:
+        Q_spec_completeness_correction[ii] = m2_Q*Q_midbins[ii] + b2_Q
+    else:
+        Q_spec_completeness_correction[ii] = m3_Q*Q_midbins[ii] + b3_Q
+#
+if plot_flag == 1:                       # plot interpolated/extrapolated points on top of computed correction fractions
+    plt.scatter(SF_midbins,SF_spec_completeness_correction,c='b', marker='+', linewidths = 0)
+    plt.scatter(Q_midbins,Q_spec_completeness_correction,c='r', marker='x', linewidths = 0)
+    plt.xlim=(7.25,12.5)
+#
+# apply correction
+# compute how many objects are added to each mass bin as a result of applying the spec_completeness_correction to the *_raw_smf lists. confirm that (# added to SF) + (# added to Q) = (# added to total)
+SF_spec_completeness_diff = correction_difference(SF_raw_smf,SF_spec_completeness_correction)
+Q_spec_completeness_diff = correction_difference(Q_raw_smf,Q_spec_completeness_correction)
+total_spec_completeness_diff = SF_spec_completeness_diff + Q_spec_completeness_diff
+#
+# Display correction factors
+print('Spectroscopic completeness correction factors by bin: ')
+print('SF: ',str(SF_spec_completeness_correction))
+print('Q: ',str(Q_spec_completeness_correction,'\n')
+#
+# Display some data for total, SF, Q: 
+print('Galaxies added due to SPECTROSCOPIC COMPLETENESS correction')
+print('SF: ',str(SF_spec_completeness_diff))
+print('Q: ',str(Q_spec_completeness_diff))
+print('Total: ',str(total_spec_completeness_diff),'\n')
+#
+#
+#
+#
+
+
+
+
 ## Section (iii): Normalize the SMF lists for each cluster by the total mass in that cluster (e.g. SF_smf1 / sum(total_smf1), sum into full SMF list; (iii).1: find midpoints of spec bins, and split hist. into "x" & "y" for scatter plotting; (iii).2: compute correction factors for varying cluster mass completeness limits, and apply correction; 
 #
 #
@@ -201,42 +571,12 @@ total_smf = SF_smf + Q_smf
 #
 ## find midpoint of hist. bins. all populations have been binned identically, so the one 'midbin' will serve for all data arrays to be plotted. for visual clarity when plotting, offset the Q_midpoints by delta_x = 0.05
 #
-def midbins(bins):
-    size = len(bins)-1
-    x_midbins = np.empty([size,1],dtype='float64')
-    for x in range(size):
-        x_midbins[x] = (bins[x] + bins[(x+1)])/2
-    return x_midbins
-#
 # compute midbins        
 SF_midbins = midbins(SF_bins)
 # offset Q midbins
 Q_midbins = SF_midbins + 0.05
 #
 #
-#
-## section (iii).2: compute correction to low-mass bin points due to varying mass completenesses of each cluster. The correction factor is: (total # of clusters) / (# of clusters complete at that mass bin), and will be multiplied by the raw number count of galaxies in each mass bin. 
-#
-## an examination of the limiting mass for each cluster (see list "limiting_mass", above) shows that the following bin midpoints have the following corresponding number of clusters complete at that mass: [7.3,7.5,7.7,7.9,8.1] ---> [1,4,4,5,6]. So all 6 clusters are complete at a mass  of 8.1, but only 1 cluster is complete down to 7.3. the corresponding corrections are as follows:
-#
-#mass_completeness_correction = np.array([6,1.5,1.5,1.2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])
-#
-## if we assume all clusters have the same general composition of SF to Q galaxies, i.e. the same relative fraction in each cluster, then if only one cluster is complete, we "scale it up" by a factor of 6. if 4 clusters are complete, we scale it up by (6/4) = 1.5. In this way, its as if each cluster were complete down to the limiting mass of 7.3
-#
-## the following loop automates the above explanation, making the code adaptable should i decide to change the number of bins in future
-mass_completeness_correction = np.zeros_like(SF_midbins)
-for ii in range(len(mass_completeness_correction)):
-    for jj in range(len(limiting_mass)):
-        if limiting_mass[jj] <= SF_midbins[ii]:
-            mass_completeness_correction[ii]+=1
-mass_completeness_correction = 6/mass_completeness_correction  # the correction factor is: (total # of clusters) / (# of clusters complete at that mass bin)
-#
-## Now the total area under the total_smf curve (i.e. np.sum(total_smf) is 6, since each cluster of the 6 clusters was normalized to 1. 
-#
-# apply the correction
-SF_smf = SF_smf * np.transpose(mass_completeness_correction)
-Q_smf = Q_smf * np.transpose(mass_completeness_correction)
-total_smf = total_smf * np.transpose(mass_completeness_correction)
 #
 #
 ## Now the total area under the total_smf curve is some arbitrary number (~6.8 for 26 bins). Re-normalize all three curves s.t. the area under the total_smf curve is equal to 1. Recall that by dividing each of SF/Q by the total area under the curve (i.e. np.sum(total_smf)) we preserve the relative fraction of SF-to-Q in each mass bin.
@@ -427,315 +767,21 @@ print('Q: ',str(np.sum(diff_Q)))
 #
 #
 ## (iv) error bars & relative fractions
-## Poissonian error bars will be added to the spec. sample only; phot sample 
-## requires MCMC error to account for cluster membership correction
+## Poissonian error bars will be added to the spec. sample only; phot sample requires MCMC error to account for cluster membership correction
 #
-## Method: treat each bin as its own Poisson distribution, w/ expectation equal
-## to count in each respective bin. the error is then the sqrt of that count
+## Method: treat each bin as its own Poisson distribution, w/ expectation equal to count in each respective bin. the error is then the sqrt of that count
 #
-## *******this is a test code to plot error bars, which will be applied to the 
-## entire field sample. adjustment to be made later to isolate spec sample alone
+## *******this is a test code to plot error bars, which will be applied to the entire field sample. adjustment to be made later to isolate spec sample alone
 #
 #
+## Sort the raw SMFs into spec & phot sub-samples. confirm the total number of raw clusters members are accounted for. compute error for spectroscopy (i.e. sqrt(N)). The phot sub-sample will be used later to make the false pos/neg correction. display how many galaxies of each type there are as this information will be put in the paper. 
 #
 #
-##  Section (v): caclulate false pos/neg fractions by cluster for completeness 
-##          corrections in photometric sample
-## Fig. 2: mass histrograms by cluster for false positive/negative to determine 
-##          mass bins for completeness corrections. fraction > 1 means more false
-##          positives than negative (i.e. more galaxies erroneously classified as
-##          cluster members than members classified as field), and would require a
-##          downward correction of the number count in that bin
-#
-SF_pos1 = []
-Q_pos1 = []
-SF_neg1 = []
-Q_neg1 = []
-SF_pos2 = []
-Q_pos2 = []
-SF_neg2 = []
-Q_neg2 = []
-SF_pos3 = []
-Q_pos3 = []
-SF_neg3 = []
-Q_neg3 = []
-SF_pos4 = []
-Q_pos4 = []
-SF_neg4 = []
-Q_neg4 = []
-SF_pos5 = []
-Q_pos5 = []
-SF_neg5 = []
-Q_neg5 = []
-SF_pos6 = []
-Q_pos6 = []
-SF_neg6 = []
-Q_neg6 = []
-counter = 0
-size = len(master_cat)
-while counter < size:
-    if master_cat[counter]['member'] == 2:      #false pos
-        if master_cat[counter]['type'] == 1:    #SF
-            if master_cat[counter]['cluster'] ==1:
-                SF_pos1.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==2:
-                SF_pos2.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==3:
-                SF_pos3.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==4:
-                SF_pos4.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==5:
-                SF_pos5.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==6:
-                SF_pos6.append(master_cat[counter]['lmass'])
-        elif master_cat[counter]['type'] == 2:    #Quiescent
-            if master_cat[counter]['cluster'] ==1:
-                Q_pos1.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==2:
-                Q_pos2.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==3:
-                Q_pos3.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==4:
-                Q_pos4.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==5:
-                Q_pos5.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==6:
-                Q_pos6.append(master_cat[counter]['lmass'])
-    elif master_cat[counter]['member'] == 3:      #false neg
-        if master_cat[counter]['type'] == 1:    #SF
-            if master_cat[counter]['cluster'] ==1:
-                SF_neg1.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==2:
-                SF_neg2.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==3:
-                SF_neg3.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==4:
-                SF_neg4.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==5:
-                SF_neg5.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==6:
-                SF_neg6.append(master_cat[counter]['lmass'])
-        elif master_cat[counter]['type'] == 2:    #Quiescent
-            if master_cat[counter]['cluster'] ==1:
-                Q_neg1.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==2:
-                Q_neg2.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==3:
-                Q_neg3.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==4:
-                Q_neg4.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==5:
-                Q_neg5.append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['cluster'] ==6:
-                Q_neg6.append(master_cat[counter]['lmass'])
-    counter +=1
-#
-## bin SF & Q for all 6 clusters, then compute false pos/neg fractions by bin for correction factors
-num_binsSF =    [3,3,3,3,3,3]##[6,6,6,6,6,6]#[4,4,4,4,4,4]#[5,5,5,5,5,5]#
-num_binsQ = [5,5,5,5,5,5]#[6,6,6,6,6,6]#[7,7,7,7,7,7]#[4,4,4,4,4,4]#
-SF_pos_hist1, binsSF1 = np.histogram(SF_pos1, bins=num_binsSF[0],range=range2)
-SF_neg_hist1, binsSF1 = np.histogram(SF_neg1, bins=num_binsSF[0],range=range2)
-Q_pos_hist1, binsQ1 = np.histogram(Q_pos1, bins=num_binsQ[0],range=range2)
-Q_neg_hist1, binsQ1 = np.histogram(Q_neg1, bins=num_binsQ[0],range=range2)
-SF_pos_hist2, binsSF2 = np.histogram(SF_pos2, bins=num_binsSF[1],range=range2)
-SF_neg_hist2, binsSF2 = np.histogram(SF_neg2, bins=num_binsSF[1],range=range2)
-Q_pos_hist2, binsQ2 = np.histogram(Q_pos2, bins=num_binsQ[1],range=range2)
-Q_neg_hist2, binsQ2 = np.histogram(Q_neg2, bins=num_binsQ[1],range=range2)
-SF_pos_hist3, binsSF3 = np.histogram(SF_pos3, bins=num_binsSF[2],range=range2)
-SF_neg_hist3, binsSF3 = np.histogram(SF_neg3, bins=num_binsSF[2],range=range2)
-Q_pos_hist3, binsQ3 = np.histogram(Q_pos3, bins=num_binsQ[2],range=range2)
-Q_neg_hist3, binsQ3 = np.histogram(Q_neg3, bins=num_binsQ[2],range=range2)
-SF_pos_hist4, binsSF4 = np.histogram(SF_pos4, bins=num_binsSF[3],range=range2)
-SF_neg_hist4, binsSF4 = np.histogram(SF_neg4, bins=num_binsSF[3],range=range2)
-Q_pos_hist4, binsQ4 = np.histogram(Q_pos4, bins=num_binsQ[3],range=range2)
-Q_neg_hist4, binsQ4 = np.histogram(Q_neg4, bins=num_binsQ[3],range=range2)
-SF_pos_hist5, binsSF5 = np.histogram(SF_pos5, bins=num_binsSF[4],range=range2)
-SF_neg_hist5, binsSF5 = np.histogram(SF_neg5, bins=num_binsSF[4],range=range2)
-Q_pos_hist5, binsQ5 = np.histogram(Q_pos5, bins=num_binsQ[4],range=range2)
-Q_neg_hist5, binsQ5 = np.histogram(Q_neg5, bins=num_binsQ[4],range=range2)
-SF_pos_hist6, binsSF6 = np.histogram(SF_pos6, bins=num_binsSF[5],range=range2)
-SF_neg_hist6, binsSF6 = np.histogram(SF_neg6, bins=num_binsSF[5],range=range2)
-Q_pos_hist6, binsQ6 = np.histogram(Q_pos6, bins=num_binsQ[5],range=range2)
-Q_neg_hist6, binsQ6 = np.histogram(Q_neg6, bins=num_binsQ[5],range=range2)
-#
-## compute false pos/ false neg ratio by cluster
-SF_pos_hist = SF_pos_hist1+SF_pos_hist2+SF_pos_hist3+SF_pos_hist4+SF_pos_hist5+SF_pos_hist6
-SF_neg_hist = SF_neg_hist1+SF_neg_hist2+SF_neg_hist3+SF_neg_hist4+SF_neg_hist5+SF_neg_hist6
-Q_pos_hist = Q_pos_hist1+Q_pos_hist2+Q_pos_hist3+Q_pos_hist4+Q_pos_hist5+Q_pos_hist6
-Q_neg_hist = Q_neg_hist1+Q_neg_hist2+Q_neg_hist3+Q_neg_hist4+Q_neg_hist5+Q_neg_hist6
-SF_frac = np.empty_like(SF_pos_hist, dtype='float64')
-Q_frac = np.empty_like(Q_pos_hist, dtype='float64')
-#
-#compute fractions
-# total sample
-zero_falseSF = 0
-counter = 0         #SF pop
-size = len(SF_pos_hist)
-while counter < size:
-    if SF_pos_hist[counter] ==0 and SF_neg_hist[counter] ==0:
-        SF_frac[counter] = 0
-        zero_falseSF +=1
-    elif SF_pos_hist[counter] ==0:
-        SF_frac[counter] = 10*SF_neg_hist[counter]
-    elif SF_neg_hist[counter] ==0:
-        SF_frac[counter] = 100*SF_pos_hist[counter]
-    else: SF_frac[counter] = SF_pos_hist[counter]/SF_neg_hist[counter]
-    counter+=1
-zero_falseQ = 0
-counter = 0         #Q pop
-size = len(Q_pos_hist)
-while counter < size:
-    if Q_pos_hist[counter] ==0 and Q_neg_hist[counter] ==0:
-        Q_frac[counter] = 1
-        zero_falseQ +=1
-    elif Q_pos_hist[counter] ==0:
-        Q_frac[counter] = 10*Q_neg_hist[counter]
-    elif Q_neg_hist[counter] ==0:
-        Q_frac[counter] = 100*Q_pos_hist[counter]
-    else: Q_frac[counter] = Q_pos_hist[counter]/Q_neg_hist[counter]
-    counter+=1
 #
 #
-
 #
-# compute midbins
-SF_frac_midbins = np.empty_like(SF_frac, dtype='float64')
-Q_frac_midbins = np.empty_like(Q_frac, dtype='float64')
 #
-size = len(binsSF1)-1
-counter = 0
-while counter < size:
-    SF_frac_midbins[counter] = (binsSF1[counter] + binsSF1[counter+1])/2
-    counter +=1
-size = len(binsQ1)-1
-counter = 0
-while counter < size:
-    Q_frac_midbins[counter] = (binsQ1[counter] + binsQ1[counter+1])/2
-    counter +=1
 #
-## table to summarize binning by cluster
-#cluster_names = Column(['1. macs0416','2. macs1149','3. macs0717','4. abell370','5. abell1063std','6. abell2744'])
-#SFpos = Column([SF_pos1,SF_pos2,SF_pos3,SF_pos4,SF_pos5,SF_pos6])
-#SFneg = Column([SF_neg1,SF_neg2,SF_neg3,SF_neg4,SF_neg5,SF_neg6])
-#Qpos = Column([Q_pos1,Q_pos2,Q_pos3,Q_pos4,Q_pos5,Q_pos6])
-#Qneg = Column([Q_neg1,Q_neg2,Q_neg3,Q_neg4,Q_neg5,Q_neg6])
-#binningSF = Column([num_binsSF[0],num_binsSF[1],num_binsSF[2],num_binsSF[3],num_binsSF[4],num_binsSF[5]])
-#binningQ = Column([num_binsQ[0],num_binsQ[1],num_binsQ[2],num_binsQ[3],num_binsQ[4],num_binsQ[5]])
-#cluster_bins1 = Table([cluster_names,SFpos,SFneg,binningSF],names=('Cluster','SF pos','SF neg','# SF bins'))
-#cluster_bins2 = Table([cluster_names,Qpos,Qneg,binningQ],names=('Cluster','Q pos','Q neg','# Q bins'))
-##
-#errors
-SF_perr_rel = (np.sqrt(SF_pos_hist))/SF_pos_hist    #compute rel. error for false pos/neg
-SF_nerr_rel = (np.sqrt(SF_neg_hist))/SF_neg_hist
-Q_perr_rel = (np.sqrt(Q_pos_hist))/Q_pos_hist
-Q_nerr_rel = (np.sqrt(Q_neg_hist))/Q_neg_hist
-SF_frac_error = np.sqrt((SF_perr_rel**2)+(SF_nerr_rel**2))*SF_frac      #computer error of correction factor (sum in quadrature of rel. errors in false pos/neg)
-Q_frac_error = np.sqrt((Q_perr_rel**2)+(Q_nerr_rel**2))*Q_frac
-#
-# sift out 'NAN' from fractions for 0/0
-counter=0                   #SF
-size=len(SF_frac_error)
-while counter<size:
-    if np.isnan(SF_frac_error[counter]):
-        SF_frac_error[counter] = 0
-    counter+=1
-counter=0                   #Q
-size=len(Q_frac_error)
-while counter<size:
-    if np.isnan(Q_frac_error[counter]):
-        Q_frac_error[counter] = 0
-    counter+=1
-#
-# plot Spectroscopic completion correction factors 
-plt.close()
-MC = plt.figure(num=2)
-#MC.suptitle('Spectroscopic Completeness Correction Factors')
-#plt.plot(SF_midbins,)
-plt.errorbar(SF_frac_midbins,SF_frac,yerr=SF_frac_error, fmt='ob',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
-plt.errorbar(Q_frac_midbins,Q_frac,yerr=Q_frac_error, fmt='or',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
-plt.plot(SF_frac_midbins,SF_frac,'-b', linewidth=1.0, label='Star-forming')
-plt.plot(Q_frac_midbins,Q_frac,'-r', linewidth=1.0, label='Quiescent')
-plt.plot([0,13],[1,1],'--k',linewidth = 0.5)
-plt.legend(loc='upper right', frameon=False)
-plt.xlim=(7.5,12)
-plt.xlabel('$log(M/M_{\odot})$')
-plt.ylim=(-0.5,4.1)
-plt.ylabel('Correction factor\n(false pos / false neg)')
-plt.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='on', labelleft='on')
-plt.minorticks_on()
-plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = ':')
-#
-### NOTE: the following is just to interpolate/extrapolate where the bins from 
-###       SMF lie within the bin correction range
-#add veritcal lines to determine correciton factors for actual bins used in SMF
-plt.plot([SF_midbins[0],SF_midbins[0]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[1],SF_midbins[1]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[2],SF_midbins[2]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[3],SF_midbins[3]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[4],SF_midbins[4]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[5],SF_midbins[5]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[6],SF_midbins[6]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[7],SF_midbins[7]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[8],SF_midbins[8]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[9],SF_midbins[9]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[10],SF_midbins[10]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[11],SF_midbins[11]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[12],SF_midbins[12]],[-0.5,6],'--g',linewidth = 0.9)
-plt.plot([SF_midbins[13],SF_midbins[13]],[-0.5,6],'--g',linewidth = 0.9)
-#plt.plot([SF_midbins[14],SF_midbins[14]],[-0.5,6],'--g',linewidth = 0.9)
-#plt.plot([SF_midbins[15],SF_midbins[15]],[-0.5,6],'--g',linewidth = 0.9)
-## extrapolating SF at lo-mass
-m=(SF_frac[1] - SF_frac[0])/(SF_frac_midbins[1] - SF_frac_midbins[0])
-b = SF_frac[1] - (SF_frac_midbins[1]*m)
-X = np.linspace(7.4,8.1,50)
-y=[]
-for x in X:
-    y.append(m*x + b)
-plt.plot(X,y,'b')
-## extrapolating Q at lo-mass
-m=(Q_frac[1] - Q_frac[0])/(Q_frac_midbins[1] - Q_frac_midbins[0])
-b = Q_frac[1] - (Q_frac_midbins[1]*m)
-X = np.linspace(7.4,8.1,50)
-y=[]
-for x in X:
-    y.append(m*x + b)
-plt.plot(X,y,'r')
-## extrapolating SF at hi-mass
-m=(SF_frac[2] - SF_frac[1])/(SF_frac_midbins[2] - SF_frac_midbins[1])
-b = SF_frac[2] - (SF_frac_midbins[2]*m)
-X = np.linspace(11,12.3,50)
-y=[]
-for x in X:
-    y.append(m*x + b)
-plt.plot(X,y,'b')
-## extrapolating Q at hi-mass
-m=(Q_frac[4] - Q_frac[3])/(Q_frac_midbins[4] - Q_frac_midbins[3])
-b = Q_frac[4] - (Q_frac_midbins[4]*m)
-X = np.linspace(11,12.3,50)
-y=[]
-for x in X:
-    y.append(m*x + b)
-plt.plot(X,y,'r')
-#
-plt.xlim=(7.25,12.5)
-#
-# list of correction factors, determined by inspection interpolating SMF mass 
-# bins between the mass correction bins
-SF_correction = [2.62757,2.39309,2.15964,1.92654,1.69308,1.45963,1.22395,1.25752,1.55918,1.85231,2.15113,2.44865,2.74762,3.04792]      #0.03 & 0.07 cutoff
-Q_correction = [1.15904,.98056,.80370,.627815,.59442,.913178,1.22395,1.31271,1.17531,1.03792,1.16754,1.40093,1.64458,1.88053]           # for 3 & 5 bins (SF & Q)
-#SF_correction = [2.5859,2.51,2.4295,2.353,2.2734,1.9766,1.585937,1.1953125,1.0625,1.1875,1.3125,1.3625,1.2375,1.1125,0.985,.8625]      for cutoff .03 & .07 (SF/Q)
-#Q_correction = [1.20723684,.885,.5625,.2865,.6096,.9309,1.25776,1.5859375,1.625,1.375,1.16183375,1.083706,1.00558,.796875,.578125,.359375]
-#
-#SF_correction = [2.75189,2.69367,2.6152,2.548,2.47931,2.34368,2.00757,1.67038,1.33367,1.19593,1.12456,1.05547,.981921,.910591]
-#Q_correction = [.54758,.476075,.404639,.330849,.487969,.643279,.802955,.9656,1.02748,.889034,.750098,.714258,.677714,.643279]
-###     NOTE: relative fraction calculated above at end of Seciont (ii), and are
-###     stored in arrays "frac_smf" & "frac_field_smf"
-#
-total_smf = np.empty_like(SF_smf, dtype='float64')
-##  apply correction factors to SMFs:
-SF_smf = SF_smf/SF_correction
-Q_smf = Q_smf/Q_correction
-total_smf = SF_smf + Q_smf
 #
 #
 ## field populations
