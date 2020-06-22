@@ -34,15 +34,16 @@ Created on Wed May 31 14:28:35 2017
 # plot stellar mass function:
 ## (i)      collect masses into SORTED arrays for SF & Q;
 ## (ii)     bin into HISTOGRAMS;
-## (iii)    CORRECTIONS to raw counts
-## (iii.1)   calculate limiting MASS COMPLETENESS correction for low-mass bins
+## (ii.1)    compute bin mid-points;
+## (iii)    CORRECTIONS to raw counts;
+## (iii.1)   calculate limiting MASS COMPLETENESS correction for low-mass bins;
 ## (iii.2)   calculate false pos/neg (i.e. spectroscopic) completeness correction for all bins
-##           include FIGURE for SPECTROSCOPIC COMPLETENESS
-## (iii.3)   NORMALIZE, & find midpoints of bins s.t. the # count from hist & # of bins are equal
-## (iv)     add ERROR BARS to scatter plot
-## (v)      EMCEE simulation; see emcee_chi2_final.py
-## (vi)     build SCHECTER best-fit models
-## (vii)    plot that shit
+##           include FIGURE for SPECTROSCOPIC COMPLETENESS;
+## (iii.3)   NORMALIZE;
+## (iv)     add ERROR BARS to scatter plot;
+## (v)      EMCEE simulation; see emcee_chi2_final.py;
+## (vi)     build SCHECTER best-fit models;
+## (vii)    plot that shit;
 #
 #
 # Import modules
@@ -255,6 +256,26 @@ print('Q: ',str(Q_raw_smf))
 print('Total: ',str(total_raw_smf),'\n')
 #
 #
+## section (ii).1: compute midbins
+#
+## find midpoint of hist. bins. all populations have been binned identically, so the one 'midbin' will serve for all data arrays to be plotted. for visual clarity when plotting, offset the Q_midpoints by delta_x = 0.05
+#
+#
+## define a function to compute the mid-points of the bins from a histogram
+def midbins(bins):
+    size = len(bins)-1
+    x_midbins = np.empty([size,1],dtype='float64')
+    for x in range(size):
+        x_midbins[x] = (bins[x] + bins[(x+1)])/2
+    return x_midbins
+#
+# compute midbins        
+SF_midbins = midbins(SF_bins)
+# offset Q midbins
+Q_midbins = SF_midbins + 0.05
+#
+#
+#
 #
 ## SORT the spec/phot subsamples into histograms as well, and confirm that spec + phot = total in each mass bin for each type of galaxy
 
@@ -356,9 +377,9 @@ print('Mass completeness correction factors by bin: ',str(mass_completeness_corr
 #
 # Display some data for total, SF, Q: 
 print('Galaxies added due to MASS COMPLETENESS correction')
-print('SF: ',str(SF_mass_completeness_diff))
-print('Q: ',str(Q_mass_completeness_diff))
-print('Total: ',str(total_mass_completeness_diff),'\n')
+print('SF: ',str(SF_mass_completeness_diff),'\nor ',str((np.sum(SF_mass_completeness_diff)/np.sum(SF_raw_smf))*100),'%')
+print('Q: ',str(Q_mass_completeness_diff),'\nor ',str((np.sum(Q_mass_completeness_diff)/np.sum(Q_raw_smf))*100),'%')
+print('Total: ',str(total_mass_completeness_diff),'\nor ',str((np.sum(total_mass_completeness_diff)/np.sum(total_raw_smf))*100),'%\n')
 #
 #
 #
@@ -393,6 +414,24 @@ SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_binsSF, range=range2)
 Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=num_binsQ, range=range2)
 Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_binsQ, range=range2)
 #
+# display diagnostics
+diag_flag_2 = 1              # 0=off, 1=on
+#
+if diag_flag_2 == 1:
+    # sum into total list, to compare with totals reported in "spec_stats1" table from "master_data_*.py"
+    total_pos_hist = SF_pos_hist + Q_pos_hist     
+    total_neg_hist = SF_neg_hist + Q_neg_hist
+    # print
+    print('The data preparation file reports:')
+    print('# of SF false pos: ',str(np.sum(spos)))
+    print('# of SF false neg: ',str(np.sum(sneg)))
+    print('# of Q false pos: ',str(np.sum(qpos)))
+    print('# of Q false neg: ',str(np.sum(qneg)))
+    print('This SMF preparation file finds:')
+    print('# of SF false pos: ',str(np.sum(SF_pos_hist)))
+    print('# of SF false neg: ',str(np.sum(SF_neg_hist)))
+    print('# of Q false pos: ',str(np.sum(Q_pos_hist)))
+    print('# of Q false neg: ',str(np.sum(Q_neg_hist)),'\n')
 #
 ## compute false pos/ false neg ratio; there is a diagnostic built in for error handling - since we require that all mass bins be populated by at least one false pos. and one false neg. (so that we may compute their ratio), the program BREAKS when an empty mass bin is encountered, and you are prompted to try a new number of bins 
 SF_frac = np.empty_like(SF_pos_hist, dtype='float32')
@@ -430,14 +469,6 @@ for ii in range(len(Q_pos_hist)):
     else:
         Q_frac[ii] = Q_pos_hist[ii] / Q_neg_hist[ii]        
 #
-## define a function to compute the mid-points of the bins from a histogram
-def midbins(bins):
-    size = len(bins)-1
-    x_midbins = np.empty([size,1],dtype='float64')
-    for x in range(size):
-        x_midbins[x] = (bins[x] + bins[(x+1)])/2
-    return x_midbins
-#
 # compute midbins for spec. mass completeness plot (i.e. plot of false pos/false neg ratios)
 SF_frac_midbins = midbins(bins_SF)
 Q_frac_midbins = midbins(bins_Q)
@@ -454,9 +485,10 @@ SF_frac_err = np.sqrt((SF_relerr_pos**2) + (SF_relerr_neg**2))*SF_frac
 Q_frac_err = np.sqrt((Q_relerr_pos**2) + (Q_relerr_neg**2))*Q_frac              
 #              
 #    
+#
 ## FIGURE ##
 #
-plot_flag = 1        # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
+plot_flag = 0        # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
 if plot_flag == 1:
     # plot Spectroscopic completion correction factors 
     plt.close()
@@ -480,18 +512,38 @@ if plot_flag == 1:
 ## Now interpolate between these data points
 #
 ## extrapolating SF at lo- & hi-mass
-m1_SF=(SF_frac[1] - SF_frac[0])/(SF_frac_midbins[1] - SF_frac_midbins[0])    # low-mass slope
-b1_SF = SF_frac[1] - (SF_frac_midbins[1]*m1_SF)            # low-mass y-int
+m_SF = [[0]*(len(SF_frac_midbins)-1)]     # initialize arrays to store slopes/intercepts for extrapolation/interpolation of spec mass completeness correction factors
+b_SF = [[0]*(len(SF_frac_midbins)-1)]
 #
-m2_SF=(SF_frac[3] - SF_frac[2])/(SF_frac_midbins[3] - SF_frac_midbins[2])    # hi-mass slope
-b2_SF = SF_frac[2] - (SF_frac_midbins[2]*m2_SF)            # hi-mass y-int
+for ii in range(len(SF_frac)-1):
+    m_SF[ii] = (SF_frac[ii+1] - SF_frac[ii]) / (SF_frac_midbins[ii+1] - SF_frac_midbins[ii]) # calc slope
+    b_SF[ii] = SF_frac[ii] - (SF_frac_midbins[ii]*m_SF[ii])   # calc intercept
+#
+for ii in range(len(SF_frac_midbins)):
+    for jj in range(len(SF_midbins)):
+        if SF_midbins[jj] < SF_frac_midbins[ii]:
+            SF_spec_completeness_correction[jj] = m_SF[0]*SF_midbins[ii] + b_SF[0]    # extrapolate below lowest mass bin
+        elif SF_midbins[ii] < SF_frac_midbins[2] and SF_midbins[ii] < SF_frac_midbins[3]:
+            SF_spec_completeness_correction[ii] = m2_SF*SF_midbins[ii] + b2_SF
+        else:
+            SF_spec_completeness_correction[ii] = m3_SF*SF_midbins[ii] + b3_SF
+#    
+
+#
+## extrapolating SF at lo- & hi-mass
+m_SF = [[0]*(len(SF_frac)-1)]     # initialize arrays to store slopes/intercepts for extrapolation/interpolation of spec mass completeness correction factors
+b_SF = [[0]*(len(SF_frac)-1)]
+#
+for ii in range(len(SF_frac)-1):
+    m_SF[ii] = (SF_frac[ii+1] - SF_frac[ii]) / (SF_frac_midbins[ii+1] - SF_frac_midbins[ii]) # calc slope
+    b_SF[ii] = SF_frac[ii] - (SF_frac_midbins[ii]*m_SF[ii])   # calc intercept
 #
 SF_spec_completeness_correction = np.empty_like(SF_midbins,dtype='float32')
 for ii in range(len(SF_midbins)):
     if SF_midbins[ii] < SF_frac_midbins[2]:
-        SF_spec_completeness_correction[ii] = m1_SF*SF_midbins[ii] + b1_SF
+        SF_spec_completeness_correction[ii] = m_SF[0]*SF_midbins[ii] + b_SF[0]
     else:
-        SF_spec_completeness_correction[ii] = m2_SF*SF_midbins[ii] + b2_SF
+        SF_spec_completeness_correction[ii] = m_SF[1]*SF_midbins[ii] + b_SF[1]
 #
 ## extrapolating Q at lo- & hi-mass
 m1_Q=(Q_frac[1] - Q_frac[0])/(Q_frac_midbins[1] - Q_frac_midbins[0])    # low-mass slope
@@ -564,17 +616,6 @@ Q_smf6 = Q_smf6 / np.sum(total_raw_smf6)
 SF_smf = SF_smf1 + SF_smf2 + SF_smf3 + SF_smf4 + SF_smf5 + SF_smf6
 Q_smf = Q_smf1 + Q_smf2 + Q_smf3 + Q_smf4 + Q_smf5 + Q_smf6
 total_smf = SF_smf + Q_smf
-#
-#
-#
-## section (iii).1: compute midbins
-#
-## find midpoint of hist. bins. all populations have been binned identically, so the one 'midbin' will serve for all data arrays to be plotted. for visual clarity when plotting, offset the Q_midpoints by delta_x = 0.05
-#
-# compute midbins        
-SF_midbins = midbins(SF_bins)
-# offset Q midbins
-Q_midbins = SF_midbins + 0.05
 #
 #
 #
