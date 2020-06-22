@@ -7,7 +7,7 @@ Created on Wed May 31 14:28:35 2017
 """
 ################## master_smfz_8 ##################
 ## This program will plot the Stellar Mass Function (SMF) for the master_dadta 
-## file of all six clusters (most current version: 'master_data_5_final.py); 
+## file of all six clusters (most current version: 'master_data_6_final.py); 
 ## two plots (SF & Q) segregated between spectroscopic and photometric subsamples
 #
 ## v2 includes the parallel fields data; 
@@ -24,9 +24,9 @@ Created on Wed May 31 14:28:35 2017
 ## v6 moves all totals and SF/Q fractions until AFTER the correction factors 
 ##    have been made, as this changes the counts in each hist & associated poissonian error
 ## 
-## v8 COMPLETE OVERHAUL: lists are first sorted by cluster, then each cluster population 
-##    (both SF & Q) are normalized by the total number of galaxies in the cluster 
-##    (i.e. sum(SF)+sum(Q)). 
+## v8 COMPLETE OVERHAUL: lists are first sorted by cluster, completeness corrections computed 
+##    and applied, then each cluster population (both SF & Q) are normalized by the total 
+##    number of galaxies in the cluster (i.e. sum(SF)+sum(Q)). 
 ##
 ##
 ##
@@ -45,6 +45,8 @@ Created on Wed May 31 14:28:35 2017
 ## (vi)     build SCHECTER best-fit models;
 ## (vii)    plot that shit;
 #
+#
+## NOTE: there are flags for diagnostics and plotting throughout the script. search "MAY NEED TO EDIT" to identify where these flags are
 #
 # Import modules
 import numpy as np
@@ -305,6 +307,7 @@ Q5_phot_smf, SF_bins = np.histogram(Q5_phot, bins=num_bins,range=range2)
 Q6_spec_smf, SF_bins = np.histogram(Q6_spec, bins=num_bins,range=range2)
 Q6_phot_smf, SF_bins = np.histogram(Q6_phot, bins=num_bins,range=range2)
 #    
+### MAY NEED TO EDIT: diag_flag_1
 ## DIAGNOSTIC: add spec & phot subsampes together for each cluster, and ensure they equal the total raw count in each mass bin
 diag_flag_1 = 1   # 0=off, i.e. don't do diagnostic; 1=on, i.e. perform diagnostic
 #
@@ -414,6 +417,7 @@ SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_binsSF, range=range2)
 Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=num_binsQ, range=range2)
 Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_binsQ, range=range2)
 #
+### MAY NEED TO EDIT: diag_flag_2
 # display diagnostics
 diag_flag_2 = 1              # 0=off, 1=on
 #
@@ -488,7 +492,8 @@ Q_frac_err = np.sqrt((Q_relerr_pos**2) + (Q_relerr_neg**2))*Q_frac
 #
 ## FIGURE ##
 #
-plot_flag = 0        # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
+### MAY NEED TO EDIT: plot_flag
+plot_flag = 1        # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
 if plot_flag == 1:
     # plot Spectroscopic completion correction factors 
     plt.close()
@@ -509,61 +514,55 @@ if plot_flag == 1:
     plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = ':')
     plt.xlim=(7.1,12.5)
     #
-## Now interpolate between these data points
+## Now interpolate/extrapolate between these data points
 #
-## extrapolating SF at lo- & hi-mass
-m_SF = [[0]*(len(SF_frac_midbins)-1)]     # initialize arrays to store slopes/intercepts for extrapolation/interpolation of spec mass completeness correction factors
-b_SF = [[0]*(len(SF_frac_midbins)-1)]
+# initialize arrays to store slopes/intercepts for extrapolation/interpolation of spec mass completeness correction factors
+m_SF = np.zeros((len(SF_frac_midbins)-1))     
+b_SF = np.zeros((len(SF_frac_midbins)-1))
+m_Q = np.zeros((len(SF_frac_midbins)-1))     
+b_Q = np.zeros((len(SF_frac_midbins)-1))
+SF_spec_completeness_correction = np.zeros_like(SF_midbins,dtype='float32')
+Q_spec_completeness_correction = np.zeros_like(SF_midbins,dtype='float32')
 #
-for ii in range(len(SF_frac)-1):
+## SF
+for ii in range(len(SF_frac_midbins)-1):
     m_SF[ii] = (SF_frac[ii+1] - SF_frac[ii]) / (SF_frac_midbins[ii+1] - SF_frac_midbins[ii]) # calc slope
     b_SF[ii] = SF_frac[ii] - (SF_frac_midbins[ii]*m_SF[ii])   # calc intercept
 #
-for ii in range(len(SF_frac_midbins)):
-    for jj in range(len(SF_midbins)):
-        if SF_midbins[jj] < SF_frac_midbins[ii]:
-            SF_spec_completeness_correction[jj] = m_SF[0]*SF_midbins[ii] + b_SF[0]    # extrapolate below lowest mass bin
-        elif SF_midbins[ii] < SF_frac_midbins[2] and SF_midbins[ii] < SF_frac_midbins[3]:
-            SF_spec_completeness_correction[ii] = m2_SF*SF_midbins[ii] + b2_SF
-        else:
-            SF_spec_completeness_correction[ii] = m3_SF*SF_midbins[ii] + b3_SF
-#    
-
-#
-## extrapolating SF at lo- & hi-mass
-m_SF = [[0]*(len(SF_frac)-1)]     # initialize arrays to store slopes/intercepts for extrapolation/interpolation of spec mass completeness correction factors
-b_SF = [[0]*(len(SF_frac)-1)]
-#
-for ii in range(len(SF_frac)-1):
-    m_SF[ii] = (SF_frac[ii+1] - SF_frac[ii]) / (SF_frac_midbins[ii+1] - SF_frac_midbins[ii]) # calc slope
-    b_SF[ii] = SF_frac[ii] - (SF_frac_midbins[ii]*m_SF[ii])   # calc intercept
-#
-SF_spec_completeness_correction = np.empty_like(SF_midbins,dtype='float32')
 for ii in range(len(SF_midbins)):
-    if SF_midbins[ii] < SF_frac_midbins[2]:
-        SF_spec_completeness_correction[ii] = m_SF[0]*SF_midbins[ii] + b_SF[0]
-    else:
-        SF_spec_completeness_correction[ii] = m_SF[1]*SF_midbins[ii] + b_SF[1]
+    if SF_spec_completeness_correction[ii] == 0:     # don't overwrite cell once correction factor is computed
+        if SF_midbins[ii] < SF_frac_midbins[0]:      # extrapolate below lowest mass bin
+            SF_spec_completeness_correction[ii] = m_SF[0]*SF_midbins[ii] + b_SF[0]    
+        elif SF_midbins[ii] > SF_frac_midbins[-1]:    # extrapolate above highest mass bin
+            SF_spec_completeness_correction[ii] = m_SF[-1]*SF_midbins[ii] + b_SF[-1]    
+        elif SF_midbins[ii] > SF_frac_midbins[0] and SF_midbins[ii] < SF_frac_midbins[-1]:    # interpolate in between all other points
+            for jj in range(len(SF_frac_midbins)-1):
+                if SF_midbins[ii] > SF_frac_midbins[jj] and SF_midbins[ii] < SF_frac_midbins[jj+1]:
+                    SF_spec_completeness_correction[ii] = m_SF[jj]*SF_midbins[ii] + b_SF[jj]
+        else:
+            print('Error in SF spec completeness correction computation BBB . ABORT')
+            break   
 #
-## extrapolating Q at lo- & hi-mass
-m1_Q=(Q_frac[1] - Q_frac[0])/(Q_frac_midbins[1] - Q_frac_midbins[0])    # low-mass slope
-b1_Q = Q_frac[1] - (Q_frac_midbins[1]*m1_Q)            # low-mass y-int
+## Q
+for ii in range(len(Q_frac_midbins)-1):
+    m_Q[ii] = (Q_frac[ii+1] - Q_frac[ii]) / (Q_frac_midbins[ii+1] - Q_frac_midbins[ii]) # calc slope
+    b_Q[ii] = Q_frac[ii] - (Q_frac_midbins[ii]*m_Q[ii])   # calc intercept
 #
-m2_Q=(Q_frac[2] - Q_frac[1])/(Q_frac_midbins[2] - Q_frac_midbins[1])    # hi-mass slope
-b2_Q = Q_frac[2] - (Q_frac_midbins[2]*m2_Q)            # mid-mass y-int
-#
-m3_Q=(Q_frac[3] - Q_frac[2])/(Q_frac_midbins[3] - Q_frac_midbins[2])    # hi-mass slope
-b3_Q = Q_frac[3] - (Q_frac_midbins[3]*m3_Q)            # hi-mass y-int
-#
-Q_spec_completeness_correction = np.empty_like(Q_midbins,dtype='float32')
 for ii in range(len(Q_midbins)):
-    if Q_midbins[ii] < Q_frac_midbins[1]:
-        Q_spec_completeness_correction[ii] = m1_Q*Q_midbins[ii] + b1_Q
-    elif Q_midbins[ii] < Q_frac_midbins[2] and Q_midbins[ii] < Q_frac_midbins[3]:
-        Q_spec_completeness_correction[ii] = m2_Q*Q_midbins[ii] + b2_Q
-    else:
-        Q_spec_completeness_correction[ii] = m3_Q*Q_midbins[ii] + b3_Q
+    if Q_spec_completeness_correction[ii] == 0:     # don't overwrite cell once correction factor is computed
+        if Q_midbins[ii] < Q_frac_midbins[0]:      # extrapolate below lowest mass bin
+            Q_spec_completeness_correction[ii] = m_Q[0]*Q_midbins[ii] + b_Q[0]    
+        elif Q_midbins[ii] > Q_frac_midbins[-1]:    # extrapolate above highest mass bin
+            Q_spec_completeness_correction[ii] = m_Q[-1]*Q_midbins[ii] + b_Q[-1]    
+        elif Q_midbins[ii] > Q_frac_midbins[0] and SF_midbins[ii] < Q_frac_midbins[-1]:    # interpolate in between all other points
+            for jj in range(len(SF_frac_midbins)-1):
+                if Q_midbins[ii] > Q_frac_midbins[jj] and Q_midbins[ii] < Q_frac_midbins[jj+1]:
+                    Q_spec_completeness_correction[ii] = m_Q[jj]*Q_midbins[ii] + b_Q[jj]
+        else:
+            print('Error in SF spec completeness correction computation BBB . ABORT')
+            break   
 #
+#    
 if plot_flag == 1:                       # plot interpolated/extrapolated points on top of computed correction fractions
     plt.scatter(SF_midbins,SF_spec_completeness_correction,c='b', marker='+', linewidths = 0)
     plt.scatter(Q_midbins,Q_spec_completeness_correction,c='r', marker='x', linewidths = 0)
