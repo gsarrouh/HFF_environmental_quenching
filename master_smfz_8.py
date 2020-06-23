@@ -87,31 +87,31 @@ other_lost = np.array([0]*6)
 #
 for cluster in range(len(limiting_mass)):          # loop through clusters one at a time; "cluster" takes on values [0,1,2,3,4,5]
     for counter in range(len(master_cat)):
-        if master_cat[counter]['cluster'] == (cluster+1):    # cluster #
-            if master_cat[counter]['lmass'] > limiting_mass[cluster]:    # limiting mass of cluster: 7.5
-                if master_cat[counter]['member'] == 0:    # cluster member = 0
-                    if master_cat[counter]['type'] == 1:   # SF type = 1
-                        SF_list[cluster].append(master_cat[counter]['lmass'])
-                        if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                            SF_phot_list[cluster].append(master_cat[counter]['lmass'])
-                        elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                            SF_spec_list[cluster].append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['type'] == 2: # Q type = 2
-                        Q_list[cluster].append(master_cat[counter]['lmass'])
-                        if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                            Q_phot_list[cluster].append(master_cat[counter]['lmass'])
-                        elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+        if master_cat['cluster'][counter] == (cluster+1):    # cluster #
+            if master_cat['lmass'][counter] > limiting_mass[cluster]:    # limiting mass of cluster: 7.5
+                if master_cat['member'][counter] == 0:    # cluster member = 0
+                    if master_cat['type'][counter] == 1:   # SF type = 1
+                        SF_list[cluster].append(master_cat['lmass'][counter])
+                        if master_cat['sub'][counter]==2:     # sub=2 is objects w/ photometry only
+                            SF_phot_list[cluster].append(master_cat['lmass'][counter])
+                        elif master_cat['sub'][counter]==1 or master_cat['sub'][counter]==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                            SF_spec_list[cluster].append(master_cat['lmass'][counter])
+                    elif master_cat['type'][counter] == 2: # Q type = 2
+                        Q_list[cluster].append(master_cat['lmass'][counter])
+                        if master_cat['sub'][counter]==2:     # sub=2 is objects w/ photometry only
+                            Q_phot_list[cluster].append(master_cat['lmass'][counter])
+                        elif master_cat['sub'][counter]==1 or master_cat['sub'][counter]==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
                             Q_spec_list[cluster].append(master_cat[counter]['lmass'])
-            elif master_cat[counter]['lmass'] < limiting_mass[cluster]:
-                if master_cat[counter]['member'] == 2:    # member false pos = 2
-                    if master_cat[counter]['type'] == 1:   # SF type = 1
+            elif master_cat['lmass'][counter] < limiting_mass[cluster]:
+                if master_cat['member'][counter] == 2:    # member false pos = 2
+                    if master_cat['type'][counter] == 1:   # SF type = 1
                         SF_pos_lost[cluster]+=1
-                    elif master_cat[counter]['type'] == 2: # Q type = 2
+                    elif master_cat['type'][counter] == 2: # Q type = 2
                         Q_pos_lost[cluster]+=1
-                elif master_cat[counter]['member'] ==3:   # member false neg = 3
-                    if master_cat[counter]['type'] == 1:   # SF type = 1
+                elif master_cat['member'][counter] ==3:   # member false neg = 3
+                    if master_cat['type'][counter] == 1:   # SF type = 1
                         SF_neg_lost[cluster]+=1
-                    elif master_cat[counter]['type'] == 2: # Q type = 2
+                    elif master_cat['type'][counter] == 2: # Q type = 2
                         Q_neg_lost[cluster]+=1
                 else: other_lost[cluster]+=1
 #
@@ -158,8 +158,9 @@ if diag_flag_1 == 1:
     print('SF false neg.: ',str(np.sum(SF_neg_lost)))
     print('Q false pos.: ',str(np.sum(Q_pos_lost)))
     print('Q false neg.: ',str(np.sum(Q_neg_lost)))
-    print('Other: ',str(np.sum(other_lost)),'\n')
+    print('Other: ',str(np.sum(other_lost)))
     print(other_lost)
+    print('\n')
 #
 #
 #
@@ -194,40 +195,12 @@ for ii in range(len(SF_list)):
     Q_raw_smf[ii].append(Q_raw)
 #
 total_raw_smf = SF_raw_smf + Q_raw_smf
-    
-
-
-SF_smf1, SF_bins = np.histogram(SF_1, bins=num_bins,range=range2)
-SF_smf2, SF_bins = np.histogram(SF_2, bins=num_bins,range=range2)
-SF_smf3, SF_bins = np.histogram(SF_3, bins=num_bins,range=range2)
-SF_smf4, SF_bins = np.histogram(SF_4, bins=num_bins,range=range2)
-SF_smf5, SF_bins = np.histogram(SF_5, bins=num_bins,range=range2)
-SF_smf6, SF_bins = np.histogram(SF_6, bins=num_bins,range=range2)
-Q_smf1, SF_bins = np.histogram(Q_1, bins=num_bins,range=range2)
-Q_smf2, SF_bins = np.histogram(Q_2, bins=num_bins,range=range2)
-Q_smf3, SF_bins = np.histogram(Q_3, bins=num_bins,range=range2)
-Q_smf4, SF_bins = np.histogram(Q_4, bins=num_bins,range=range2)
-Q_smf5, SF_bins = np.histogram(Q_5, bins=num_bins,range=range2)
-Q_smf6, SF_bins = np.histogram(Q_6, bins=num_bins,range=range2)
-#
-# combine SMF lists for SF & Q into total SMF list
-total_raw_smf1 = SF_smf1 + Q_smf1
-total_raw_smf2 = SF_smf2 + Q_smf2
-total_raw_smf3 = SF_smf3 + Q_smf3
-total_raw_smf4 = SF_smf4 + Q_smf4
-total_raw_smf5 = SF_smf5 + Q_smf5
-total_raw_smf6 = SF_smf6 + Q_smf6
-#
-# compute raw totals
-SF_raw_smf = SF_smf1 + SF_smf2 + SF_smf3 + SF_smf4 + SF_smf5 + SF_smf6
-Q_raw_smf = Q_smf1 + Q_smf2 + Q_smf3 + Q_smf4 + Q_smf5 + Q_smf6
-total_raw_smf = total_raw_smf1 + total_raw_smf2 + total_raw_smf3 + total_raw_smf4 + total_raw_smf5 + total_raw_smf6
 #
 # Display some data for total, SF, Q: 
 print('RAW totals')
-print('SF: ',str(SF_raw_smf))
-print('Q: ',str(Q_raw_smf))
-print('Total: ',str(total_raw_smf),'\n')
+print('SF: ',str(np.sum(SF_raw_smf)))
+print('Q: ',str(np.sum(Q_raw_smf)))
+print('Total: ',str(np.sum(total_raw_smf)),'\n')
 #
 #
 ## section (ii).1: compute midbins
@@ -249,79 +222,50 @@ SF_midbins = midbins(SF_bins)
 Q_midbins = SF_midbins + 0.05
 #
 #
-#
-#
 ## SORT the spec/phot subsamples into histograms as well, and confirm that spec + phot = total in each mass bin for each type of galaxy
-
-# sort spec/phot subsamples into histograms for each cluster
-SF1_spec_smf, SF_bins = np.histogram(SF1_spec, bins=num_bins,range=range2)
-SF1_phot_smf, SF_bins = np.histogram(SF1_phot, bins=num_bins,range=range2)
-SF2_spec_smf, SF_bins = np.histogram(SF2_spec, bins=num_bins,range=range2)
-SF2_phot_smf, SF_bins = np.histogram(SF2_phot, bins=num_bins,range=range2)
-SF3_spec_smf, SF_bins = np.histogram(SF3_spec, bins=num_bins,range=range2)
-SF3_phot_smf, SF_bins = np.histogram(SF3_phot, bins=num_bins,range=range2)
-SF4_spec_smf, SF_bins = np.histogram(SF4_spec, bins=num_bins,range=range2)
-SF4_phot_smf, SF_bins = np.histogram(SF4_phot, bins=num_bins,range=range2)
-SF5_spec_smf, SF_bins = np.histogram(SF5_spec, bins=num_bins,range=range2)
-SF5_phot_smf, SF_bins = np.histogram(SF5_phot, bins=num_bins,range=range2)
-SF6_spec_smf, SF_bins = np.histogram(SF6_spec, bins=num_bins,range=range2)
-SF6_phot_smf, SF_bins = np.histogram(SF6_phot, bins=num_bins,range=range2)
-Q1_spec_smf, SF_bins = np.histogram(Q1_spec, bins=num_bins,range=range2)
-Q1_phot_smf, SF_bins = np.histogram(Q1_phot, bins=num_bins,range=range2)
-Q2_spec_smf, SF_bins = np.histogram(Q2_spec, bins=num_bins,range=range2)
-Q2_phot_smf, SF_bins = np.histogram(Q2_phot, bins=num_bins,range=range2)
-Q3_spec_smf, SF_bins = np.histogram(Q3_spec, bins=num_bins,range=range2)
-Q3_phot_smf, SF_bins = np.histogram(Q3_phot, bins=num_bins,range=range2)
-Q4_spec_smf, SF_bins = np.histogram(Q4_spec, bins=num_bins,range=range2)
-Q4_phot_smf, SF_bins = np.histogram(Q4_phot, bins=num_bins,range=range2)
-Q5_spec_smf, SF_bins = np.histogram(Q5_spec, bins=num_bins,range=range2)
-Q5_phot_smf, SF_bins = np.histogram(Q5_phot, bins=num_bins,range=range2)
-Q6_spec_smf, SF_bins = np.histogram(Q6_spec, bins=num_bins,range=range2)
-Q6_phot_smf, SF_bins = np.histogram(Q6_phot, bins=num_bins,range=range2)
-# 
-## combine spec/phot subsamples into a single list
-SF_raw_smf_spec = SF1_spec_smf + SF2_spec_smf + SF3_spec_smf + SF4_spec_smf + SF5_spec_smf + SF6_spec_smf
-SF_raw_smf_phot = SF1_phot_smf + SF2_phot_smf + SF3_phot_smf + SF4_phot_smf + SF5_phot_smf + SF6_phot_smf
-Q_raw_smf_spec = Q1_spec_smf + Q2_spec_smf + Q3_spec_smf + Q4_spec_smf + Q5_spec_smf + Q6_spec_smf
-Q_raw_smf_phot = Q1_phot_smf + Q2_phot_smf + Q3_phot_smf + Q4_phot_smf + Q5_phot_smf + Q6_phot_smf
-
-
-### MAY NEED TO EDIT: diag_flag_1
-## DIAGNOSTIC: add spec & phot subsampes together for each cluster, and ensure they equal the total raw count in each mass bin
-diag_flag_1 = 1   # 0=off, i.e. don't do diagnostic; 1=on, i.e. perform diagnostic
 #
-if diag_flag_1 == 1:
+# sort spec/phot subsamples into histograms for each cluster
+#
+SF_phot_smf = [[],[],[],[],[],[]]       # initialize list of lists to store histograms of SMFs
+SF_spec_smf = [[],[],[],[],[],[]]
+Q_phot_smf = [[],[],[],[],[],[]]       
+Q_spec_smf = [[],[],[],[],[],[]]
+#
+for ii in range(len(SF_spec_list)):
+    SF_spec, mass_bins = np.histogram(SF_spec_list[ii], bins=num_bins,range=range2)
+    SF_phot, mass_bins = np.histogram(SF_phot_list[ii], bins=num_bins,range=range2)
+    Q_spec, mass_bins = np.histogram(Q_spec_list[ii], bins=num_bins,range=range2)
+    Q_phot, mass_bins = np.histogram(Q_phot_list[ii], bins=num_bins,range=range2)
+    SF_phot_smf[ii].append(SF_phot)
+    SF_spec_smf[ii].append(SF_spec)
+    Q_phot_smf[ii].append(SF_phot)
+    Q_spec_smf[ii].append(SF_spec)
+#
+# convert SMF lists to arrays
+SF_raw_smf = np.array(SF_raw_smf)
+Q_raw_smf = np.array(Q_raw_smf)
+total_raw_smf = np.array(total_raw_smf)
+SF_phot_smf = np.array(SF_phot_smf)
+SF_spec_smf = np.array(SF_spec_smf)
+Q_phot_smf = np.array(Q_phot_smf)
+Q_spec_smf = np.array(Q_spec_smf)
+#
+### MAY NEED TO EDIT: diag_flag_2
+## DIAGNOSTIC: add spec & phot subsampes together for each cluster, and ensure they equal the total raw count in each mass bin
+diag_flag_2 = 1   # 0=off, i.e. don't do diagnostic; 1=on, i.e. perform diagnostic
+#
+if diag_flag_2 == 1:
     # compute differences, e.g.: SF_smf1 = SF1_spec_smf + SF1_phot_smf for each mass bin. they should be the same
-    diff_SF1 = SF_smf1 - (SF1_spec_smf + SF1_phot_smf)
-    diff_SF2 = SF_smf2 - (SF2_spec_smf + SF2_phot_smf)
-    diff_SF3 = SF_smf3 - (SF3_spec_smf + SF3_phot_smf)
-    diff_SF4 = SF_smf4 - (SF4_spec_smf + SF4_phot_smf)
-    diff_SF5 = SF_smf5 - (SF5_spec_smf + SF5_phot_smf)
-    diff_SF6 = SF_smf6 - (SF6_spec_smf + SF6_phot_smf)
-    diff_Q1 = Q_smf1 - (Q1_spec_smf + Q1_phot_smf)
-    diff_Q2 = Q_smf2 - (Q2_spec_smf + Q2_phot_smf)
-    diff_Q3 = Q_smf3 - (Q3_spec_smf + Q3_phot_smf)
-    diff_Q4 = Q_smf4 - (Q4_spec_smf + Q4_phot_smf)
-    diff_Q5 = Q_smf5 - (Q5_spec_smf + Q5_phot_smf)
-    diff_Q6 = Q_smf6 - (Q6_spec_smf + Q6_phot_smf)
-    diff_SF = SF_raw_smf - (SF_raw_smf_spec + SF_raw_smf_phot)
-    diff_Q = Q_raw_smf - (Q_raw_smf_spec + Q_raw_smf_phot)
-    # print differences
-    print('Differences between raw cluster count and (spec + phot) subsamples')
-    print('SF1: ',str(np.sum(diff_SF1)))
-    print('SF2: ',str(np.sum(diff_SF2)))
-    print('SF3: ',str(np.sum(diff_SF3)))
-    print('SF4: ',str(np.sum(diff_SF4)))
-    print('SF5: ',str(np.sum(diff_SF5)))
-    print('SF6: ',str(np.sum(diff_SF6)))
-    print('Q1: ',str(np.sum(diff_Q1)))
-    print('Q2: ',str(np.sum(diff_Q2)))
-    print('Q3: ',str(np.sum(diff_Q3)))
-    print('Q4: ',str(np.sum(diff_Q4)))
-    print('Q5: ',str(np.sum(diff_Q5)))
-    print('Q6: ',str(np.sum(diff_Q6)))
-    print('SF total: ',str(np.sum(diff_SF)))
-    print('Q total: ',str(np.sum(diff_Q)),'\n')
+    SF_diff = np.array([[0]*len(SF_midbins)]*6)     # initialize array to store difference between sample & sub-samples, by cluster
+    Q_diff = np.array([[0]*len(Q_midbins)]*6)
+    #
+    print('Differences between raw cluster count and (spec + phot) subsamples, by cluster')
+    for ii in range(len(SF_raw_smf)):
+        SF_diff[ii] = SF_raw_smf[ii] - (SF_phot_smf[ii] + SF_spec_smf[ii])
+        Q_diff[ii] = Q_raw_smf[ii] - (Q_phot_smf[ii] + Q_spec_smf[ii])
+        print('SF',str(ii+1),' difference: ',str(np.sum(SF_diff[ii])))
+        print('Q',str(ii+1),' difference: ',str(np.sum(Q_diff[ii])),'\n')
+#    
 #
 #
 #
@@ -358,17 +302,17 @@ SF_mass_completeness_diff = correction_difference(SF_raw_smf,mass_completeness_c
 Q_mass_completeness_diff = correction_difference(Q_raw_smf,mass_completeness_correction)
 total_mass_completeness_diff = correction_difference(total_raw_smf,mass_completeness_correction)
 #
-### MAY NEED TO EDIT: diag_flag_2
-diag_flag_2 = 1
+### MAY NEED TO EDIT: diag_flag_3
+diag_flag_3 = 1
 #
-if diag_flag_2 == 1:
+if diag_flag_3 == 1:
 # Display correction factors
     print('Mass completeness correction factors by bin: ',str(mass_completeness_correction),'\n')
     #
     # Display some data for total, SF, Q: 
     print('Galaxies added due to MASS COMPLETENESS correction')
-    print('SF: ',str(SF_mass_completeness_diff),'\nor ',str((np.sum(SF_mass_completeness_diff)/np.sum(SF_raw_smf))*100),'%')
-    print('Q: ',str(Q_mass_completeness_diff),'\nor ',str((np.sum(Q_mass_completeness_diff)/np.sum(Q_raw_smf))*100),'%')
+    print('SF: ',str(SF_mass_completeness_diff),'\nor ',str((np.sum(SF_mass_completeness_diff)/np.sum(SF_raw_smf))*100),'%\n')
+    print('Q: ',str(Q_mass_completeness_diff),'\nor ',str((np.sum(Q_mass_completeness_diff)/np.sum(Q_raw_smf))*100),'%\n')
     print('Total: ',str(total_mass_completeness_diff),'\nor ',str((np.sum(total_mass_completeness_diff)/np.sum(total_raw_smf))*100),'%\n')
 #
 #
@@ -382,17 +326,17 @@ SF_neg = []
 Q_pos = []
 Q_neg = []
 #
-for ii in range(len(master_cat)):
-    if master_cat[ii]['type'] == 1:      # type=1 for SF
-        if master_cat[ii]['member'] == 2:     # member=2 for false pos
-            SF_pos.append(master_cat[ii]['lmass'])
-        elif master_cat[ii]['member'] == 3:   # member=3 for false neg
-            SF_neg.append(master_cat[ii]['lmass'])
-    elif master_cat[ii]['type'] == 2:     # type=2 for Q
-        if master_cat[ii]['member'] == 2:     # member=2 for false pos
-            Q_pos.append(master_cat[ii]['lmass'])
-        elif master_cat[ii]['member'] == 3:   # member=3 for false neg
-            Q_neg.append(master_cat[ii]['lmass'])
+for counter in range(len(master_cat)):
+    if master_cat['type'][counter] == 1:      # type=1 for SF
+        if master_cat['member'][counter] == 2:     # member=2 for false pos
+            SF_pos.append(master_cat['lmass'][counter])
+        elif master_cat['member'][counter] == 3:   # member=3 for false neg
+            SF_neg.append(master_cat['lmass'][counter])
+    elif master_cat['type'][counter] == 2:     # type=2 for Q
+        if master_cat['member'][counter] == 2:     # member=2 for false pos
+            Q_pos.append(master_cat['lmass'][counter])
+        elif master_cat['member'][counter] == 3:   # member=3 for false neg
+            Q_neg.append(master_cat['lmass'][counter])
 #
 ### bin SF & Q, then compute false pos/neg fractions by mass bin for correction factors. 
 ### NOTE: that # of bins was determined by trial and error, as the largest number which would ensure that #all bins are populated
@@ -404,11 +348,11 @@ SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_binsSF, range=range2)
 Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=num_binsQ, range=range2)
 Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_binsQ, range=range2)
 #
-### MAY NEED TO EDIT: diag_flag_3
+### MAY NEED TO EDIT: diag_flag_4
 # display diagnostics
-diag_flag_3 = 1              # 0=off, 1=on
+diag_flag_4 = 1              # 0=off, 1=on
 #
-if diag_flag_3 == 1:
+if diag_flag_4 == 1:
     # sum into total list, to compare with totals reported in "spec_stats1" table from "master_data_*.py"
     total_pos_hist = SF_pos_hist + Q_pos_hist     
     total_neg_hist = SF_neg_hist + Q_neg_hist
@@ -422,7 +366,12 @@ if diag_flag_3 == 1:
     print('# of SF false pos: ',str(np.sum(SF_pos_hist)))
     print('# of SF false neg: ',str(np.sum(SF_neg_hist)))
     print('# of Q false pos: ',str(np.sum(Q_pos_hist)))
-    print('# of Q false neg: ',str(np.sum(Q_neg_hist)),'\n')
+    print('# of Q false neg: ',str(np.sum(Q_neg_hist)))
+    print('Objects lost below limiting mass: ')
+    print('SF false pos.: ',str(np.sum(SF_pos_lost)))
+    print('SF false neg.: ',str(np.sum(SF_neg_lost)))
+    print('Q false pos.: ',str(np.sum(Q_pos_lost)))
+    print('Q false neg.: ',str(np.sum(Q_neg_lost)),'\n')
 #
 ## compute false pos/ false neg ratio; there is a diagnostic built in for error handling - since we require that all mass bins be populated by at least one false pos. and one false neg. (so that we may compute their ratio), the program BREAKS when an empty mass bin is encountered, and you are prompted to try a new number of bins 
 SF_frac = np.empty_like(SF_pos_hist, dtype='float32')
@@ -557,13 +506,13 @@ if plot_flag == 1:                       # plot interpolated/extrapolated points
 #
 # apply correction
 # compute how many objects are added to each mass bin as a result of applying the spec_completeness_correction to the *_raw_smf lists. confirm that (# added to SF) + (# added to Q) = (# added to total)
-SF_spec_completeness_diff = correction_difference(SF1_phot_smf,SF_spec_completeness_correction)
-Q_spec_completeness_diff = correction_difference(Q_raw_smf,Q_spec_completeness_correction)
+SF_spec_completeness_diff = correction_difference(SF_phot_smf,np.transpose(SF_spec_completeness_correction))
+Q_spec_completeness_diff = correction_difference(Q_phot_smf,np.transpose(Q_spec_completeness_correction))
 total_spec_completeness_diff = SF_spec_completeness_diff + Q_spec_completeness_diff
 #
-### MAY NEED TO EDIT: diag_flag_4
-diag_flag_4 = 1   
-if diag_flag_4 == 1:
+### MAY NEED TO EDIT: diag_flag_5
+diag_flag_5 = 1   
+if diag_flag_5 == 1:
     # Display correction factors
     print('Spectroscopic completeness correction factors by bin: ')
     print('SF: ',str(np.transpose(SF_spec_completeness_correction)))
@@ -577,6 +526,20 @@ if diag_flag_4 == 1:
 #
 #
 #
+#
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## SECTION (iii.3): NORMALIZE the SMF lists for each cluster by the total mass in that cluster (e.g. SF_smf1 / sum(total_smf1), sum into full SMF list; begin by adding the corrections just computed to the raw totals
 #
 ## Add mass & spec corrections to *_raw_smf lists
