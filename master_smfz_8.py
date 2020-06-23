@@ -65,141 +65,101 @@ from scipy.optimize import curve_fit
 ## SF_*/Q_*, and track sublists of objects which have spec vs those which only have phot, separately for SF/Q; creates list of samples to be binned & plotted as histogram/scatterplot
 #
 ## Cluster sample
-SF_1 = []       #lists of SF/Q by cluster, for raw counts by cluster
-SF_2 = []
-SF_3 = []
-SF_4 = []
-SF_5 = []
-SF_6 = []
-Q_1 = []
-Q_2 = []
-Q_3 = []
-Q_4 = []
-Q_5 = []
-Q_6 = []
-SF1_spec = []    #lists to track spectrscopic/photometric subsamples within each cluster, by galaxy type
-SF1_phot = []
-SF2_spec = []
-SF2_phot = []
-SF3_spec = []
-SF3_phot = []
-SF4_spec = []
-SF4_phot = []
-SF5_spec = []
-SF5_phot = []
-SF6_spec = []
-SF6_phot = []
-Q1_spec = []
-Q1_phot = []
-Q2_spec = []
-Q2_phot = []
-Q3_spec = []
-Q3_phot = []
-Q4_spec = []
-Q4_phot = []
-Q5_spec = []
-Q5_phot = []
-Q6_spec = []
-Q6_phot = []
+#
+SF_list = [[],[],[],[],[],[]]    # create an empty list filled with 6 empty lists - 1 for each cluster
+Q_list = [[],[],[],[],[],[]]
+SF_phot_list = [[],[],[],[],[],[]]
+SF_spec_list = [[],[],[],[],[],[]]
+Q_phot_list = [[],[],[],[],[],[]]
+Q_spec_list = [[],[],[],[],[],[]]
+#
 limiting_mass = [7.5,7.8,8.0,7.5,7.4,7.3] # clusters 1,2,3,4,5,6, see IDs below
+#
+SF_pos_lost = np.array([0]*6)        # to track SF/Q false pos/neg objects lost due to their being below the mass limit, by cluster
+SF_neg_lost = np.array([0]*6)
+Q_pos_lost = np.array([0]*6)
+Q_neg_lost = np.array([0]*6)
+other_lost = np.array([0]*6)
 #
 # The following loop searches the master catalogue 'master_cat' and separates all objects by 
 # cluster. Then, it looks for all objects above the limiting mass for that cluster. It then 
 # creates two lists: one for SF and one for Q (e.g. SF_*/Q_*). It further splits these lists into those objects with spectrscopy, and those without (e.g. SF*_spec/phot)
 #
-for counter in range(len(master_cat)):
-    if master_cat[counter]['cluster'] == 1:    # cluster 1 macs0416
-        if master_cat[counter]['lmass'] > limiting_mass[0]:    # limiting mass of cluster: 7.5
-            if master_cat[counter]['member'] == 0:    # cluster member = 0
-                if master_cat[counter]['type'] == 1:   # SF type = 1
-                    SF_1.append(master_cat[counter]['lmass'])
-                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                        SF1_phot.append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                        SF1_spec.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['type'] == 2: # Q type = 2
-                    Q_1.append(master_cat[counter]['lmass'])
-                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                        Q1_phot.append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                        Q1_spec.append(master_cat[counter]['lmass'])
-    elif master_cat[counter]['cluster'] == 2:    # cluster 2 macs1149
-        if master_cat[counter]['lmass'] > limiting_mass[1]:    # limiting mass of cluster: 7.8
-            if master_cat[counter]['member'] == 0:    # cluster member = 0
-                if master_cat[counter]['type'] == 1:   # SF type = 1
-                    SF_2.append(master_cat[counter]['lmass'])
-                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                        SF2_phot.append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                        SF2_spec.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['type'] == 2: # Q type = 2
-                    Q_2.append(master_cat[counter]['lmass'])
-                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                        Q2_phot.append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                        Q2_spec.append(master_cat[counter]['lmass'])
-    elif master_cat[counter]['cluster'] == 3:    # cluster 3 macs0717
-        if master_cat[counter]['lmass'] > limiting_mass[2]:    # limiting mass of cluster: 8.0
-            if master_cat[counter]['member'] == 0:    # cluster member = 0
-                if master_cat[counter]['type'] == 1:   # SF type = 1
-                    SF_3.append(master_cat[counter]['lmass'])
-                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                        SF3_phot.append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                        SF3_spec.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['type'] == 2: # Q type = 2
-                    Q_3.append(master_cat[counter]['lmass'])
-                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                        Q3_phot.append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                        Q3_spec.append(master_cat[counter]['lmass'])
-    elif master_cat[counter]['cluster'] == 4:    # cluster 4 abell 370
-        if master_cat[counter]['lmass'] > limiting_mass[3]:    # limiting mass of cluster: 7.5
-            if master_cat[counter]['member'] == 0:    # cluster member = 0
-                if master_cat[counter]['type'] == 1:   # SF type = 1
-                    SF_4.append(master_cat[counter]['lmass'])
-                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                        SF4_phot.append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                        SF4_spec.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['type'] == 2: # Q type = 2
-                    Q_4.append(master_cat[counter]['lmass'])
-                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                        Q4_phot.append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                        Q4_spec.append(master_cat[counter]['lmass'])
-    elif master_cat[counter]['cluster'] == 5:    # cluster 5 abell 1063
-        if master_cat[counter]['lmass'] > limiting_mass[4]:    # limiting mass of cluster: 7.4
-            if master_cat[counter]['member'] == 0:    # cluster member = 0
-                if master_cat[counter]['type'] == 1:   # SF type = 1
-                    SF_5.append(master_cat[counter]['lmass'])
-                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                        SF5_phot.append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                        SF5_spec.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['type'] == 2: # Q type = 2
-                    Q_5.append(master_cat[counter]['lmass'])
-                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                        Q5_phot.append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                        Q5_spec.append(master_cat[counter]['lmass'])
-    elif master_cat[counter]['cluster'] == 6:    # cluster 6 abell 2744
-        if master_cat[counter]['lmass'] > limiting_mass[5]:    # limiting mass of cluster: 7.3
-            if master_cat[counter]['member'] == 0:    # cluster member = 0
-                if master_cat[counter]['type'] == 1:   # SF type = 1
-                    SF_6.append(master_cat[counter]['lmass'])
-                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                        SF6_phot.append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                        SF6_spec.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['type'] == 2: # Q type = 2
-                    Q_6.append(master_cat[counter]['lmass'])
-                    if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
-                        Q6_phot.append(master_cat[counter]['lmass'])
-                    elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
-                        Q6_spec.append(master_cat[counter]['lmass'])
+for cluster in range(len(limiting_mass)):          # loop through clusters one at a time; "cluster" takes on values [0,1,2,3,4,5]
+    for counter in range(len(master_cat)):
+        if master_cat[counter]['cluster'] == (cluster+1):    # cluster #
+            if master_cat[counter]['lmass'] > limiting_mass[cluster]:    # limiting mass of cluster: 7.5
+                if master_cat[counter]['member'] == 0:    # cluster member = 0
+                    if master_cat[counter]['type'] == 1:   # SF type = 1
+                        SF_list[cluster].append(master_cat[counter]['lmass'])
+                        if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                            SF_phot_list[cluster].append(master_cat[counter]['lmass'])
+                        elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                            SF_spec_list[cluster].append(master_cat[counter]['lmass'])
+                    elif master_cat[counter]['type'] == 2: # Q type = 2
+                        Q_list[cluster].append(master_cat[counter]['lmass'])
+                        if master_cat[counter]['sub']==2:     # sub=2 is objects w/ photometry only
+                            Q_phot_list[cluster].append(master_cat[counter]['lmass'])
+                        elif master_cat[counter]['sub']==1 or master_cat[counter]['sub']==3:  # sub=1 is objects w/ both spec & phot; sub=3 is for spec only
+                            Q_spec_list[cluster].append(master_cat[counter]['lmass'])
+            elif master_cat[counter]['lmass'] < limiting_mass[cluster]:
+                if master_cat[counter]['member'] == 2:    # member false pos = 2
+                    if master_cat[counter]['type'] == 1:   # SF type = 1
+                        SF_pos_lost[cluster]+=1
+                    elif master_cat[counter]['type'] == 2: # Q type = 2
+                        Q_pos_lost[cluster]+=1
+                elif master_cat[counter]['member'] ==3:   # member false neg = 3
+                    if master_cat[counter]['type'] == 1:   # SF type = 1
+                        SF_neg_lost[cluster]+=1
+                    elif master_cat[counter]['type'] == 2: # Q type = 2
+                        Q_neg_lost[cluster]+=1
+                else: other_lost[cluster]+=1
 #
 #
+### MAY NEED TO EDIT ### diag_flag_1
+##  displays summary of sorted lists above
+diag_flag_1 = 1             # 0=off (don't display diagnostic); 1=on (display diagnostic table)
+#
+if diag_flag_1 == 1:
+    ## Summarize initial data stats in table
+    #
+    # calculate list lengths
+    SF_len = np.array([0]*6)
+    Q_len = np.array([0]*6)
+    SF_phot_len = np.array([0]*6)
+    SF_spec_len = np.array([0]*6)
+    Q_phot_len = np.array([0]*6)
+    Q_spec_len = np.array([0]*6)
+    #
+    for ii in range(len(SF_list)):
+        SF_len[ii] = len(SF_list[ii])
+        Q_len[ii] = len(Q_list[ii])
+        SF_phot_len[ii] = len(SF_phot_list[ii])
+        SF_spec_len[ii] = len(SF_spec_list[ii])
+        Q_phot_len[ii] = len(Q_phot_list[ii])
+        Q_spec_len[ii] = len(Q_spec_list[ii])
+    #
+    data_names = Column(['SF','Q','SF_phot','SF_spec','Q_phot','Q_spec','Total'],name='Property')
+    # 
+    # setup arrays for displaying in table
+    col_names=['Property','Total','macs0416','macs1149','macs0717','abell370','abell1063','abell2744']
+    SF_tabular = ['SF',np.sum(SF_len),SF_len[0],SF_len[1],SF_len[2],SF_len[3],SF_len[4],SF_len[5]]
+    Q_tabular = ['Q',np.sum(Q_len),Q_len[0],Q_len[1],Q_len[2],Q_len[3],Q_len[4],Q_len[5]]
+    SF_phot_tabular = ['SF_phot',np.sum(SF_phot_len),SF_phot_len[0],SF_phot_len[1],SF_phot_len[2],SF_phot_len[3],SF_phot_len[4],SF_phot_len[5]]
+    SF_spec_tabular = ['SF_spec',np.sum(SF_spec_len),SF_spec_len[0],SF_spec_len[1],SF_spec_len[2],SF_spec_len[3],SF_spec_len[4],SF_spec_len[5]]
+    Q_phot_tabular = ['Q_phot',np.sum(Q_phot_len),Q_phot_len[0],Q_phot_len[1],Q_phot_len[2],Q_phot_len[3],Q_phot_len[4],Q_phot_len[5]]
+    Q_spec_tabular = ['Q_spec',np.sum(Q_spec_len),Q_spec_len[0],Q_spec_len[1],Q_spec_len[2],Q_spec_len[3],Q_spec_len[4],Q_spec_len[5]]
+    # display table
+    from tabulate import tabulate
+    print(tabulate([SF_tabular,Q_tabular,SF_phot_tabular,SF_spec_tabular,Q_phot_tabular,Q_spec_tabular],headers=col_names))
+    #
+    print('\nObjects lost below limiting mass: ')
+    print('SF false pos.: ',str(np.sum(SF_pos_lost)))
+    print('SF false neg.: ',str(np.sum(SF_neg_lost)))
+    print('Q false pos.: ',str(np.sum(Q_pos_lost)))
+    print('Q false neg.: ',str(np.sum(Q_neg_lost)))
+    print('Other: ',str(np.sum(other_lost)),'\n')
+    print(other_lost)
 #
 #
 #
@@ -224,6 +184,19 @@ num_bins = np.linspace(range2[0],range2[1],num_points)
 #
 ## smf histograms for individual clusters
 #
+SF_raw_smf = [[],[],[],[],[],[]]       # initialize list of lists to store histograms of SMFs
+Q_raw_smf = [[],[],[],[],[],[]]
+#
+for ii in range(len(SF_list)):
+    SF_raw, mass_bins = np.histogram(SF_list[ii], bins=num_bins,range=range2)
+    Q_raw, mass_bins = np.histogram(Q_list[ii], bins=num_bins,range=range2)
+    SF_raw_smf[ii].append(SF_raw)
+    Q_raw_smf[ii].append(Q_raw)
+#
+total_raw_smf = SF_raw_smf + Q_raw_smf
+    
+
+
 SF_smf1, SF_bins = np.histogram(SF_1, bins=num_bins,range=range2)
 SF_smf2, SF_bins = np.histogram(SF_2, bins=num_bins,range=range2)
 SF_smf3, SF_bins = np.histogram(SF_3, bins=num_bins,range=range2)
