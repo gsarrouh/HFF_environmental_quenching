@@ -30,7 +30,8 @@ Created on Mon Jun 22 04:32:11 2020
 ## 0: no data (no photometry or spectroscopy)
 ## 1: spectroscopy & photometry
 ## 2: photometry only 
-## 3: spectroscopy only  (there's just 3 in macs0717)   
+## 3: spectroscopy only  (there's just 3 in macs0717) 
+## 4: stars
 #
 ## Sieve 3 - 'type': :   identifies type of data each object has
 ## 0: star
@@ -84,7 +85,9 @@ Created on Mon Jun 22 04:32:11 2020
 ###        cluster ["nodata", "phot_only","spec_only","both"], 
 ### (1.2)  add FLAG: summarize in table "data_stats"
 ### (1.3)  convert flux to mag.,
-### (2) identify outliers, calculate various del_z's, summarize 
+### (2) calculate various del_z's, 
+### (2.1)  identify outliers
+### (2.2)  add FLAG: summarize in table ""
 ###     in "macros"
 ### (3) distinguish b/w SF/Q
 ### (4) make membership cuts to spec samples, summarize in "spec_stats"
@@ -193,12 +196,12 @@ E3 = Column([99]*len(master_cat), name='member', dtype=np.int8)
 master_cat.add_columns([E1,E2,E3],[-1,-1,-1])                   # add columns to the end of table
 #
 #
-#
-## SECTION (1.1) - FILTERS: this section classifies all objects as either:
+## SECTION (1.1) - SUB-TYPE FILTER: this section classifies all objects as either:
 ##  sub = 0: no data (neither spec. nor phot.)
 ##  sub = 1: both
 ##  sub = 2: phot only
 ##  sub = 3: spec only
+##  sub = 4: stars
 #
 # sift for targets without no data, spec only, phot only, and both
 spec_only = np.array([0]*6)    # to keep track by cluster
@@ -206,41 +209,66 @@ phot_only = np.array([0]*6)
 error = 0
 both = np.array([0]*6)
 no_data = np.array([0]*6)
+stars = np.array([0]*6)
 #
 for counter in range(len(master_cat)):
-    if master_cat[counter]['z_spec'] > 0 and master_cat[counter]['z_peak'] > 0:  #entries w/ both spectroscopy and photometry  (SPECTROSCOPIC sub-sample)
-        if master_cat[counter]['use_phot'] ==0:     # use_phot = 0 means bad photometry
+    if master_cat['z_spec'][counter] > 0 and master_cat['z_peak'][counter] > 0:  #entries w/ both spectroscopy and photometry  (SPECTROSCOPIC sub-sample)
+        if master_cat['use_phot'][counter] ==0:     # use_phot = 0 means bad photometry
             for jj in range(len(spec_only)):
-                if master_cat[counter]['cluster'] == (jj+1):      # identify # of spec only objects by cluster
-                    spec_only[(jj)]+=1
-            master_cat[counter]['sub'] = 3          # APPLY FILTER: sub=3 for objects w/ SPEC ONLY
-        elif master_cat[counter]['use_phot'] ==1:
+                if master_cat['cluster'][counter] == (jj+1):      # identify # of spec only objects by cluster
+                    if master_cat['star_flag'][counter] == 1:
+                        master_cat['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
+                        stars[jj]+=1
+                    else:
+                        spec_only[(jj)]+=1
+            master_cat['sub'][counter] = 3          # APPLY FILTER: sub=3 for objects w/ SPEC ONLY
+        elif master_cat['use_phot'][counter] ==1:
             for jj in range(len(both)):
-                if master_cat[counter]['cluster'] == (jj+1):      # identify # of (spec & phot) objects by cluster
-                    both[(jj)]+=1
-            master_cat[counter]['sub'] = 1          # APPLY FILTER: sub=1 for objects w/ BOTH SPEC & PHOT
+                if master_cat['cluster'][counter] == (jj+1):      # identify # of (spec & phot) objects by cluster
+                    if master_cat['star_flag'][counter] == 1:
+                        master_cat['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
+                        stars[jj]+=1
+                    else:
+                        both[(jj)]+=1
+                        master_cat['sub'][counter] = 1          # APPLY FILTER: sub=1 for objects w/ BOTH SPEC & PHOT
         else: error+=1                              # just to keep track of erroneous objects
-    elif master_cat[counter]['z_spec'] > 0 and master_cat[counter]['z_peak'] < 0:  #entries w/ spectroscopy alone
+    elif master_cat['z_spec'][counter] > 0 and master_cat['z_peak'][counter] < 0:  #entries w/ spectroscopy alone
         for jj in range(len(spec_only)):
-            if master_cat[counter]['cluster'] == (jj+1):      # identify # of spec only objects by cluster
-                spec_only[(jj)]+=1
-        master_cat[counter]['sub'] = 3          # APPLY FILTER: sub=3 for objects w/ SPEC ONLY
-    elif master_cat[counter]['z_spec'] < 0 and master_cat[counter]['z_peak'] > 0:  #entries w/ photometry alone (PHOTOMETRIC sub-sample)
-        if master_cat[counter]['use_phot'] ==0:
+            if master_cat['cluster'][counter] == (jj+1):      # identify # of spec only objects by cluster
+                if master_cat['star_flag'][counter] == 1:
+                    master_cat['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
+                    stars[jj]+=1
+                else:
+                    spec_only[(jj)]+=1
+                    master_cat['sub'][counter] = 3          # APPLY FILTER: sub=3 for objects w/ SPEC ONLY
+    elif master_cat['z_spec'][counter] < 0 and master_cat['z_peak'][counter] > 0:  #entries w/ photometry alone (PHOTOMETRIC sub-sample)
+        if master_cat['use_phot'][counter] ==0:
             for jj in range(len(both)):
-                if master_cat[counter]['cluster'] == (jj+1):      # identify # of NO DATA objects by cluster
-                    no_data[(jj)]+=1
-            master_cat[counter]['sub'] = 0          # APPLY FILTER: sub=0 for objects w/ NEITHER SPEC NOR PHOT
-        elif master_cat[counter]['use_phot'] ==1:
+                if master_cat['cluster'][counter] == (jj+1):      # identify # of NO DATA objects by cluster
+                    if master_cat['star_flag'][counter] == 1:
+                        master_cat['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
+                        stars[jj]+=1
+                    else:
+                        no_data[(jj)]+=1
+                        master_cat['sub'][counter] = 0          # APPLY FILTER: sub=0 for objects w/ NEITHER SPEC NOR PHOT
+        elif master_cat['use_phot'][counter] ==1:
             for jj in range(len(both)):
-                if master_cat[counter]['cluster'] == (jj+1):      # identify # of phot only objects by cluster
-                    phot_only[(jj)]+=1
-            master_cat[counter]['sub'] = 2          # APPLY FILTER: sub=2 for objects w/ PHOT ONLY
-    elif master_cat[counter]['z_spec'] < 0 and master_cat[counter]['z_peak'] < 0:  #entries w/ no z estimates at all
+                if master_cat['cluster'][counter] == (jj+1):      # identify # of phot only objects by cluster
+                    if master_cat['star_flag'][counter] == 1:
+                        master_cat['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
+                        stars[jj]+=1
+                    else:
+                        phot_only[(jj)]+=1
+                        master_cat['sub'][counter] = 2          # APPLY FILTER: sub=2 for objects w/ PHOT ONLY
+    elif master_cat['z_spec'][counter] < 0 and master_cat['z_peak'][counter] < 0:  #entries w/ no z estimates at all
         for jj in range(len(both)):
-            if master_cat[counter]['cluster'] == (jj+1):      # identify # of NO DATA objects by cluster
-                no_data[(jj)]+=1
-        master_cat[counter]['sub'] = 0          # APPLY FILTER: sub=0 for objects w/ NEITHER SPEC NOR PHOT
+            if master_cat['cluster'][counter] == (jj+1):      # identify # of NO DATA objects by cluster
+                if master_cat['star_flag'][counter] == 1:
+                    master_cat['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
+                    stars[jj]+=1
+                else:
+                    no_data[(jj)]+=1
+                    master_cat['sub'][counter] = 0          # APPLY FILTER: sub=0 for objects w/ NEITHER SPEC NOR PHOT
 #
 #
 ## SECTION (1.2): SUMMARY table
@@ -250,285 +278,88 @@ diag_flag_1 = 1             # 0=off (don't display diagnostic); 1=on (display di
 #
 if diag_flag_1 == 1:
     ## Summarize initial data stats in table
-    data_names = Column(['total','spec & phot','only phot','spec only','no data'],name='Property')
-    data0 = Column([len(master_cat),np.sum(both),np.sum(phot_only),np.sum(spec_only),np.sum(no_data)],name='Total')  # total column
-    data1 = Column([len(macs0416),both[0],phot_only[0],spec_only[0],no_data[0]],name='macs0416')
-    data2 = Column([len(macs1149),both[1],phot_only[1],spec_only[1],no_data[1]],name='macs1149')
-    data3 = Column([len(macs0717),both[2],phot_only[2],spec_only[2],no_data[2]],name='macs0717')
-    data4 = Column([len(abell370),both[3],phot_only[3],spec_only[3],no_data[3]],name='abell370')
-    data5 = Column([len(abell1063),both[4],phot_only[4],spec_only[4],no_data[4]],name='abell1063')
-    data6 = Column([len(abell2744),both[5],phot_only[5],spec_only[5],no_data[5]],name='abell2744')
-    global data
-    data_stats = Table([data_names,data0,data1,data2,data3,data4,data5,data6])  
+    data_names = Column(['total','spec & phot','only phot','spec only','no data','stars'],name='Property')
+    col_names = ['macs0416','macs1149','macs0717','abell370','abell1063','abell2744']
+    data0 = Column([np.sum([np.sum(both),np.sum(phot_only),np.sum(spec_only),np.sum(no_data),np.sum(stars)]),np.sum(both),np.sum(phot_only),np.sum(spec_only),np.sum(no_data),np.sum(stars)],name='Total')  # total column
+    data_stats = Table([data_names,data0])
+    for ii in range(len(spec_only)):
+        data = Column([np.sum([both[ii],phot_only[ii],spec_only[ii],no_data[ii],stars[ii]]),both[ii],phot_only[ii],spec_only[ii],no_data[ii],stars[ii]],name=col_names[ii])
+        data_stats.add_column(data)
     #
+    print('Catalogue by sub-type:')
     print(data_stats)
 #
 #
-
-
+## SECTION (1.3): convert FLUX TO MAGNITUDE; using well-known mag = -2.5*log_10(flux) + zero_pt. zero_pt = 25
 #
-##add columns for luminosity calculations to each cluster catalogue individually
-##for some reason there are problems with simply doing this once to the final master_cat(alogue)
-# 1.macs0416
-empty_1u = Column([99]*len(macs0416), name='L_u', dtype=np.float64)
-empty_1v = Column([99]*len(macs0416), name='L_v', dtype=np.float64)
-empty_1j = Column([99]*len(macs0416), name='L_j', dtype=np.float64)
-empty_1uv = Column([99]*len(macs0416), name='uv', dtype=np.float64)
-empty_1vj = Column([99]*len(macs0416), name='vj', dtype=np.float64)
-macs0416.add_columns([empty_1u,empty_1v,empty_1j,empty_1uv,empty_1vj])
-# 2.macs1149  
-empty_2u = Column([99]*len(macs1149), name='L_u', dtype=np.float64)
-empty_2v = Column([99]*len(macs1149), name='L_v', dtype=np.float64)
-empty_2j = Column([99]*len(macs1149), name='L_j', dtype=np.float64)
-empty_2uv = Column([99]*len(macs1149), name='uv', dtype=np.float64)
-empty_2vj = Column([99]*len(macs1149), name='vj', dtype=np.float64)
-macs1149.add_columns([empty_2u,empty_2v,empty_2j,empty_2uv,empty_2vj])
-# 3.macs0717  
-empty_3u = Column([99]*len(macs0717), name='L_u', dtype=np.float64)
-empty_3v = Column([99]*len(macs0717), name='L_v', dtype=np.float64)
-empty_3j = Column([99]*len(macs0717), name='L_j', dtype=np.float64)
-empty_3uv = Column([99]*len(macs0717), name='uv', dtype=np.float64)
-empty_3vj = Column([99]*len(macs0717), name='vj', dtype=np.float64)
-macs0717.add_columns([empty_3u,empty_3v,empty_3j,empty_3uv,empty_3vj])
-# 4.abell370  
-empty_4u = Column([99]*len(abell370), name='L_u', dtype=np.float64)
-empty_4v = Column([99]*len(abell370), name='L_v', dtype=np.float64)
-empty_4j = Column([99]*len(abell370), name='L_j', dtype=np.float64)
-empty_4uv = Column([99]*len(abell370), name='uv', dtype=np.float64)
-empty_4vj = Column([99]*len(abell370), name='vj', dtype=np.float64)
-abell370.add_columns([empty_4u,empty_4v,empty_4j,empty_4uv,empty_4vj])
-# 5.abell1063  
-empty_5u = Column([99]*len(abell1063), name='L_u', dtype=np.float64)
-empty_5v = Column([99]*len(abell1063), name='L_v', dtype=np.float64)
-empty_5j = Column([99]*len(abell1063), name='L_j', dtype=np.float64)
-empty_5uv = Column([99]*len(abell1063), name='uv', dtype=np.float64)
-empty_5vj = Column([99]*len(abell1063), name='vj', dtype=np.float64)
-abell1063.add_columns([empty_5u,empty_5v,empty_5j,empty_5uv,empty_5vj])
-# 6.abell2744
-empty_6u = Column([99]*len(abell2744), name='L_u', dtype=np.float64)
-empty_6v = Column([99]*len(abell2744), name='L_v', dtype=np.float64)
-empty_6j = Column([99]*len(abell2744), name='L_j', dtype=np.float64)
-empty_6uv = Column([99]*len(abell2744), name='uv', dtype=np.float64)
-empty_6vj = Column([99]*len(abell2744), name='vj', dtype=np.float64)
-abell2744.add_columns([empty_6u,empty_6v,empty_6j,empty_6uv,empty_6vj])
-#
+# add columns for luminosity calculations
+empty_u = Column([99]*len(master_cat), name='L_u', dtype=np.float64)
+empty_v = Column([99]*len(master_cat), name='L_v', dtype=np.float64)
+empty_j = Column([99]*len(master_cat), name='L_j', dtype=np.float64)
+empty_uv = Column([99]*len(master_cat), name='uv', dtype=np.float64)
+empty_vj = Column([99]*len(master_cat), name='vj', dtype=np.float64)
+master_cat.add_columns([empty_u,empty_v,empty_j,empty_uv,empty_vj])
 #
 ##convert flux to magnitude (erroneously labelled as luminosity, e.g. L_u for magnitude in UV), get color indices U-V, V-J, add to table
 #
-####1. macs0416
-counter = 0
-size = len(macs0416)
-while counter < size:
-    if macs0416[counter]['sub'] ==0:
-        counter +=1 
+for counter in range(len(master_cat)):
+    if master_cat[counter]['sub'] ==0 or master_cat[counter]['sub'] ==3 or master_cat[counter]['sub'] ==4:      # skip objects w/ "no data" (sub=0); "spec only" (sub=3); "stars" (sub=4)
+        pass
     else:
-        macs0416[counter]['L_u'] = -2.5*np.log10(macs0416[counter]['u']) + 25
-        macs0416[counter]['L_v'] = -2.5*np.log10(macs0416[counter]['v']) + 25
-        macs0416[counter]['L_j'] = -2.5*np.log10(macs0416[counter]['j']) + 25
-        macs0416[counter]['uv'] = macs0416[counter]['L_u'] - macs0416[counter]['L_v']
-        macs0416[counter]['vj'] = macs0416[counter]['L_v'] - macs0416[counter]['L_j']
-        counter +=1
-#
-#####2. macs1149
-      #cluster designation column
-counter = 0
-size = len(macs1149)
-while counter < size:
-    if macs1149[counter]['sub'] ==0:
-        counter +=1 
-    else:
-        macs1149[counter]['L_u'] = -2.5*np.log10(macs1149[counter]['u']) + 25
-        macs1149[counter]['L_v'] = -2.5*np.log10(macs1149[counter]['v']) + 25
-        macs1149[counter]['L_j'] = -2.5*np.log10(macs1149[counter]['j']) + 25
-        macs1149[counter]['uv'] = macs1149[counter]['L_u'] - macs1149[counter]['L_v']
-        macs1149[counter]['vj'] = macs1149[counter]['L_v'] - macs1149[counter]['L_j']
-        counter +=1
-#####3.macs0717
-aa = 0
-counter = 0
-size = len(macs0717)
-while counter < size:
-    if macs0717[counter]['sub'] ==0 or macs0717[counter]['sub'] ==3:
-        aa+=1
-        counter +=1 
-    else:
-        macs0717[counter]['L_u'] = -2.5*np.log10(macs0717[counter]['u']) + 25
-        macs0717[counter]['L_v'] = -2.5*np.log10(macs0717[counter]['v']) + 25
-        macs0717[counter]['L_j'] = -2.5*np.log10(macs0717[counter]['j']) + 25
-        macs0717[counter]['uv'] = macs0717[counter]['L_u'] - macs0717[counter]['L_v']
-        macs0717[counter]['vj'] = macs0717[counter]['L_v'] - macs0717[counter]['L_j']
-        counter +=1
-#####4.abell370
-counter = 0
-size = len(abell370)
-while counter < size:
-    if abell370[counter]['sub'] ==0:
-        counter +=1 
-    else:
-        abell370[counter]['L_u'] = -2.5*np.log10(abell370[counter]['u']) + 25
-        abell370[counter]['L_v'] = -2.5*np.log10(abell370[counter]['v']) + 25
-        abell370[counter]['L_j'] = -2.5*np.log10(abell370[counter]['j']) + 25
-        abell370[counter]['uv'] = abell370[counter]['L_u'] - abell370[counter]['L_v']
-        abell370[counter]['vj'] = abell370[counter]['L_v'] - abell370[counter]['L_j']
-        counter +=1
-#####5.abell1063
-counter = 0
-size = len(abell1063)
-while counter < size:
-    if abell1063[counter]['sub'] ==0:
-        counter +=1 
-    else:
-        abell1063[counter]['L_u'] = -2.5*np.log10(abell1063[counter]['u']) + 25
-        abell1063[counter]['L_v'] = -2.5*np.log10(abell1063[counter]['v']) + 25
-        abell1063[counter]['L_j'] = -2.5*np.log10(abell1063[counter]['j']) + 25
-        abell1063[counter]['uv'] = abell1063[counter]['L_u'] - abell1063[counter]['L_v']
-        abell1063[counter]['vj'] = abell1063[counter]['L_v'] - abell1063[counter]['L_j']
-        counter +=1
-#####6.abell2744
-counter = 0
-size = len(abell2744)
-while counter < size:
-    if abell2744[counter]['sub'] ==0:
-        counter +=1 
-    else:
-        abell2744[counter]['L_u'] = -2.5*np.log10(abell2744[counter]['u']) + 25
-        abell2744[counter]['L_v'] = -2.5*np.log10(abell2744[counter]['v']) + 25
-        abell2744[counter]['L_j'] = -2.5*np.log10(abell2744[counter]['j']) + 25
-        abell2744[counter]['uv'] = abell2744[counter]['L_u'] - abell2744[counter]['L_v']
-        abell2744[counter]['vj'] = abell2744[counter]['L_v'] - abell2744[counter]['L_j']
-        counter +=1
-#
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-global master_cat
-master_cat = Table(np.concatenate((macs0416,macs1149,macs0717,abell370,abell1063,abell2744), axis=0))  #create a master catalogue of all clusters
+        master_cat['L_u'][counter] = -2.5*np.log10(master_cat['u'][counter]) + 25
+        master_cat['L_v'][counter] = -2.5*np.log10(master_cat['v'][counter]) + 25
+        master_cat['L_j'][counter] = -2.5*np.log10(master_cat['j'][counter]) + 25
+        master_cat['uv'][counter] = master_cat['L_u'][counter] - master_cat['L_v'][counter]
+        master_cat['vj'][counter] = master_cat['L_v'][counter] - master_cat['L_j'][counter]
 #
 #
 #
 #
 #
 #
-### **Section 2: calulate z's & separate outliers
-## (i) calculate delta_z for spec subsample; (ii) separate outliers from 
-## both phot & spec sub-sample;  
+## SECTION (2): calulate DEL_Z's & separate outliers
 #
-#####Note: the photometric redshift used is 'z_peak' from data
+#####Note: the photometric redshift used is 'z_peak' column from data
 #
 #(i) calculate delta_z for targets w/ both z_spec & z_phot
-master_cat.add_column(Column([-99]*len(master_cat),name='del_z', dtype=np.float64))                    #<-- z_phot - z_spec / 1 + z_spec
-master_cat.add_column(Column([-99]*len(master_cat),name='z_clusterspec', dtype=np.float64))   #<-- z_spec - z_cl / 1 + z_spec
-master_cat.add_column(Column([-99]*len(master_cat),name='z_clusterphot', dtype=np.float64))   #<-- z_phot - z_cl / 1 + z_phot
+master_cat.add_column(Column([-99]*len(master_cat),name='del_z', dtype=np.float64))           # del_z = (z_phot - z_spec) / (1 + z_spec)
+master_cat.add_column(Column([-99]*len(master_cat),name='z_clusterspec', dtype=np.float64))   # del_z = (z_spec - z_cl) / (1 + z_spec)
+master_cat.add_column(Column([-99]*len(master_cat),name='z_clusterphot', dtype=np.float64))   # del_z = (z_phot - z_cl) / (1 + z_phot)
 #
-counter = 0
-size = len(master_cat)
-while counter < size:                       #calucalte del_z for outlier cut
-    if master_cat[counter]['sub'] == 1:
-        master_cat[counter]['del_z'] = ((master_cat[counter]['z_peak'] - master_cat[counter]['z_spec']) / (1 + master_cat[counter]['z_spec']))
-        counter +=1
-    else:
-        counter +=1
+# store cluster redshifts; obtained from https://archive.stsci.edu/prepds/frontier/
+z_cluster = [0.396,0.543,0.545,0.375,0.348,0.308]
 #
-# (ii) separate outliers for |del_z| > 0.15
-## "member" == 4 is outliers;
-outliers = 0
-out = [[0]*6]
-spec_subsample = 0
-phot_subsample = 0
-size = len(master_cat)
-counter = 0
-while counter < size: 
-    if master_cat[counter]['sub'] == 2 and master_cat[counter]['sub'] != 0:
-        phot_subsample +=1
-    elif master_cat[counter]['sub'] == 1 and master_cat[counter]['sub'] != 0:
-        if abs(master_cat[counter]['del_z']) > 0.15: #identify objects w/ del_z > 0.15
-            master_cat[counter]['type'] = 3
-            outliers += 1
-            if master_cat[counter]['cluster'] == 1:
-                    out[0][0] +=1
-                    both[0][0] -=1
-            elif master_cat[counter]['cluster'] == 2:
-                    out[0][1] +=1
-                    both[0][1] -=1
-            elif master_cat[counter]['cluster'] == 3:
-                    out[0][2] +=1
-                    both[0][2] -=1
-            elif master_cat[counter]['cluster'] == 4:
-                    out[0][3] +=1
-                    both[0][3] -=1
-            elif master_cat[counter]['cluster'] == 5:
-                    out[0][4] +=1
-                    both[0][4] -=1
-            elif master_cat[counter]['cluster'] == 6:
-                    out[0][5] +=1
-                    both[0][5] -=1
-        else: 
-            spec_subsample +=1          ##spec_subsample includes sub==1 & sub==3
-    counter +=1
-#
-## store cluster redshifts; obtained from https://archive.stsci.edu/prepds/frontier/
-z_cluster = [0.396,0.543,0.545,0.375,0.348,0.308]      
-#  [macs0416,macs1149,macs0717,abell370,abell1063,abell2744]   <- order of elements in cluster array, i.e. z_macs0717 = z_cluster[2] = 0.545
+#calucalte del_z, z_clusterspec, z_clusterphot for outlier cut (defined above); these will be used to make cuts (member, field, false pos/neg) to spec sample, from which we will use relative fractions by mass to correct the photometric sample for completeness.
+for counter in range(len(master_cat)):
+    if master_cat['sub'][counter] == 1:
+        master_cat['del_z'][counter] = ((master_cat['z_peak'][counter] - master_cat['z_spec'][counter]) / (1 + master_cat['z_spec'][counter]))
+        master_cat['z_clusterspec'][counter] = ((master_cat['z_spec'][counter] - z_cluster[0]) / (1 + master_cat['z_spec'][counter]))
+        master_cat['z_clusterphot'][counter] = ((master_cat['z_peak'][counter] - z_cluster[0]) / (1 + master_cat['z_peak'][counter]))
 #
 #
+## SECTION(2.1): separate OUTLIERS from both phot & spec sub-sample, defined as |del_z| < 0.15. apply FILTER MEMBER = 4 for outliers;   
+#
+outliers = np.array([0]*6)      # initialize array to track outliers by cluster, for computing outlier fraction later
+sum_delz = []                   # for computing mean |del_z|
+
+#
+for counter in range(len(master_cat)):
+    if master_cat['sub'][counter] == 1:                        # sub=1 for objects with both spec & phot; total # of such objects tracked by cluster above in the array called "both"
+        if np.abs(master_cat['del_z'][counter]) > 0.15:        # |del_z| > 0.15 for outliers, threshold chosen for historical reasons to facilitate comparison with other studies
+            master_cat['member'][counter] = 4                  # member = 4 identifies outliers
+            for ii in range(len(outliers)):
+                if master_cat['cluster'][counter] == (ii+1):   # keep track of outliers by cluster
+                    outliers[ii]+=1
+        sum_delz.append(np.abs(master_cat['del_z'][counter]))
 #
 #
+## SECTION(2.2): compute & DISPLAY OUTLIER FRACTION, SCATTER (i.e. std dev), and MEAN of |del_z|.
 #
-## calculate z_clusterspec for del_zphot vs del_zspec plot, defined below. these 
-## will be used to make cuts to spec sample, from which we will use relative 
-## fractions by mass to correct the photometric sample for 
-## completeness.
-counter = 0
-size = len(master_cat)
-while counter < size:
-    if master_cat[counter]['sub'] == 1 or master_cat[counter]['sub'] == 3:         #spec sample del_z plot for cuts: denominator = (1 + z_spec)
-        if master_cat[counter]['cluster'] == 1:
-            master_cat[counter]['z_clusterspec'] = ((master_cat[counter]['z_spec'] - z_cluster[0]) / (1 + master_cat[counter]['z_spec']))
-            master_cat[counter]['z_clusterphot'] = ((master_cat[counter]['z_peak'] - z_cluster[0]) / (1 + master_cat[counter]['z_peak']))
-        elif master_cat[counter]['cluster'] == 2:
-            master_cat[counter]['z_clusterspec'] = ((master_cat[counter]['z_spec'] - z_cluster[1]) / (1 + master_cat[counter]['z_spec']))
-            master_cat[counter]['z_clusterphot'] = ((master_cat[counter]['z_peak'] - z_cluster[1]) / (1 + master_cat[counter]['z_peak']))
-        elif master_cat[counter]['cluster'] == 3:
-            master_cat[counter]['z_clusterspec'] = (master_cat[counter]['z_spec'] - z_cluster[2]) / (1 + master_cat[counter]['z_spec'])
-            master_cat[counter]['z_clusterphot'] = (master_cat[counter]['z_peak'] - z_cluster[2]) / (1 + master_cat[counter]['z_peak'])
-        elif master_cat[counter]['cluster'] == 4:
-            master_cat[counter]['z_clusterspec'] = (master_cat[counter]['z_spec'] - z_cluster[3]) / (1 + master_cat[counter]['z_spec'])
-            master_cat[counter]['z_clusterphot'] = (master_cat[counter]['z_peak'] - z_cluster[3]) / (1 + master_cat[counter]['z_peak'])
-        elif master_cat[counter]['cluster'] == 5:
-            master_cat[counter]['z_clusterspec'] = (master_cat[counter]['z_spec'] - z_cluster[4]) / (1 + master_cat[counter]['z_spec'])
-            master_cat[counter]['z_clusterphot'] = (master_cat[counter]['z_peak'] - z_cluster[4]) / (1 + master_cat[counter]['z_peak'])
-        elif master_cat[counter]['cluster'] == 6:
-            master_cat[counter]['z_clusterspec'] = (master_cat[counter]['z_spec'] - z_cluster[5]) / (1 + master_cat[counter]['z_spec'])
-            master_cat[counter]['z_clusterphot'] = (master_cat[counter]['z_peak'] - z_cluster[5]) / (1 + master_cat[counter]['z_peak'])
-        counter +=1
-    elif master_cat[counter]['sub'] == 2:       #phot sample del_z plot for cuts defined in v7a to be (z_phot - z_cl)
-        if master_cat[counter]['cluster'] == 1:
-            master_cat[counter]['z_clusterphot'] = (master_cat[counter]['z_peak'] - z_cluster[0]) / (1 + z_cluster[0])
-        elif master_cat[counter]['cluster'] == 2:
-            master_cat[counter]['z_clusterphot'] = (master_cat[counter]['z_peak'] - z_cluster[1]) / (1 + z_cluster[1])
-        elif master_cat[counter]['cluster'] == 3:
-            master_cat[counter]['z_clusterphot'] = (master_cat[counter]['z_peak'] - z_cluster[2]) / (1 + z_cluster[2])
-        elif master_cat[counter]['cluster'] == 4:
-            master_cat[counter]['z_clusterphot'] = (master_cat[counter]['z_peak'] - z_cluster[3]) / (1 + z_cluster[3])
-        elif master_cat[counter]['cluster'] == 5:
-            master_cat[counter]['z_clusterphot'] = (master_cat[counter]['z_peak'] - z_cluster[4]) / (1 + z_cluster[4])
-        elif master_cat[counter]['cluster'] == 6:
-            master_cat[counter]['z_clusterphot'] = (master_cat[counter]['z_peak'] - z_cluster[5]) / (1 + z_cluster[5]) 
-        counter +=1
-    else: 
-        counter +=1
+delz_mean = np.sum(sum_delz)/len(sum_delz)
+delz_scatter = np.std(sum_delz)
+print('Outlier fraction: ',str(np.sum(outliers)/np.sum(both)))
+print('|del_z| mean: ',str(delz_mean))
+print('|del_z| scatter: ',str(delz_scatter),'\n')
 #
 #
 #
