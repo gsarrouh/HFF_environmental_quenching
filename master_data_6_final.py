@@ -6,19 +6,14 @@ Created on Mon Jun 22 04:32:11 2020
 @author: gsarrouh
 """
 #
-###This script reads in all data for the Hubble Frontier Fields images and 
-###prepares data for plotting and analysis. Key information is summarized 
-###in the tables: 
-###     **"data_stats","macros_type","macros","spec_stats","phot_stats",****
-###     **"sample_stats","BCG_stats"
+###This script reads in all data for the Hubble Frontier Fields images and prepares data for plotting and analysis. Key information is summarized in the tables: 
+###     **"sub_stats","type_stats","SF_spec_stats","Q_spec_stats","SF_phot_stats","Q_phot_stats"**
 #
-###Data is organized in a single catalogue ("master_cat"), and objects are 
-###identified through applying a series of filters or "sieves" to designate key populations 
-###using a numerical designation for ease of writing code.
+### Data is organized in a single catalogue ("master_cat"), and objects are identified through applying a series of "FILTERS" to designate key populations using a numerical designation for ease of writing code.
 #
-### NOTE: tagets w/o spec or photometry have been removed prior to creating "master_cat" table
 #
-## Sieve 1 - 'cluster':  cluster catalogues are designated as follows: 
+#
+## FILTER 1 - 'cluster':  cluster catalogues are designated as follows: 
 ## 1: macs0416
 ## 2: macs1149
 ## 3: macs0717
@@ -26,30 +21,29 @@ Created on Mon Jun 22 04:32:11 2020
 ## 5: abell1063
 ## 6: abell2744
 #
-## Sieve 2 - 'sub': :   identifies sub-type of data each object has
+## FILTER 2 - 'sub': :   identifies sub-type of data each object has
 ## 0: no data (no photometry or spectroscopy)
 ## 1: spectroscopy & photometry
 ## 2: photometry only 
 ## 3: spectroscopy only  (there's just 3 in macs0717) 
-## 4: stars
+## 4: star
 #
-## Sieve 3 - 'type': :   identifies type of data each object has
+## FILTER 3 - 'type': :   identifies type of data each object has
 ## 0: star
 ## 1: star-forming (SF)
 ## 2: quiescent (Q)  
 ## 3: outliers (defined as |del_z\ > 0.15)
 #
-## Sieve 4 - 'member': :   identifies type of data each object has
+## FILTER 4 - 'member': :   identifies type of data each object has
+## NOTE: this designation is for objects with phot only (sub =2) and spec&phot (sub=1) only, as membership determinaion requires a good 'z_phot' estimate. as such, member=2 & =3 are for spec&phot (sub=1) subsample only, as only they can be classified as false pos/neg
 ## 0: secure cluster member
 ## 1: secure field    <-- this comprises the sample of field galaxies to be 
 ##                        compared with cluster, at similar redshifts
 ## 2: false positive
 ## 3: false negative
-## 4: field outliers  <-- these are galaxies well outside the redshift range 
-##                        of the 6 clusters
+## 4: field outlier   <-- objects well outside the redshift range of the clusters (e.g. z > 0.55)
 #
-## NOTE: targets w/ only photometry are split into 'cluster members' and 'field',
-##       no z_spec for determining false pos/neg
+#
 #
 ##  Notes from previous versions w/ only 2 rough data sets:
 ### v6: calculates del_z, z_clusterphot/spec on a line-by-line basis to ensure 
@@ -80,22 +74,36 @@ Created on Mon Jun 22 04:32:11 2020
 #
 ### Section summary:
 #
+### PROGRAM START
+#
 ### (1) import data into single table, creating KEY TABLE: "master_cat" 
-### (1.1)  add filter ("sieves") columns, identify sub-samples in each 
+### (1.1)  add filter ("sieves") columns, apply SUB-TYPE FILTER in each 
 ###        cluster ["nodata", "phot_only","spec_only","both"], 
-### (1.2)  add FLAG: summarize in table "data_stats"
+### (1.2)  add DIAG_FLAG_1: summarize in table "sub_stats"
 ### (1.3)  convert flux to mag.,
 ### (2) calculate various del_z's, 
 ### (2.1)  identify outliers
-### (2.2)  add FLAG: summarize in table ""
-###     in "macros"
-### (3) distinguish b/w SF/Q
-### (4) make membership cuts to spec samples, summarize in "spec_stats"
-### (5) make membership cuts to phot samples, summarize in "phot_stats"
+### (2.2)  compute & DISPLAY OUTLIER FRACTION, SCATTER (i.e. std dev), and MEAN of |del_z|.
+### (3) distinguish b/w SF/Q: apply TYPE FILTER
+### (3.1)  add DIAG_FLAG_2: summarize in table "type_stats"
+### (4) make membership cuts to spec samples (i.e. apply MEMBER FILTER), apply diagnostic to test different redshift cutoff (OUTPUT FILE: /Documents/Programs/Python/nserc17/HFF_ToAdamFinal/working_data/section_4_false_pos_neg_redshift_cuts_*.txt) 
+### (4.1) add DIAG_FLAG_3: summarize in table "SF_spec_stats" & "Q_spec_stats"
+### (5) make membership cuts to phot samples
+### (5.1) add DIAG_FLAG_4: summarize in table "SF_phot_stats" & "Q_phot_stats"
+#
+### PROGRAM END
 #
 #
 #
-###################     Start
+###################     PROGRAM START
+#
+## TIME_FLAG: START
+## superior time_flag which supercedes all others and times the entire program
+time_flag = 0     # track & print time to execute current section
+#
+if time_flag == 1:
+    start_time = time.time()
+#  
 # Read in ALL data from WORKING DIRECTORY: NSERC17/HFFtoAdam/working_data
 import numpy as np
 import matplotlib as mpl
@@ -103,10 +111,17 @@ import matplotlib.pyplot as plt
 import astropy
 from astropy.table import Table
 from astropy.table import Column
+import time
 #
 ##SECTION 1: import all data from HFF team, convert flux to luminosity & gather full 
-##catalogue into single table "master_cat"; separate objects for which there is no 
-##redshift data (both photo & spec) as "nodata"
+#
+## TIME_FLAG_1 START
+time_flag_1 = 1     # track & print time to execute current section
+#
+if time_flag_1 == 1 and time_flag == 0:
+    start_time = time.time()
+#  
+## import catalogues into single table "master_cat"; separate objects for which there is no redshift data (both photo & spec) as "nodata"
 #
 ##create table from redshift ".zout" file
 z_macs0416 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/HFF_ToAdamFinal/working_data/macs0416clu_v3.5.zout',format='ascii')
@@ -190,9 +205,9 @@ global master_cat
 master_cat = Table(np.concatenate((macs0416,macs1149,macs0717,abell370,abell1063,abell2744), axis=0))  #create a master catalogue of all clusters
 #
 ## add "empty" columns (with value set = 99) for the remaining sieves: sub, type, member for [phot or spec],[SF or Q],[cluster member, field, false pos/neg] respectively
-E1 = Column([99]*len(master_cat), name='sub', dtype=np.int8)    # create columns
-E2 = Column([99]*len(master_cat), name='type', dtype=np.int8)
-E3 = Column([99]*len(master_cat), name='member', dtype=np.int8)
+E1 = Column([-99]*len(master_cat), name='sub', dtype=np.int8)    # create columns
+E2 = Column([-99]*len(master_cat), name='type', dtype=np.int8)
+E3 = Column([-99]*len(master_cat), name='member', dtype=np.int8)
 master_cat.add_columns([E1,E2,E3],[-1,-1,-1])                   # add columns to the end of table
 #
 #
@@ -209,7 +224,7 @@ phot_only = np.array([0]*6)
 error = 0
 both = np.array([0]*6)
 no_data = np.array([0]*6)
-stars = np.array([0]*6)
+stars_sub = np.array([0]*6)
 #
 for counter in range(len(master_cat)):
     if master_cat['z_spec'][counter] > 0 and master_cat['z_peak'][counter] > 0:  #entries w/ both spectroscopy and photometry  (SPECTROSCOPIC sub-sample)
@@ -218,7 +233,7 @@ for counter in range(len(master_cat)):
                 if master_cat['cluster'][counter] == (jj+1):      # identify # of spec only objects by cluster
                     if master_cat['star_flag'][counter] == 1:
                         master_cat['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
-                        stars[jj]+=1
+                        stars_sub[jj]+=1
                     else:
                         spec_only[(jj)]+=1
             master_cat['sub'][counter] = 3          # APPLY FILTER: sub=3 for objects w/ SPEC ONLY
@@ -227,7 +242,7 @@ for counter in range(len(master_cat)):
                 if master_cat['cluster'][counter] == (jj+1):      # identify # of (spec & phot) objects by cluster
                     if master_cat['star_flag'][counter] == 1:
                         master_cat['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
-                        stars[jj]+=1
+                        stars_sub[jj]+=1
                     else:
                         both[(jj)]+=1
                         master_cat['sub'][counter] = 1          # APPLY FILTER: sub=1 for objects w/ BOTH SPEC & PHOT
@@ -237,7 +252,7 @@ for counter in range(len(master_cat)):
             if master_cat['cluster'][counter] == (jj+1):      # identify # of spec only objects by cluster
                 if master_cat['star_flag'][counter] == 1:
                     master_cat['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
-                    stars[jj]+=1
+                    stars_sub[jj]+=1
                 else:
                     spec_only[(jj)]+=1
                     master_cat['sub'][counter] = 3          # APPLY FILTER: sub=3 for objects w/ SPEC ONLY
@@ -247,7 +262,7 @@ for counter in range(len(master_cat)):
                 if master_cat['cluster'][counter] == (jj+1):      # identify # of NO DATA objects by cluster
                     if master_cat['star_flag'][counter] == 1:
                         master_cat['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
-                        stars[jj]+=1
+                        stars_sub[jj]+=1
                     else:
                         no_data[(jj)]+=1
                         master_cat['sub'][counter] = 0          # APPLY FILTER: sub=0 for objects w/ NEITHER SPEC NOR PHOT
@@ -256,7 +271,7 @@ for counter in range(len(master_cat)):
                 if master_cat['cluster'][counter] == (jj+1):      # identify # of phot only objects by cluster
                     if master_cat['star_flag'][counter] == 1:
                         master_cat['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
-                        stars[jj]+=1
+                        stars_sub[jj]+=1
                     else:
                         phot_only[(jj)]+=1
                         master_cat['sub'][counter] = 2          # APPLY FILTER: sub=2 for objects w/ PHOT ONLY
@@ -265,7 +280,7 @@ for counter in range(len(master_cat)):
             if master_cat['cluster'][counter] == (jj+1):      # identify # of NO DATA objects by cluster
                 if master_cat['star_flag'][counter] == 1:
                     master_cat['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
-                    stars[jj]+=1
+                    stars_sub[jj]+=1
                 else:
                     no_data[(jj)]+=1
                     master_cat['sub'][counter] = 0          # APPLY FILTER: sub=0 for objects w/ NEITHER SPEC NOR PHOT
@@ -278,15 +293,15 @@ diag_flag_1 = 1             # 0=off (don't display diagnostic); 1=on (display di
 #
 if diag_flag_1 == 1:
     ## Summarize initial data stats in table
-    data_names = Column(['total','spec & phot','only phot','spec only','no data','stars'],name='Property')
+    sub_names = Column(['total','spec & phot','only phot','spec only','no data','stars'],name='Property')
     col_names = ['macs0416','macs1149','macs0717','abell370','abell1063','abell2744']
-    data0 = Column([np.sum([np.sum(both),np.sum(phot_only),np.sum(spec_only),np.sum(no_data),np.sum(stars)]),np.sum(both),np.sum(phot_only),np.sum(spec_only),np.sum(no_data),np.sum(stars)],name='Total')  # total column
-    data_stats = Table([data_names,data0])
+    sub0 = Column([np.sum([np.sum(both),np.sum(phot_only),np.sum(spec_only),np.sum(no_data),np.sum(stars_sub)]),np.sum(both),np.sum(phot_only),np.sum(spec_only),np.sum(no_data),np.sum(stars_sub)],name='Total')  # total column
+    sub_stats = Table([data_names,data0])
     for ii in range(len(spec_only)):
-        data = Column([np.sum([both[ii],phot_only[ii],spec_only[ii],no_data[ii],stars[ii]]),both[ii],phot_only[ii],spec_only[ii],no_data[ii],stars[ii]],name=col_names[ii])
-        data_stats.add_column(data)
+        sub_col = Column([np.sum([both[ii],phot_only[ii],spec_only[ii],no_data[ii],stars_sub[ii]]),both[ii],phot_only[ii],spec_only[ii],no_data[ii],stars_sub[ii]],name=col_names[ii])  # add columns to table one cluster at a time
+        sub_stats.add_column(sub_col)
     #
-    print('Catalogue by sub-type:')
+    print('Catalogue by SUB-type:')
     print(data_stats)
 #
 #
@@ -312,13 +327,23 @@ for counter in range(len(master_cat)):
         master_cat['uv'][counter] = master_cat['L_u'][counter] - master_cat['L_v'][counter]
         master_cat['vj'][counter] = master_cat['L_v'][counter] - master_cat['L_j'][counter]
 #
+## TIME_FLAG_1 END
+#
+if time_flag_1 == 1 and time_flag == 0:
+    print("Section 1 took: %s seconds.\n\n" % (time.time() - start_time))
 #
 #
 #
 #
 #
-## SECTION (2): calulate DEL_Z's & separate outliers
+## SECTION (2): calulate DEL_Z's & separate OUTLIERS
 #
+## TIME_FLAG_2 START
+time_flag_2 = 1     # track & print time to execute current section
+#
+if time_flag_2 == 1 and time_flag == 0:
+    start_time = time.time()
+#  
 #####Note: the photometric redshift used is 'z_peak' column from data
 #
 #(i) calculate delta_z for targets w/ both z_spec & z_phot
@@ -331,13 +356,19 @@ z_cluster = [0.396,0.543,0.545,0.375,0.348,0.308]
 #
 #calucalte del_z, z_clusterspec, z_clusterphot for outlier cut (defined above); these will be used to make cuts (member, field, false pos/neg) to spec sample, from which we will use relative fractions by mass to correct the photometric sample for completeness.
 for counter in range(len(master_cat)):
-    if master_cat['sub'][counter] == 1:
+    if master_cat['sub'][counter] == 1:   # sub=1 identifies spec&phot subsample
         master_cat['del_z'][counter] = ((master_cat['z_peak'][counter] - master_cat['z_spec'][counter]) / (1 + master_cat['z_spec'][counter]))
-        master_cat['z_clusterspec'][counter] = ((master_cat['z_spec'][counter] - z_cluster[0]) / (1 + master_cat['z_spec'][counter]))
-        master_cat['z_clusterphot'][counter] = ((master_cat['z_peak'][counter] - z_cluster[0]) / (1 + master_cat['z_peak'][counter]))
+        for ii in range(len(z_cluster)):
+            if master_cat['cluster'][counter] == (ii+1):
+                master_cat['z_clusterspec'][counter] = ((master_cat['z_spec'][counter] - z_cluster[ii]) / (1 + master_cat['z_spec'][counter]))
+                master_cat['z_clusterphot'][counter] = ((master_cat['z_peak'][counter] - z_cluster[ii]) / (1 + master_cat['z_peak'][counter]))
+    elif master_cat['sub'][counter] == 2:   # sub=2 identifies phot-only subsample
+        for ii in range(len(z_cluster)):
+            if master_cat['cluster'][counter] == (ii+1):
+                master_cat['z_clusterphot'][counter] = ((master_cat['z_peak'][counter] - z_cluster[ii]) / (1 + master_cat['z_peak'][counter]))
 #
 #
-## SECTION(2.1): separate OUTLIERS from both phot & spec sub-sample, defined as |del_z| < 0.15. apply FILTER MEMBER = 4 for outliers;   
+## SECTION(2.1): separate OUTLIERS from both phot & spec sub-sample, defined as |del_z| < 0.15. apply FILTER TYPE = 3 for outliers;   
 #
 outliers = np.array([0]*6)      # initialize array to track outliers by cluster, for computing outlier fraction later
 sum_delz = []                   # for computing mean |del_z|
@@ -346,7 +377,7 @@ sum_delz = []                   # for computing mean |del_z|
 for counter in range(len(master_cat)):
     if master_cat['sub'][counter] == 1:                        # sub=1 for objects with both spec & phot; total # of such objects tracked by cluster above in the array called "both"
         if np.abs(master_cat['del_z'][counter]) > 0.15:        # |del_z| > 0.15 for outliers, threshold chosen for historical reasons to facilitate comparison with other studies
-            master_cat['member'][counter] = 4                  # member = 4 identifies outliers
+            master_cat['type'][counter] = 3                  # type = 3 identifies outliers
             for ii in range(len(outliers)):
                 if master_cat['cluster'][counter] == (ii+1):   # keep track of outliers by cluster
                     outliers[ii]+=1
@@ -357,731 +388,438 @@ for counter in range(len(master_cat)):
 #
 delz_mean = np.sum(sum_delz)/len(sum_delz)
 delz_scatter = np.std(sum_delz)
-print('Outlier fraction: ',str(np.sum(outliers)/np.sum(both)))
-print('|del_z| mean: ',str(delz_mean))
-print('|del_z| scatter: ',str(delz_scatter),'\n')
+print('OUTLIERS: %s' % np.sum(outliers))
+print('Outlier fraction: %s' % (np.sum(outliers)/np.sum(both)))
+print('|del_z| mean: %s'%delz_mean)
+print('|del_z| scatter: %s\n'%delz_scatter)
+#
+## TIME_FLAG_2 END
+#
+if time_flag_2 == 1 and time_flag == 0:
+    print("Section 2 took: %s seconds.\n\n" % (time.time() - start_time))
+#  
 #
 #
 #
 #
-#
-## SECTION 3: separate SF/Q for both subsamples based on van der Burg (2013) 
+## SECTION (3): add FILTER TYPE: separate SF/Q for both subsamples based on van der Burg (2013) 
 ## colour criteria;    filter name: 'type'  IDs below
 ##   0 = stars;  1 = SF (star-forming);    2 = Q (quiscient);    3 = outliers
 #
-##(i) sift for stars in “star_flag” from catalogue; 0: galaxies, 1: stars, 2: fainter than 25 magnitude
-star = [[0]*6]
-star_type = [[0]*3]
-size = len(master_cat)
-counter = 0
-while counter < size: 
-    if master_cat[counter]['star_flag'] == 1: #identify objects with a "star flag" = 1 for stars; gal=0, mag>25 = 2
-        master_cat[counter]['type'] = 0
-        if master_cat[counter]['sub'] == 0:     #keep track of which subsample stars came from
-            star_type[0][0] +=1
-        elif master_cat[counter]['sub'] == 1:   #spec stars
-            spec_subsample -=1
-            star_type[0][1] +=1
-        elif master_cat[counter]['sub'] ==2:    #phot stars
-            phot_subsample -=1
-            star_type[0][2] +=1
-        if master_cat[counter]['cluster'] == 1:
-            star[0][0] +=1
-        elif master_cat[counter]['cluster'] == 2:
-            star[0][1] +=1
-        elif master_cat[counter]['cluster'] == 3:
-            star[0][2] +=1    
-        elif master_cat[counter]['cluster'] == 4:
-            star[0][3] +=1    
-        elif master_cat[counter]['cluster'] == 5:
-            star[0][4] +=1    
-        elif master_cat[counter]['cluster'] == 6:
-            star[0][5] +=1
-        counter +=1
+#
+## TIME_FLAG_3 START
+time_flag_3 = 1     # track & print time to execute current section
+#
+if time_flag_3 == 1 and time_flag == 0:
+    start_time = time.time()
+#  
+SF_type = np.array([0]*6)                             # initialize arrays
+Q_type = np.array([0]*6)
+stars_type = np.array([0]*6)                          # count # of stars by cluster
+lost_type = np.array([0]*6)                           # objects lost due no data (sub=0), spec only (sub=3), 
+for counter in range(len(master_cat)):
+    if master_cat['star_flag'][counter] == 1:          # identify STARS, filter type=0
+        master_cat['type'][counter] = 0              
+        for ii in range(len(stars_type)):
+            if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
+                stars_type[ii]+=1
+    elif master_cat['sub'][counter]==1 or master_cat['sub'][counter]==2:    # sub=1 for (spec & phot) subsample, sub=2 for phot subsample; i.e. look at all objects with photometry
+        if master_cat['uv'][counter] > 1.3 and master_cat['vj'][counter] < 1.6 and master_cat['uv'][counter] > ((0.88*master_cat[counter]['vj']) + 0.6): 
+            master_cat['type'][counter] = 2             # identify passive (QUIESCENT) galaxies, type=2
+            for ii in range(len(Q_type)):
+                if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
+                    Q_type[ii]+=1
+        else:
+            master_cat['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1
+            for ii in range(len(SF_type)):
+                if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
+                    SF_type[ii]+=1
     else:
-        counter +=1
+        for ii in range(len(lost_type)):
+            if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
+                lost_type[ii]+=1      # objects lost due to spec only (sub=3),no data (sub=0), and possibly outliers (type=3) 
+#        
 #
-## SF/Q segragation
-spec_SF = 0
-spec_Q = 0
-phot_SF = 0
-phot_Q = 0
-#stat counting variables
-SF_spec = [[0]*6]
-SF_phot = [[0]*6]
-Q_spec = [[0]*6]
-Q_phot = [[0]*6]
-check1 = 0  #check for stars
-check2 = 0  #check that rows NOT counted should equal sum(nodata,out,spec_only)
-size = len(master_cat)
-counter = 0
-while counter < size: 
-    if master_cat[counter]['sub'] == 1 and master_cat[counter]['type'] != 3 and master_cat[counter]['type'] != 0:        #spec subsample, skipping stars & outliers
-        if master_cat[counter]['uv'] > 1.3 and master_cat[counter]['vj'] < 1.6 and master_cat[counter]['uv'] > ((0.88*master_cat[counter]['vj']) + 0.6): #identify passive (quiescent)
-            master_cat[counter]['type'] = 2
-#            spec_Q +=1
-            if master_cat[counter]['cluster'] == 1:
-                Q_spec[0][0] +=1
-            elif master_cat[counter]['cluster'] == 2:
-                Q_spec[0][1] +=1
-            elif master_cat[counter]['cluster'] == 3:
-                Q_spec[0][2] +=1    
-            elif master_cat[counter]['cluster'] == 4:
-                Q_spec[0][3] +=1    
-            elif master_cat[counter]['cluster'] == 5:
-                Q_spec[0][4] +=1    
-            elif master_cat[counter]['cluster'] == 6:
-                Q_spec[0][5] +=1   
-        else:
-            master_cat[counter]['type'] = 1         #if not Q, then must be SF
-#            spec_SF +=1
-            if master_cat[counter]['cluster'] == 1:
-                SF_spec[0][0] +=1
-            elif master_cat[counter]['cluster'] == 2:
-                SF_spec[0][1] +=1
-            elif master_cat[counter]['cluster'] == 3:
-                SF_spec[0][2] +=1    
-            elif master_cat[counter]['cluster'] == 4:
-                SF_spec[0][3] +=1    
-            elif master_cat[counter]['cluster'] == 5:
-                SF_spec[0][4] +=1    
-            elif master_cat[counter]['cluster'] == 6:
-                SF_spec[0][5] +=1  
-    elif master_cat[counter]['sub'] == 2 and master_cat[counter]['type'] != 3 and master_cat[counter]['type'] != 0:               #phot subsample
-        if master_cat[counter]['uv'] > 1.3 and master_cat[counter]['vj'] < 1.6 and master_cat[counter]['uv'] > ((0.88*master_cat[counter]['vj'] + 0.6)): #identify passive (quiescent)
-            master_cat[counter]['type'] = 2
-#            phot_Q +=1
-            if master_cat[counter]['cluster'] == 1:
-                Q_phot[0][0] +=1
-            elif master_cat[counter]['cluster'] == 2:
-                Q_phot[0][1] +=1
-            elif master_cat[counter]['cluster'] == 3:
-                Q_phot[0][2] +=1    
-            elif master_cat[counter]['cluster'] == 4:
-                Q_phot[0][3] +=1    
-            elif master_cat[counter]['cluster'] == 5:
-                Q_phot[0][4] +=1    
-            elif master_cat[counter]['cluster'] == 6:
-                Q_phot[0][5] +=1     
-        else:
-            master_cat[counter]['type'] = 1
-#            phot_SF +=1
-            if master_cat[counter]['cluster'] == 1:
-                SF_phot[0][0] +=1
-            elif master_cat[counter]['cluster'] == 2:
-                SF_phot[0][1] +=1
-            elif master_cat[counter]['cluster'] == 3:
-                SF_phot[0][2] +=1    
-            elif master_cat[counter]['cluster'] == 4:
-                SF_phot[0][3] +=1    
-            elif master_cat[counter]['cluster'] == 5:
-                SF_phot[0][4] +=1    
-            elif master_cat[counter]['cluster'] == 6:
-                SF_phot[0][5] +=1   
-    elif master_cat[counter]['type'] == 0:               #stars
-        check1 +=1
-    else: 
-        check2 +=1      #check that entries not listed above are outliers & nodata ONLY i.e. check should equal np.sum(nodata)+np.sum(out)
-    counter +=1
+## SECTION (3.1): SUMMARY table
+### MAY NEED TO EDIT ### diag_flag_2
+##  summarize data population as segregated above, and display in a table
+diag_flag_2 = 1
 #
-## calculate statistics
+if diag_flag_2 == 1:
+    ## Summarize initial data stats in table
+    type_names = Column(['Total','SF','Q','Other'],name='Property')
+    col_names = ['macs0416','macs1149','macs0717','abell370','abell1063','abell2744']
+    type0 = Column([np.sum([np.sum(SF_type),np.sum(Q_type),np.sum(lost_type),np.sum(stars_type)]),np.sum(SF_type),np.sum(Q_type),np.sum(lost_type+stars_type)],name='Total')  # total column
+    type_stats = Table([type_names,type0])
+    for ii in range(len(spec_only)):
+        type_col = Column([np.sum([SF_type[ii],Q_type[ii],lost_type[ii],stars_type[ii]]),SF_type[ii],Q_type[ii],(lost_type[ii]+stars_type[ii])],name=col_names[ii])
+        type_stats.add_column(type_col)  # add columns to table one cluster at a time
+    #
+    print('Catalogue by TYPE:')
+    print(type_stats)
+    print('NOTE: "Other" is comprised of objects without photometry (i.e. stars, and objects with either bad photometry or both bad photometry and bad spectroscopy).\n')
 #
-delz_std=[]
-clusterspec_std=[]
-clusterphot_std=[]
-counter = 0
-size = len(master_cat)
-while counter < size:
-    if master_cat[counter]['type'] == 1 or master_cat[counter]['type'] == 2:  #SF & Q, no stars or outliers     
-        if master_cat[counter]['sub'] == 1:                 #objects w/ both spec & phot only
-            delz_std.append(master_cat[counter]['del_z'])
-            clusterspec_std.append(master_cat[counter]['z_clusterspec'])
-        elif master_cat[counter]['sub'] == 2:                 #objects w/ phot only
-            clusterphot_std.append(master_cat[counter]['z_clusterphot'])
-    counter +=1
-delz_std = np.std(delz_std)
-clusterspec_std = np.std(clusterspec_std)
-clusterphot_std = np.std(clusterphot_std)
-na = 'n/a'
+## TIME_FLAG_3 END
 #
-macro_type = Column(['total','SF','Q','delz std','z_cluster std','stars','outliers'])
-tot = Column([np.sum(both)-np.sum(spec_only)+outliers+star_type[0][1]+np.sum(phot_only),np.sum(SF_spec)+np.sum(SF_phot),np.sum(Q_spec)+np.sum(Q_phot),na,na,np.sum(star_type),outliers])
-sp = Column([np.sum(both)-np.sum(spec_only)+outliers+star_type[0][1],np.sum(SF_spec),np.sum(Q_spec),delz_std,clusterspec_std,star_type[0][0],outliers])
-ph = Column([np.sum(phot_only),np.sum(SF_phot),np.sum(Q_phot),na,clusterphot_std,star_type[0][1], 0])
-macros_type = Table([macro_type,tot,sp,ph],names=('Property','Total','spec','phot'))
+if time_flag_3 == 1 and time_flag == 0:
+    print("Section 3 took: %s seconds.\n\n" % (time.time() - start_time))
 #
 #
 #
 #
 #
+## SECTION 4: apply MEMBER FILTER based on cuts discussed with AM in 2017 (see comments below), based on cuts made in VDB2013. MEMBER isolates: 0=cluster member (secure); 1=field (secure); 2=false pos; 3=false neg;
 #
-#### DEL_Z CUTS ####
+## CRITERIA
 #
-#
-#
-## SECTION 4: apply delta_z cuts to determine membership of z_phot sample based on cut
-## criteria discussed w/ AM: |del_z phot| < 0.07 & |del_z spec| < 0.01, in the process isolate 
-## secure field, false pos/neg items from. ID column to identify populations is
-## called "member"         
-## separate  secure field/member & false pos/neg using criteria: 
-## SF:
-## cluster = 0: abs(z_clusterspec) < 0.01 & abs(z_cluster phot) < 0.03; 
-## field = 1: abs(z_clusterspec) > 0.02 & abs(z_cluster phot) > 0.1; 
+## SF: cluster = 0: abs(z_clusterspec) < 0.01 & abs(z_cluster phot) < 0.03; 
+##      field = 1: abs(z_clusterspec) > 0.02 & abs(z_cluster phot) > 0.1; 
 ## false pos = 2: abs(z_clusterspec) > 0.01 & abs(z_cluster phot) < 0.03;
 ## false neg = 3: abs(z_clusterspec) < 0.01 & abs(z_cluster phot) > 0.03;
-#
 ## Q: same cutoff for z_clusterspec, cutoff for z_clusterphot > 0.07
 #
-## Note: this is only done for spec sample; results used to correct photo sample for completeness at end of analysis
+## Note: this is only done for spec sample; results used to correct photo sample for completeness at end of analysis in file "master_smf_8.py"
 #
 ### SF sub-sample: SF_spec into secure member, field, false pos/neg
-###
 #
-smem = [[0]*6]
-qmem = [[0]*6]
-sfield = [[0]*6]
-qfield = [[0]*6]
-spos = [[0]*6]
-qpos = [[0]*6]
-sneg = [[0]*6]
-qneg = [[0]*6]
-#cluster mass lists to see false pos/neg by mass bin by cluster
-SF_pos1 = []
-Q_pos1 = []
-SF_neg1 = []
-Q_neg1 = []
-SF_pos2 = []
-Q_pos2 = []
-SF_neg2 = []
-Q_neg2 = []
-SF_pos3 = []
-Q_pos3 = []
-SF_neg3 = []
-Q_neg3 = []
-SF_pos4 = []
-Q_pos4 = []
-SF_neg4 = []
-Q_neg4 = []
-SF_pos5 = []
-Q_pos5 = []
-SF_neg5 = []
-Q_neg5 = []
-SF_pos6 = []
-Q_pos6 = []
-SF_neg6 = []
-Q_neg6 = []
-other = 0
-size = len(master_cat)
-counter = 0
-while counter < size:
-    if master_cat[counter]['sub'] == 1:       # ['sub'] == 1: spec
-        if master_cat[counter]['type'] == 0 or master_cat[counter]['type'] ==3:    #['type'] == 0: stars,    ['type'] == 3: spec_only
-            other +=1
-        elif master_cat[counter]['type'] == 1:      # '[type'] == 1:   look only at SF spec population
-            if abs(master_cat[counter]['z_clusterspec']) > 0.02 and abs(master_cat[counter]['z_clusterphot']) > 0.1:  # secure field
-                master_cat[counter]['member'] = 1   #field
-                if master_cat[counter]['cluster'] == 1:
-                    sfield[0][0] +=1
-                elif master_cat[counter]['cluster'] == 2:
-                    sfield[0][1] +=1
-                elif master_cat[counter]['cluster'] == 3:
-                    sfield[0][2] +=1    
-                elif master_cat[counter]['cluster'] == 4:
-                    sfield[0][3] +=1    
-                elif master_cat[counter]['cluster'] == 5:
-                    sfield[0][4] +=1    
-                elif master_cat[counter]['cluster'] == 6:
-                    sfield[0][5] +=1  
-            elif abs(master_cat[counter]['z_clusterspec']) > 0.01 and abs(master_cat[counter]['z_clusterphot']) < 0.03:  #  false positive
-                master_cat[counter]['member'] = 2   #false positive
-                if master_cat[counter]['cluster'] == 1:
-                    spos[0][0] +=1
-                    SF_pos1.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 2:
-                    spos[0][1] +=1
-                    SF_pos2.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 3:
-                    spos[0][2] +=1    
-                    SF_pos3.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 4:
-                    spos[0][3] +=1 
-                    SF_pos4.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 5:
-                    spos[0][4] +=1 
-                    SF_pos5.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 6:
-                    spos[0][5] +=1
-                    SF_pos6.append(master_cat[counter]['lmass'])
-            elif abs(master_cat[counter]['z_clusterspec']) < 0.01 and abs(master_cat[counter]['z_clusterphot']) > 0.03:  #  false negative
-                master_cat[counter]['member'] = 3   #false negative
-                if master_cat[counter]['cluster'] == 1:
-                    sneg[0][0] +=1
-                    SF_neg1.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 2:
-                    sneg[0][1] +=1
-                    SF_neg2.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 3:
-                    sneg[0][2] +=1  
-                    SF_neg3.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 4:
-                    sneg[0][3] +=1  
-                    SF_neg4.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 5:
-                    sneg[0][4] +=1 
-                    SF_neg5.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 6:
-                    sneg[0][5] +=1
-                    SF_neg6.append(master_cat[counter]['lmass'])
-            elif abs(master_cat[counter]['z_clusterspec']) < 0.01 and abs(master_cat[counter]['z_clusterphot']) < 0.03:
-                master_cat[counter]['member'] = 0              #secure cluster member
-                if master_cat[counter]['cluster'] == 1:
-                    smem[0][0] +=1
-                elif master_cat[counter]['cluster'] == 2:
-                    smem[0][1] +=1
-                elif master_cat[counter]['cluster'] == 3:
-                    smem[0][2] +=1    
-                elif master_cat[counter]['cluster'] == 4:
-                    smem[0][3] +=1    
-                elif master_cat[counter]['cluster'] == 5:
-                    smem[0][4] +=1    
-                elif master_cat[counter]['cluster'] == 6:
-                    smem[0][5] +=1 
-        elif master_cat[counter]['type'] == 2:                  #Q  
-            if abs(master_cat[counter]['z_clusterspec']) > 0.02 and abs(master_cat[counter]['z_clusterphot']) > 0.1:  # secure field
-                master_cat[counter]['member'] = 1       #field
-                if master_cat[counter]['cluster'] == 1:
-                    qfield[0][0] +=1
-                elif master_cat[counter]['cluster'] == 2:
-                    qfield[0][1] +=1
-                elif master_cat[counter]['cluster'] == 3:
-                    qfield[0][2] +=1    
-                elif master_cat[counter]['cluster'] == 4:
-                    qfield[0][3] +=1    
-                elif master_cat[counter]['cluster'] == 5:
-                    qfield[0][4] +=1    
-                elif master_cat[counter]['cluster'] == 6:
-                    qfield[0][5] +=1  
-            elif abs(master_cat[counter]['z_clusterspec']) > 0.01 and abs(master_cat[counter]['z_clusterphot']) < 0.07:  #  false positive
-                master_cat[counter]['member'] = 2       #false positive
-                if master_cat[counter]['cluster'] == 1:
-                    qpos[0][0] +=1
-                    Q_pos1.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 2:
-                    qpos[0][1] +=1
-                    Q_pos2.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 3:
-                    qpos[0][2] +=1  
-                    Q_pos3.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 4:
-                    qpos[0][3] +=1 
-                    Q_pos4.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 5:
-                    qpos[0][4] +=1 
-                    Q_pos5.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 6:
-                    qpos[0][5] +=1
-                    Q_pos6.append(master_cat[counter]['lmass'])
-            elif abs(master_cat[counter]['z_clusterspec']) < 0.01 and abs(master_cat[counter]['z_clusterphot']) > 0.07:  #  false negative
-                master_cat[counter]['member'] = 3       #false negative
-                if master_cat[counter]['cluster'] == 1:
-                    qneg[0][0] +=1
-                    Q_neg1.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 2:
-                    qneg[0][1] +=1
-                    Q_neg2.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 3:
-                    qneg[0][2] +=1    
-                    Q_neg3.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 4:
-                    qneg[0][3] +=1 
-                    Q_neg4.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 5:
-                    qneg[0][4] +=1 
-                    Q_neg5.append(master_cat[counter]['lmass'])
-                elif master_cat[counter]['cluster'] == 6:
-                    qneg[0][5] +=1
-                    Q_neg6.append(master_cat[counter]['lmass'])
-            elif abs(master_cat[counter]['z_clusterspec']) < 0.01 and abs(master_cat[counter]['z_clusterphot']) < 0.07:
-                master_cat[counter]['member'] = 0              #secure cluster member
-                if master_cat[counter]['cluster'] == 1:
-                    qmem[0][0] +=1
-                elif master_cat[counter]['cluster'] == 2:
-                    qmem[0][1] +=1                        
-                elif master_cat[counter]['cluster'] == 3:
-                    qmem[0][2] +=1                           
-                elif master_cat[counter]['cluster'] == 4:
-                    qmem[0][3] +=1                         
-                elif master_cat[counter]['cluster'] == 5:
-                    qmem[0][4] +=1                         
-                elif master_cat[counter]['cluster'] == 6:
-                    qmem[0][5] +=1                        
-        counter +=1
-    else:     
-        counter +=1
 #
-## summarize key macro information by cluster in a table
+## TIME_FLAG_4 START
+time_flag_4 = 1     # track & print time to execute current section
 #
-macro_names = Column(['total','no data','spec total(no out)','phot total','stars','SF total','SF spec','SF phot','Q total','Q spec','Q phot','outliers (spec)'])
-total = Column([len(master_cat),np.sum(nodata),spec_subsample,phot_subsample,np.sum(star),np.sum(SF_spec)+np.sum(SF_phot),np.sum(SF_spec),np.sum(SF_phot),np.sum(Q_spec)+np.sum(Q_phot),np.sum(Q_spec),np.sum(Q_phot),outliers])
-cl1 = Column([len(cat_macs0416),nodata[0][0],both[0][0]+spec_only[0][0],phot_only[0][0],star[0][0],SF_spec[0][0]+SF_phot[0][0],SF_spec[0][0],SF_phot[0][0],Q_spec[0][0]+Q_phot[0][0],Q_spec[0][0],Q_phot[0][0],out[0][0]])
-cl2 = Column([len(cat_macs1149),nodata[0][1],both[0][1]+spec_only[0][1],phot_only[0][1],star[0][1],SF_spec[0][1]+SF_phot[0][1],SF_spec[0][1],SF_phot[0][1],Q_spec[0][1]+Q_phot[0][1],Q_spec[0][1],Q_phot[0][1],out[0][1]])
-cl3 = Column([len(cat_macs0717),nodata[0][2],both[0][2]+spec_only[0][2],phot_only[0][2],star[0][2],SF_spec[0][2]+SF_phot[0][2],SF_spec[0][2],SF_phot[0][2],Q_spec[0][2]+Q_phot[0][2],Q_spec[0][2],Q_phot[0][2],out[0][2]])
-cl4 = Column([len(cat_abell370),nodata[0][3],both[0][3]+spec_only[0][3],phot_only[0][3],star[0][3],SF_spec[0][3]+SF_phot[0][3],SF_spec[0][3],SF_phot[0][3],Q_spec[0][3]+Q_phot[0][3],Q_spec[0][3],Q_phot[0][3],out[0][3]])
-cl5 = Column([len(cat_abell1063),nodata[0][4],both[0][4]+spec_only[0][4],phot_only[0][4],star[0][4],SF_spec[0][4]+SF_phot[0][4],SF_spec[0][4],SF_phot[0][4],Q_spec[0][4]+Q_phot[0][4],Q_spec[0][4],Q_phot[0][4],out[0][4]])
-cl6 = Column([len(cat_abell2744),nodata[0][5],both[0][5]+spec_only[0][5],phot_only[0][5],star[0][5],SF_spec[0][5]+SF_phot[0][5],SF_spec[0][5],SF_phot[0][5],Q_spec[0][5]+Q_phot[0][5],Q_spec[0][5],Q_phot[0][5],out[0][5]])
-macros1 = Table([macro_names,total,cl1,cl2],names=('Property','Full catalogue','1.macs0416','2.macs1149'))
-macros2 = Table([macro_names,cl3,cl4,cl5,cl6],names=('Property','3.macs0717','4.abell370','5.abell1063','6.abel2744'))
+if time_flag_4 == 1 and time_flag == 0:
+    start_time = time.time()
 #
-##summarize spec sample stats in table
+## the following code is part of a diagnostic to test the # of false pos/neg produced by altering the photometric/spectroscopic redshift cutoff. upon completion it will be commented out permenantly.
 #
-spec_names = Column(['secure cluster - SF','secure field - SF','false positive - SF','false negative - SF','total SF','secure cluster - Q','secure field - Q','false positive - Q','false negative - Q','total Q','Total'])
-total_mems = Column([np.sum(smem),np.sum(sfield),np.sum(spos),np.sum(sneg),np.sum([smem,sfield,spos,sneg]),np.sum(qmem),np.sum(qfield),np.sum(qpos),np.sum(qneg),np.sum([qmem,qfield,qpos,qneg]),np.sum([smem,sfield,spos,sneg,qmem,qfield,qpos,qneg])])
-cl1_mems = Column([smem[0][0],sfield[0][0],spos[0][0],sneg[0][0],np.sum([smem[0][0],sfield[0][0],spos[0][0],sneg[0][0]]),qmem[0][0],qfield[0][0],qpos[0][0],qneg[0][0],np.sum([qmem[0][0],qfield[0][0],qpos[0][0],qneg[0][0]]),np.sum([smem[0][0],sfield[0][0],spos[0][0],sneg[0][0],qmem[0][0],qfield[0][0],qpos[0][0],qneg[0][0]])])
-cl2_mems = Column([smem[0][1],sfield[0][1],spos[0][1],sneg[0][1],np.sum([smem[0][1],sfield[0][1],spos[0][1],sneg[0][1]]),qmem[0][1],qfield[0][1],qpos[0][1],qneg[0][1],np.sum([qmem[0][1],qfield[0][1],qpos[0][1],qneg[0][1]]),np.sum([smem[0][1],sfield[0][1],spos[0][1],sneg[0][1],qmem[0][1],qfield[0][1],qpos[0][1],qneg[0][1]])])
-cl3_mems = Column([smem[0][2],sfield[0][2],spos[0][2],sneg[0][2],np.sum([smem[0][2],sfield[0][2],spos[0][2],sneg[0][2]]),qmem[0][2],qfield[0][2],qpos[0][2],qneg[0][2],np.sum([qmem[0][2],qfield[0][2],qpos[0][2],qneg[0][2]]),np.sum([smem[0][2],sfield[0][2],spos[0][2],sneg[0][2],qmem[0][2],qfield[0][2],qpos[0][2],qneg[0][2]])])
-cl4_mems = Column([smem[0][3],sfield[0][3],spos[0][3],sneg[0][3],np.sum([smem[0][3],sfield[0][3],spos[0][3],sneg[0][3]]),qmem[0][3],qfield[0][3],qpos[0][3],qneg[0][3],np.sum([qmem[0][3],qfield[0][3],qpos[0][3],qneg[0][3]]),np.sum([smem[0][3],sfield[0][3],spos[0][3],sneg[0][3],qmem[0][3],qfield[0][3],qpos[0][3],qneg[0][3]])])
-cl5_mems = Column([smem[0][4],sfield[0][4],spos[0][4],sneg[0][4],np.sum([smem[0][4],sfield[0][4],spos[0][4],sneg[0][4]]),qmem[0][4],qfield[0][4],qpos[0][4],qneg[0][4],np.sum([qmem[0][4],qfield[0][4],qpos[0][4],qneg[0][4]]),np.sum([smem[0][4],sfield[0][4],spos[0][4],sneg[0][4],qmem[0][4],qfield[0][4],qpos[0][4],qneg[0][4]])])
-cl6_mems = Column([smem[0][5],sfield[0][5],spos[0][5],sneg[0][5],np.sum([smem[0][5],sfield[0][5],spos[0][5],sneg[0][5]]),qmem[0][5],qfield[0][5],qpos[0][5],qneg[0][5],np.sum([qmem[0][5],qfield[0][5],qpos[0][5],qneg[0][5]]),np.sum([smem[0][5],sfield[0][5],spos[0][5],sneg[0][5],qmem[0][5],qfield[0][5],qpos[0][5],qneg[0][5]])])
-
-spec_stats1 = Table([spec_names,total_mems,cl1_mems,cl2_mems],names=('Property','Full catalogue','1.macs0416','2.macs1149'))
-spec_stats2 = Table([spec_names,cl3_mems,cl4_mems,cl5_mems,cl6_mems],names=('Property','3.macs0717','4.abell370','5.abell1063','6.abel2744'))
+# define cut-offs for SF & Q
+z_cutoff = np.linspace(0.01,0.09,9)       # create array from [0.01,0.09] in steps of 0.01; replace in loop below with SF_cutoff & Q_cutoff once cutoffs are determined 
+SF_cutoff = [0.01,0.03]      # [spec,phot]
+Q_cutoff = [0.01,0.08]
 #
-#create histograms & summarize results by mass bin for false pos/neg
-range1 = [7.5,12.15]
-num_binsSF = [5,2,2,5,5,5]#[4,4,4,4,4,4]#   
-num_binsQ = [4,5,5,4,4,4]#[6,6,6,6,6,6] #[7,7,7,7,7,7]#
 #
-SF_pos_hist1, binsSF1 = np.histogram(SF_pos1, bins=num_binsSF[0],range=range1)
-SF_neg_hist1, binsSF1 = np.histogram(SF_neg1, bins=num_binsSF[0],range=range1)
-Q_pos_hist1, binsQ1 = np.histogram(Q_pos1, bins=num_binsQ[0],range=range1)
-Q_neg_hist1, binsQ1 = np.histogram(Q_neg1, bins=num_binsQ[0],range=range1)
-SF_pos_hist2, binsSF2 = np.histogram(SF_pos2, bins=num_binsSF[1],range=range1)
-SF_neg_hist2, binsSF2 = np.histogram(SF_neg2, bins=num_binsSF[1],range=range1)
-Q_pos_hist2, binsQ2 = np.histogram(Q_pos2, bins=num_binsQ[1],range=range1)
-Q_neg_hist2, binsQ2 = np.histogram(Q_neg2, bins=num_binsQ[1],range=range1)
-SF_pos_hist3, binsSF3 = np.histogram(SF_pos3, bins=num_binsSF[2],range=range1)
-SF_neg_hist3, binsSF3 = np.histogram(SF_neg3, bins=num_binsSF[2],range=range1)
-Q_pos_hist3, binsQ3 = np.histogram(Q_pos3, bins=num_binsQ[2],range=range1)
-Q_neg_hist3, binsQ3 = np.histogram(Q_neg3, bins=num_binsQ[2],range=range1)
-SF_pos_hist4, binsSF4 = np.histogram(SF_pos4, bins=num_binsSF[3],range=range1)
-SF_neg_hist4, binsSF4 = np.histogram(SF_neg4, bins=num_binsSF[3],range=range1)
-Q_pos_hist4, binsQ4 = np.histogram(Q_pos4, bins=num_binsQ[3],range=range1)
-Q_neg_hist4, binsQ4 = np.histogram(Q_neg4, bins=num_binsQ[3],range=range1)
-SF_pos_hist5, binsSF5 = np.histogram(SF_pos5, bins=num_binsSF[4],range=range1)
-SF_neg_hist5, binsSF5 = np.histogram(SF_neg5, bins=num_binsSF[4],range=range1)
-Q_pos_hist5, binsQ5 = np.histogram(Q_pos5, bins=num_binsQ[4],range=range1)
-Q_neg_hist5, binsQ5 = np.histogram(Q_neg5, bins=num_binsQ[4],range=range1)
-SF_pos_hist6, binsSF6 = np.histogram(SF_pos6, bins=num_binsSF[5],range=range1)
-SF_neg_hist6, binsSF6 = np.histogram(SF_neg6, bins=num_binsSF[5],range=range1)
-Q_pos_hist6, binsQ6 = np.histogram(Q_pos6, bins=num_binsQ[5],range=range1)
-Q_neg_hist6, binsQ6 = np.histogram(Q_neg6, bins=num_binsQ[5],range=range1)
+## these lists don't have a purpose but might come in handy later
+## cluster mass lists to see false pos/neg by mass bin by cluster
+#SF_pos = [[],[],[],[],[],[]]
+#SF_neg = [[],[],[],[],[],[]]
+#Q_pos = [[],[],[],[],[],[]]
+#Q_neg = [[],[],[],[],[],[]]    
 #
-#group clusters: group1: 1&4&5&6, group 2: 2&3 by redshift. see if mass correction bins work out better
-SF_pos_group1 = SF_pos_hist1+SF_pos_hist4+SF_pos_hist5+SF_pos_hist6
-SF_neg_group1 = SF_neg_hist1+SF_neg_hist4+SF_neg_hist5+SF_neg_hist6
-Q_pos_group1 = Q_pos_hist1+Q_pos_hist4+Q_pos_hist5+Q_pos_hist6
-Q_neg_group1 = Q_neg_hist1+Q_neg_hist4+Q_neg_hist5+Q_neg_hist6
-SF_pos_group2 = SF_pos_hist2+SF_pos_hist3
-SF_neg_group2 = SF_neg_hist2+SF_neg_hist3
-Q_pos_group2 = Q_pos_hist2+Q_pos_hist3
-Q_neg_group2 = Q_neg_hist2+Q_neg_hist3
-
-##create summary tables, one for each cluster
 #
-#midbins for each cluster, SF & Q separately as diff # of bins
-##SF
-#1
-SF_midbins1 = np.empty_like(SF_pos_hist1, dtype='float64')
-size = len(binsSF1)-1
-counter = 0
-while counter < size:
-    SF_midbins1[counter] = (binsSF1[counter] + binsSF1[counter+1])/2
-    counter +=1
-#2
-SF_midbins2 = np.empty_like(SF_pos_hist2, dtype='float64')
-size = len(binsSF2)-1
-counter = 0
-while counter < size:
-    SF_midbins2[counter] = (binsSF2[counter] + binsSF2[counter+1])/2
-    counter +=1
-#3
-SF_midbins3 = np.empty_like(SF_pos_hist3, dtype='float64')
-size = len(binsSF3)-1
-counter = 0
-while counter < size:
-    SF_midbins3[counter] = (binsSF3[counter] + binsSF3[counter+1])/2
-    counter +=1
-#4
-SF_midbins4 = np.empty_like(SF_pos_hist4, dtype='float64')
-size = len(binsSF4)-1
-counter = 0
-while counter < size:
-    SF_midbins4[counter] = (binsSF4[counter] + binsSF4[counter+1])/2
-    counter +=1
-#5
-SF_midbins5 = np.empty_like(SF_pos_hist5, dtype='float64')
-size = len(binsSF5)-1
-counter = 0
-while counter < size:
-    SF_midbins5[counter] = (binsSF5[counter] + binsSF5[counter+1])/2
-    counter +=1
-#6
-SF_midbins6 = np.empty_like(SF_pos_hist6, dtype='float64')
-size = len(binsSF6)-1
-counter = 0
-while counter < size:
-    SF_midbins6[counter] = (binsSF6[counter] + binsSF6[counter+1])/2
-    counter +=1
-##Q
-#1
-Q_midbins1 = np.empty_like(Q_pos_hist1, dtype='float64')
-size = len(binsQ1)-1
-counter = 0
-while counter < size:
-    Q_midbins1[counter] = (binsQ1[counter] + binsQ1[counter+1])/2
-    counter +=1
-#2
-Q_midbins2 = np.empty_like(Q_pos_hist2, dtype='float64')
-size = len(binsQ2)-1
-counter = 0
-while counter < size:
-    Q_midbins2[counter] = (binsQ2[counter] + binsQ2[counter+1])/2
-    counter +=1
-#3
-Q_midbins3 = np.empty_like(Q_pos_hist3, dtype='float64')
-size = len(binsQ3)-1
-counter = 0
-while counter < size:
-    Q_midbins3[counter] = (binsQ3[counter] + binsQ3[counter+1])/2
-    counter +=1
-#4
-Q_midbins4 = np.empty_like(Q_pos_hist4, dtype='float64')
-size = len(binsQ4)-1
-counter = 0
-while counter < size:
-    Q_midbins4[counter] = (binsQ4[counter] + binsQ4[counter+1])/2
-    counter +=1
-#5
-Q_midbins5 = np.empty_like(Q_pos_hist5, dtype='float64')
-size = len(binsQ5)-1
-counter = 0
-while counter < size:
-    Q_midbins5[counter] = (binsQ5[counter] + binsQ5[counter+1])/2
-    counter +=1
-#6
-Q_midbins6 = np.empty_like(Q_pos_hist6, dtype='float64')
-size = len(binsQ6)-1
-counter = 0
-while counter < size:
-    Q_midbins6[counter] = (binsQ6[counter] + binsQ6[counter+1])/2
-    counter +=1
+## DIAGNOSTIC loop to test different values of z_cutoff STARTS here
+##
+## open a file to print to
+#f = open('/Users/gsarrouh/Documents/Programs/Python/nserc17/HFF_ToAdamFinal/working_data/section_4_false_pos_neg_redshift_cuts_001.txt','w+')
 #
-#summary tables for each
-#SF1 = Table([SF_midbins1,SF_pos_hist1,SF_neg_hist1],names=('SF Bins','SF pos','SF neg'))
-#SF2 = Table([SF_midbins2,SF_pos_hist2,SF_neg_hist2],names=('SF Bins','SF pos','SF neg'))
-#SF3 = Table([SF_midbins3,SF_pos_hist3,SF_neg_hist3],names=('SF Bins','SF pos','SF neg'))
-#SF4 = Table([SF_midbins4,SF_pos_hist4,SF_neg_hist4],names=('SF Bins','SF pos','SF neg'))
-#SF5 = Table([SF_midbins5,SF_pos_hist5,SF_neg_hist5],names=('SF Bins','SF pos','SF neg'))
-#SF6 = Table([SF_midbins6,SF_pos_hist6,SF_neg_hist6],names=('SF Bins','SF pos','SF neg'))
-#Q1 = Table([Q_midbins1,Q_pos_hist1,Q_neg_hist1],names=('Q Bins','Q pos','Q neg'))
-#Q2 = Table([Q_midbins2,Q_pos_hist2,Q_neg_hist2],names=('Q Bins','Q pos','Q neg'))
-#Q3 = Table([Q_midbins3,Q_pos_hist3,Q_neg_hist3],names=('Q Bins','Q pos','Q neg'))
-#Q4 = Table([Q_midbins4,Q_pos_hist4,Q_neg_hist4],names=('Q Bins','Q pos','Q neg'))
-#Q5 = Table([Q_midbins5,Q_pos_hist5,Q_neg_hist5],names=('Q Bins','Q pos','Q neg'))
-#Q6 = Table([Q_midbins6,Q_pos_hist6,Q_neg_hist6],names=('Q Bins','Q pos','Q neg'))
-#group summary tables
-SFg1 = Table([SF_midbins1,SF_pos_group1,SF_neg_group1],names=('SF Bins','SF pos','SF neg'))
-SFg2 = Table([SF_midbins2,SF_pos_group2,SF_neg_group2],names=('SF Bins','SF pos','SF neg'))
-Qg1 = Table([Q_midbins1,Q_pos_group1,Q_neg_group1],names=('Q Bins','Q pos','Q neg'))
-Qg2 = Table([Q_midbins2,Q_pos_group2,Q_neg_group2],names=('Q Bins','Q pos','Q neg'))
-
-
-
+#for cutoff in range(len(z_cutoff)):
+##
+## INDENT HERE for diagnostic 
+mem = np.array([[0]*6]*2)       # initialize arrays to track cluster members, field, false pos/neg by cluster
+field = np.array([[0]*6]*2)     # row_1=SF; row_2=Q; for all arrays
+pos = np.array([[0]*6]*2)
+neg = np.array([[0]*6]*2)
+other_member = 0                 # track objects outside of (phot + spec) subsample
+lost_due_to_buffer = np.array([[0]*6]*2)
 #
-##Section 5: make cuts to photometric sample based on defintion for del_z:
-##del_z = (z_phot - z_cl) < 0.05; same photometric cut made to 
-##specroscopic sub-sample. this is a preliminary measure for determining the 
-##photometric sample, final corrections will be made by radial/mass bins to 
-##match outlier fractions in spec. sample per van der Burg (2013)
+## The following loop isolates the (spec + phot) sample, i.e. 'sub'=1, and makes the cuts defined above, assigning different classifications to the MEMBER FILTER 
+for counter in range(len(master_cat)):
+    if master_cat['sub'][counter] == 1:                   # sub=1 identifies subsample with both spec & phot
+        if master_cat['type'][counter]==1:                # type=1 identifies SF sample
+            if abs(master_cat['z_clusterspec'][counter]) > 0.02 and abs(master_cat['z_clusterphot'][counter]) > 0.1: 
+                master_cat['member'][counter] = 1         # member=1 for FIELD
+                for ii in range(len(field[0])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                        field[0][ii]+=1
+            elif abs(master_cat['z_clusterspec'][counter]) > SF_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) < SF_cutoff[1]: #z_cutoff[cutoff]: #
+                master_cat['member'][counter] = 2         # member=2 for FALSE POSITIVE
+                for ii in range(len(pos[0])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of false pos by cluster
+                        pos[0][ii]+=1
+            elif abs(master_cat['z_clusterspec'][counter]) < SF_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) > SF_cutoff[1]: #z_cutoff[cutoff]: #
+                master_cat['member'][counter] = 3         # member=3 for FALSE NEGATIVE
+                for ii in range(len(neg[0])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of false neg by cluster
+                        neg[0][ii]+=1
+            elif abs(master_cat['z_clusterspec'][counter]) < SF_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) < SF_cutoff[1]: #z_cutoff[cutoff]: #
+                master_cat['member'][counter] = 0         # member=0 for cluster MEMBERS
+                for ii in range(len(mem[0])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
+                        mem[0][ii]+=1
+            else: 
+                for ii in range(len(lost_due_to_buffer[0])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
+                        lost_due_to_buffer[0][ii]+=1
+        elif master_cat['type'][counter]==2:                # type=2 identifies Q sample
+            if abs(master_cat['z_clusterspec'][counter]) > 0.02 and abs(master_cat['z_clusterphot'][counter]) > 0.1: 
+                master_cat['member'][counter] = 1         # member=1 for FIELD
+                for ii in range(len(field[1])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                        field[1][ii]+=1
+            elif abs(master_cat['z_clusterspec'][counter]) > Q_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) < Q_cutoff[1]: #z_cutoff[cutoff]: #
+                master_cat['member'][counter] = 2         # member=2 for FALSE POSITIVE
+                for ii in range(len(pos[1])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of false pos by cluster
+                        pos[1][ii]+=1
+            elif abs(master_cat['z_clusterspec'][counter]) < Q_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) > Q_cutoff[1]: #z_cutoff[cutoff]: #
+                master_cat['member'][counter] = 3         # member=3 for FALSE NEGATIVE
+                for ii in range(len(neg[1])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of false neg by cluster
+                        neg[1][ii]+=1
+            elif abs(master_cat['z_clusterspec'][counter]) < Q_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) < Q_cutoff[1]: #z_cutoff[cutoff]: #
+                master_cat['member'][counter] = 0         # member=0 for cluster MEMBERS
+                for ii in range(len(mem[1])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
+                        mem[1][ii]+=1
+            else: 
+                for ii in range(len(lost_due_to_buffer[1])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
+                        lost_due_to_buffer[1][ii]+=1
+    else: other_member+=1
+## INDENT HERE
+#    #
+#    # compute membership acceptance fraction
+#    SF_specphot = np.sum([np.sum(mem[0]),np.sum(field[0]),np.sum(pos[0]),np.sum(neg[0])]) # total # of galaxies with both spec & phot - SF
+#    Q_specphot = np.sum([np.sum(mem[1]),np.sum(field[1]),np.sum(pos[1]),np.sum(neg[1])])  # total # of galaxies with both spec & phot - Q
+#    mem_fraction = np.array([(np.sum(mem[0])/SF_specphot),(np.sum(mem[1])/Q_specphot)]) # [SF acceptance fraction, Q acceptance fraction]
+#    print('\nOverall membership fraction: \nSF: %s'%mem_fraction[0],' & Q: %s'%mem_fraction[1],'   for cutoff:  ',str(z_cutoff[cutoff]))
+#    # print # of memebrs, false pos/neg, & acceptance fraction for each of SF & Q to a file
+#    # FORMAT: row_1 = SF;   row_2 = Q;
+#    #   col_1 = z_cut;  col_2 = TYPE;  col_3=members; col_4 = false pos; col_5 = false neg; col_6 = acceptance fraction; col_7 = False pos/neg ratio
+#    space = ' '
+#    zcut = str(z_cutoff[cutoff])
+#    SF_1 = str(np.sum(mem[0]))
+#    SF_2 = str(np.sum(pos[0]))
+#    SF_3 = str(np.sum(neg[0]))
+#    SF_4 = str(mem_fraction[0])
+#    SF_5 = str(max((np.sum(pos[0])/np.sum(neg[0])),(np.sum(neg[0])/np.sum(pos[0]))))
+#    a = zcut+space+'SF'+space+SF_1+space+SF_2+space+SF_3+space+SF_4+space+SF_5
+#    Q_1 = str(np.sum(mem[1]))
+#    Q_2 = str(np.sum(pos[1]))
+#    Q_3 = str(np.sum(neg[1]))
+#    Q_4 = str(mem_fraction[1])
+#    Q_5 = str(max((np.sum(pos[1])/np.sum(neg[1])),(np.sum(neg[1])/np.sum(pos[1]))))
+#    b = zcut+space+'Q'+space+Q_1+space+Q_2+space+Q_3+space+Q_4+space+Q_5
+#    if cutoff == 0:
+#        header1 = '### The del_z spec cutoff has been set to > %s for all runs in this document.'%SF_cutoff[0]
+#        header2 = '### Columns:  del_z cutoff  Type   Member   False pos.   False neg.   % acceptance   #   False pos/neg ratio\n#\n#\n'
+#        writer = '%s\n'%header1+'%s'%header2+'%s\n'%a+'%s\n'%b
+#        f.write(writer)
+#    else: 
+#        writer = '%s\n'%a+'%s\n'%b
+#        f.write(writer)
+##        
+#f.close()
 #
-## (i) apply cut at |z_clusterphot| < 0.05 to separate cluster from field for 
-## targets with photometry only. store in column 'members': 0 = member, 1 = field
-## 2 = false pos, 3 = false neg, 4 = field outlier
+#
+# END of DIAGNOSTIC loop
+#
+#    
+## SECTION (4.1): SUMMARY table
+### MAY NEED TO EDIT ### diag_flag_3
+##  summarize data population as segregated above, and display in a table
+diag_flag_3 = 1
+#
+if diag_flag_3 == 1:
+    ## Summarize initial data stats in table
+    member_names = Column(['Total','Secure member','Secure field','Fasle pos','False neg'],name='Property')
+    col_names = ['macs0416','macs1149','macs0717','abell370','abell1063','abell2744']
+    # SF table
+    member0 = Column([np.sum(both),np.sum(mem[0]),np.sum(field[0]),np.sum(pos[0]),np.sum(neg[0])],name='Total')  # total column
+    SF_spec_stats = Table([member_names,member0])
+    for ii in range(len(mem[0])):
+        col = Column([both[ii],mem[0][ii],field[0][ii],pos[0][ii],neg[0][ii]],name=col_names[ii])
+        SF_spec_stats.add_column(col)  # add columns to table one cluster at a time
+    #
+    # Q table
+    member0 = Column([np.sum(both),np.sum(mem[1]),np.sum(field[1]),np.sum(pos[1]),np.sum(neg[1])],name='Total')  # total column
+    Q_spec_stats = Table([member_names,member0])
+    for ii in range(len(mem[1])):
+        col = Column([both[ii],mem[1][ii],field[1][ii],pos[1][ii],neg[1][ii]],name=col_names[ii])
+        Q_spec_stats.add_column(col)  # add columns to table one cluster at a time
+    #
+    print('(SPEC+PHOT) Subsample\nCatalogue by MEMBER - Star-forming:')
+    print(SF_spec_stats)
+    print('NOTE: Total reported under each cluster is sum of SF+Q.\n')
+    print('Catalogue by MEMBER - Quiescent:')
+    print(Q_spec_stats)
+    print('NOTE: Total reported under each cluster is sum of SF+Q.')
+    print('NOTE: Differences b/w Total row and sum of other rows might arise due to the "buffer" zone built in between classifying objects as secure member vs field.\n')
+#
+SF_specphot = np.sum([np.sum(mem[0]),np.sum(field[0]),np.sum(pos[0]),np.sum(neg[0])])
+Q_specphot = np.sum([np.sum(mem[1]),np.sum(field[1]),np.sum(pos[1]),np.sum(neg[1])])
+print('\nOverall membership fraction: \nSF: %s'%(np.sum(mem[0])/SF_specphot),' & Q: %s'%(np.sum(mem[1])/Q_specphot),'   for cutoff:\nSF: ',str(SF_cutoff),'    Q: ',str(Q_cutoff))
+#
+print('\nTotal catalogue length: %s'%len(master_cat))
+print('SPEC+PHOT sub-sample: %s' % np.sum(both))
+print('SF: %s' % np.sum([mem[0],field[0],pos[0],neg[0]]))
+print('Q: %s' % np.sum([mem[1],field[1],pos[1],neg[1]]))
+print('Lost due to buffer b/w member & field\nSF: %s'%np.sum(lost_due_to_buffer[0]),';    Q: %s'%np.sum(lost_due_to_buffer[1]))
+print('Other (not in (spec + phot) subsample): %s'%other_member)
+print('NOTE: Differences b/w Total row and sum of other rows might arise due to the "buffer" zone built in between classifying objects as secure member vs field.\n')                        
+#
+## TIME_FLAG_4 END
+#
+if time_flag_4 == 1 and time_flag == 0:
+    print("Section 4 took: %s seconds.\n\n" % (time.time() - start_time))
+#
+#
+#
+#
+#
+## SETION (5): make cuts to photometric sample based on defintion for del_z:  del_z = (z_phot - z_cl) < 0.05 (to match cut made above in SF_cutoff[1]/Q_cutoff[1]; apply MEMBER FILTER = 3 for PHOTOMETRIC SUBSAMPLE MEMBERS); same photometric cut made to specroscopic sub-sample. this is a preliminary measure for determining the photometric sample, final corrections will be made by mass bins to match false pos/neg fractions in spec. sample per van der Burg (2013)
+#
+## apply cut at |z_clusterphot| < SF_cutoff[1]/Q_cutoff[1] to separate cluster members from field for targets with photometry only. store in MEMBER FILTER: 
+## 0 = cluster member; 1 = field; 2 = false pos; 3 = false neg; 4 = field outlier
+#
 ## recall: z_clusterphot defined as (z_peak - z_cluster / 1 + z_peak)
 #
+#
+## TIME_FLAG_5 START
+time_flag_5 = 1     # track & print time to execute current section
+#
+if time_flag_5 == 1 and time_flag == 0:
+    start_time = time.time()
+#  
 ### Quiescent sub-sample: segregate into secure member, field
-phot_mems = [[0]*6]
-phot_memq = [[0]*6]
-phot_fields = [[0]*6]
-phot_fieldq = [[0]*6]
-other = 0       #track phot stars & outliers; should be 89  (spec has 47, total of 136 per 'macros table')
-aa = [[0]*6]
-size = len(master_cat)
-counter = 0
-while counter < size:
-    if master_cat[counter]['sub'] ==2:
-        aa[0][0] +=1
+# initialize arrays, format is row_1=SF, row_2=Q
+mem_phot = np.array([[0]*6]*2)
+field_phot = np.array([[0]*6]*2)
+other_phot = 0      # objects not in sub=2 phot only subsample
+n_phot_only = 0     # number of objects in sub=2 subsample
+n_SF = 0
+n_Q = 0
+lost_due_to_buffer_phot = np.array([[0]*6]*2)    # objects lost due to buffer b/w definition of cluster and field
+#
+for counter in range(len(master_cat)):
+    if master_cat[counter]['sub'] ==2:      # sub=2 identifies phot only subsample
+        n_phot_only+=1
         if master_cat[counter]['type'] == 0 or master_cat[counter]['type'] ==3: #skip stars and outliers
-            other +=1       
-        elif master_cat[counter]['type'] ==1:       # SF
-            aa[0][1] +=1
-            if abs(master_cat[counter]['z_clusterphot']) > 0.05:     
+            pass       
+        elif master_cat[counter]['type'] ==1:       # type=1 identifies SF
+            n_SF+=1
+            if abs(master_cat[counter]['z_clusterphot']) > SF_cutoff[1]:     # identify field galaxies
                 if master_cat[counter]['z_peak'] >0.55 or master_cat[counter]['z_peak'] <0.3:
-                    master_cat[counter]['member'] = 4       # field outlier
-                    aa[0][2] +=1
+                    master_cat[counter]['member'] = 4       # memfield outlier
                 else:
                     master_cat[counter]['member'] = 1               #phot SF field sample
-                    if master_cat[counter]['cluster'] == 1:
-                        phot_fields[0][0] +=1
-                    elif master_cat[counter]['cluster'] == 2:
-                        phot_fields[0][1] +=1
-                    elif master_cat[counter]['cluster'] == 3:
-                        phot_fields[0][2] +=1    
-                    elif master_cat[counter]['cluster'] == 4:
-                        phot_fields[0][3] +=1    
-                    elif master_cat[counter]['cluster'] == 5:
-                        phot_fields[0][4] +=1    
-                    elif master_cat[counter]['cluster'] == 6:
-                        phot_fields[0][5] +=1
+                    for ii in range(len(field_phot[0])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                            field_phot[0][ii]+=1
+            elif abs(master_cat[counter]['z_clusterphot']) < SF_cutoff[1]:
+                master_cat[counter]['member'] = 0           # member=0 is secure cluster member
+                for ii in range(len(mem_phot[0])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                        mem_phot[0][ii]+=1
             else:
-                master_cat[counter]['member'] = 0
-                if master_cat[counter]['cluster'] == 1:
-                    phot_mems[0][0] +=1
-                elif master_cat[counter]['cluster'] == 2:
-                    phot_mems[0][1] +=1
-                elif master_cat[counter]['cluster'] == 3:
-                    phot_mems[0][2] +=1    
-                elif master_cat[counter]['cluster'] == 4:
-                    phot_mems[0][3] +=1    
-                elif master_cat[counter]['cluster'] == 5:
-                    phot_mems[0][4] +=1    
-                elif master_cat[counter]['cluster'] == 6:
-                    phot_mems[0][5] +=1
+                for ii in range(len(lost_due_to_buffer_phot[0])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                        lost_due_to_buffer_phot[0][ii]+=1
         elif master_cat[counter]['type'] ==2:       #Q
-            aa[0][3] +=1
-            if abs(master_cat[counter]['z_clusterphot']) > 0.05:     #phot field
+            n_Q+=1
+            if abs(master_cat[counter]['z_clusterphot']) > Q_cutoff[1]:     # identify field galaxies
                 if master_cat[counter]['z_peak'] >0.55 or master_cat[counter]['z_peak'] <0.3:
-                    master_cat[counter]['member'] = 4
-                    aa[0][4] +=1
+                    master_cat[counter]['member'] = 4       # memfield outlier
                 else:
-                    master_cat[counter]['member'] = 1       #phot Q field sample
-                    if master_cat[counter]['cluster'] == 1:
-                        phot_fieldq[0][0] +=1
-                    elif master_cat[counter]['cluster'] == 2:
-                        phot_fieldq[0][1] +=1
-                    elif master_cat[counter]['cluster'] == 3:
-                        phot_fieldq[0][2] +=1    
-                    elif master_cat[counter]['cluster'] == 4:
-                        phot_fieldq[0][3] +=1    
-                    elif master_cat[counter]['cluster'] == 5:
-                        phot_fieldq[0][4] +=1    
-                    elif master_cat[counter]['cluster'] == 6:
-                        phot_fieldq[0][5] +=1
+                    master_cat[counter]['member'] = 1               #phot SF field sample
+                    for ii in range(len(field_phot[1])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                            field_phot[1][ii]+=1
+            elif abs(master_cat[counter]['z_clusterphot']) < Q_cutoff[1]:
+                master_cat[counter]['member'] = 0           # member=0 is secure cluster member
+                for ii in range(len(mem_phot[1])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                        mem_phot[1][ii]+=1
             else:
-                master_cat[counter]['member'] = 0       #cluster member, phot
-                if master_cat[counter]['cluster'] == 1:
-                    phot_memq[0][0] +=1
-                elif master_cat[counter]['cluster'] == 2:
-                    phot_memq[0][1] +=1
-                elif master_cat[counter]['cluster'] == 3:
-                    phot_memq[0][2] +=1    
-                elif master_cat[counter]['cluster'] == 4:
-                    phot_memq[0][3] +=1    
-                elif master_cat[counter]['cluster'] == 5:
-                    phot_memq[0][4] +=1    
-                elif master_cat[counter]['cluster'] == 6:
-                    phot_memq[0][5] +=1
-    counter +=1
+                for ii in range(len(lost_due_to_buffer_phot[1])):
+                    if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                        lost_due_to_buffer_phot[1][ii]+=1
+    else: 
+        other_phot+=1
+#                        
+## SECTION (5.1): SUMMARY table
+### MAY NEED TO EDIT ### diag_flag_4
+##  summarize data population as segregated above, and display in a table
+diag_flag_4 = 1
 #
-print ('stars/outliers = ',other)
-print ('memSF = ',np.sum(phot_mems))
-print ('fieldSF = ',np.sum(phot_fields))
-print ('memQ = ',np.sum(phot_memq))
-print ('fieldQ = ',np.sum(phot_fieldq))
-print ('aa = ',aa)
+if diag_flag_4 == 1:
+    ## Summarize initial data stats in table
+    member_names = Column(['Total','Secure member','Secure field'],name='Property')
+    col_names = ['macs0416','macs1149','macs0717','abell370','abell1063','abell2744']
+    # SF table
+    member0 = Column([np.sum([mem_phot[0],field_phot[0]]),np.sum(mem_phot[0]),np.sum(field_phot[0])],name='Total')  # total column
+    SF_phot_stats = Table([member_names,member0])
+    for ii in range(len(mem_phot[0])):
+        col = Column([np.sum([mem_phot[0][ii],field_phot[0][ii]]),mem_phot[0][ii],field_phot[0][ii]],name=col_names[ii])
+        SF_phot_stats.add_column(col)  # add columns to table one cluster at a time
+    #
+    # Q table
+    member0 = Column([np.sum([mem_phot[1],field_phot[1]]),np.sum(mem_phot[1]),np.sum(field_phot[1])],name='Total')  # total column
+    Q_phot_stats = Table([member_names,member0])
+    for ii in range(len(mem_phot[1])):
+        col = Column([np.sum([mem_phot[1][ii],field_phot[1][ii]]),mem_phot[1][ii],field_phot[1][ii]],name=col_names[ii])
+        Q_phot_stats.add_column(col)  # add columns to table one cluster at a time
+    #
+    print('PHOT-ONLY Subsample\nCatalogue by MEMBER - Star-forming:')
+    print(SF_phot_stats)
+    print('NOTE: Total reported under each cluster is sum of SF+Q.\n')
+    print('Catalogue by MEMBER - Quiescent:')
+    print(Q_phot_stats)
+    print('Lost due to buffer b/w member & field\nSF: %s'%np.sum(lost_due_to_buffer_phot[0]),';    Q: %s'%np.sum(lost_due_to_buffer_phot[1]))
+    print('NOTE: Total reported under each cluster is sum of SF+Q.')
+    print('NOTE: Differences b/w Total row and sum of other rows might arise due to the "buffer" zone built in between classifying objects as secure member vs field.\n')
 #
-## make cut to photometric field population to isolate galaxies of similar 
-## redshift range as cluster sample. clusters range from 0.308 to 0.545; select 
-## field sample in range from 0.3 to 0.55
-#aa=0
-#bb=0
-#counter = 0
-#size = len(master_cat)
-#while counter < size:
-##    if master_cat[counter]['member'] == 1 and master_cat[counter]['sub'] ==2:
-##       bb+=1
-#      if master_cat[counter]['z_peak'] >0.5 or master_cat[counter]['z_peak'] <0.3:
-#            master_cat[counter]['member'] = 4
-#            aa+=1
-#    counter +=1
-## summarize photometric sample info into table
+mem_phot_fraction = np.array([0]*2,dtype='float32')     # to keep track of membership acceptance fraction
+mem_phot_fraction[0] = (np.sum(mem_phot[0]) / n_SF)
+mem_phot_fraction[1] = (np.sum(mem_phot[1]) / n_Q)
 #
-phot_names = Column(['secure cluster - SF','secure field - SF','total SF','secure cluster - Q','secure field - Q','total Q','Total'])
-total_memp = Column([np.sum(phot_mems),np.sum(phot_fields),np.sum([phot_mems,phot_fields]),np.sum(phot_memq),np.sum(phot_fieldq),np.sum([phot_memq,phot_fieldq]),np.sum([phot_mems,phot_fields,phot_memq,phot_fieldq])])
-cl1_memp = Column([phot_mems[0][0],phot_fields[0][0],np.sum([phot_mems[0][0],phot_fields[0][0]]),phot_memq[0][0],phot_fieldq[0][0],np.sum([phot_memq[0][0],phot_fieldq[0][0]]),np.sum([phot_mems[0][0],phot_fields[0][0],phot_memq[0][0],phot_fieldq[0][0]])])
-cl2_memp = Column([phot_mems[0][1],phot_fields[0][1],np.sum([phot_mems[0][1],phot_fields[0][1]]),phot_memq[0][1],phot_fieldq[0][1],np.sum([phot_memq[0][1],phot_fieldq[0][1]]),np.sum([phot_mems[0][1],phot_fields[0][1],phot_memq[0][1],phot_fieldq[0][1]])])
-cl3_memp = Column([phot_mems[0][2],phot_fields[0][2],np.sum([phot_mems[0][2],phot_fields[0][2]]),phot_memq[0][2],phot_fieldq[0][2],np.sum([phot_memq[0][2],phot_fieldq[0][2]]),np.sum([phot_mems[0][2],phot_fields[0][2],phot_memq[0][2],phot_fieldq[0][2]])])
-cl4_memp = Column([phot_mems[0][3],phot_fields[0][3],np.sum([phot_mems[0][3],phot_fields[0][3]]),phot_memq[0][3],phot_fieldq[0][3],np.sum([phot_memq[0][3],phot_fieldq[0][3]]),np.sum([phot_mems[0][3],phot_fields[0][3],phot_memq[0][3],phot_fieldq[0][3]])])
-cl5_memp = Column([phot_mems[0][4],phot_fields[0][4],np.sum([phot_mems[0][4],phot_fields[0][4]]),phot_memq[0][4],phot_fieldq[0][4],np.sum([phot_memq[0][4],phot_fieldq[0][4]]),np.sum([phot_mems[0][4],phot_fields[0][4],phot_memq[0][4],phot_fieldq[0][4]])])
-cl6_memp = Column([phot_mems[0][5],phot_fields[0][5],np.sum([phot_mems[0][5],phot_fields[0][5]]),phot_memq[0][5],phot_fieldq[0][5],np.sum([phot_memq[0][5],phot_fieldq[0][5]]),np.sum([phot_mems[0][5],phot_fields[0][5],phot_memq[0][5],phot_fieldq[0][5]])])
-phot_stats1 = Table([phot_names,total_memp,cl1_memp,cl2_memp],names=('Property','Full catalogue','1.macs0416','2.macs1149'))
-phot_stats2 = Table([phot_names,cl3_memp,cl4_memp,cl5_memp,cl6_memp],names=('Property','3.macs0717','4.abell370','5.abell1063','6.abel2744'))
+print('\nOverall membership fraction: \nSF: %s'%mem_phot_fraction[0],' & Q: %s'%mem_phot_fraction[1],'   for cutoff:\nSF: ',str(SF_cutoff),'    Q: ',str(Q_cutoff))
 #
-## identify BCGs in master_cat
-BCG = Table(names=('cluster','sub','type','member','id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','BCG','use_phot','L_u','L_v','L_j','uv','vj','del_z','z_clusterspec','z_clusterphot','f_F160W','e_F160W'))
+print('\nTotal catalogue length: %s'%len(master_cat))
+print('PHOT ONLY sub-sample: %s' %n_phot_only)
+print('SF: %s' % np.sum([mem_phot[0],field_phot[0]]))
+print('Q: %s' % np.sum([mem_phot[1],field_phot[1]]))
+print('Other (not in phot only subsample): %s'%other_phot)
+print('NOTE: Differences b/w Total row and sum of other rows might arise due to the "buffer" zone built in between classifying objects as secure member vs field.\n')                        
 #
-BCG_cl = [[0]*6]
-BCG_sub= [[0]*4]
-BCG_mem=[[0]*4]
-size = len(master_cat)
-counter = 0
-BCG_counter = 0
-while counter < size: 
-    if master_cat[counter]['BCG'] == 2: #per .cat documentation, "use_{KS/CH1/CH2}" ==2 identifies BCGs. have confirmed each tracks the same # of BCGs per cluster
-        BCG.add_row(master_cat[counter])
-        if master_cat[counter]['cluster'] == 1:
-            BCG_cl[0][0] +=1
-        elif master_cat[counter]['cluster'] == 2:
-            BCG_cl[0][1] +=1
-        elif master_cat[counter]['cluster'] == 3:
-            BCG_cl[0][2] +=1
-        elif master_cat[counter]['cluster'] == 4:
-            BCG_cl[0][3] +=1
-        elif master_cat[counter]['cluster'] == 5:
-            BCG_cl[0][4] +=1
-        elif master_cat[counter]['cluster'] == 6:
-            BCG_cl[0][5] +=1
-        if master_cat[counter]['sub'] ==0:
-            BCG_sub[0][0]+=1
-        elif master_cat[counter]['sub'] ==1:
-            BCG_sub[0][1]+=1
-        elif master_cat[counter]['sub'] ==2:
-            BCG_sub[0][2]+=1
-        elif master_cat[counter]['sub'] ==3:
-            BCG_sub[0][3]+=1
-        if master_cat[counter]['member'] == 0:
-            BCG_mem[0][0]+=1
-        elif master_cat[counter]['member'] == 1:
-            BCG_mem[0][1]+=1
-        elif master_cat[counter]['member'] == 2:
-            BCG_mem[0][2]+=1
-        elif master_cat[counter]['member'] == 3:
-            BCG_mem[0][3]+=1
-    counter +=1
+## TIME_FLAG_5 END
 #
-## 
-## summarize all member/field data in signle table - "sample_stats"
-na = 'n/a'
-sample_names = Column(['SF total','SF phot','SF spec','false pos','false neg','fraction false pos/neg','Q total','Q phot','Q spec','false pos','false neg','fraction false pos/neg', 'Total'])
-members = Column([np.sum(phot_mems)+np.sum(smem),np.sum(phot_mems),np.sum(smem),np.sum(spos),np.sum(sneg),np.sum(spos)/np.sum(sneg),np.sum(phot_memq)+np.sum(qmem),np.sum(phot_memq),np.sum(qmem),np.sum(qpos),np.sum(qneg),np.sum(qpos)/np.sum(qneg),np.sum(phot_mems)+np.sum(smem)+np.sum(phot_memq)+np.sum(qmem)])
-field = Column([np.sum(phot_fields)+np.sum(sfield),np.sum(phot_fields),np.sum(sfield),na,na,na,np.sum(phot_fieldq)+np.sum(qfield),np.sum(phot_fieldq),np.sum(qfield),na,na,na,np.sum(phot_fields)+np.sum(sfield)+np.sum(phot_fieldq)+np.sum(qfield)])
-sample_stats = Table([sample_names,members,field],names=('Property','Selected members','"Secure" field'))
-## Display all stat summary tables:
-#       data_stats
-#       macros_type
-#       macros1/2
-#       spec_stats1/2
-#       phot_stats
-#       sample_stats
+if time_flag_5 == 1 and time_flag == 0:
+    print("Section 5 took: %s seconds.\n\n" % (time.time() - start_time))
 #
-###### END
+#
+#
+#
+#                        
+## SECTION (6): BCGs. Brightest Cluster Galaxies (BCGs) need to be taken out of the cluster sample as they are unique to overly dense environments and so lack a counterpart in the field against which to make a fair comparison. as such, we remove them from our sample before making the SMF
+#
+#
+## TIME_FLAG_6 START
+time_flag_6 = 1     # track & print time to execute current section
+#
+if time_flag_6 == 1 and time_flag == 0:
+    start_time = time.time()
+#
+#
+#####       UNFINISHED        #####
+##### INSERT code to model out BCGs
+#
+#
+## TIME_FLAG_6 END
+time_flag_6 = 1     # track & print time to execute current section
+#
+if time_flag_6 == 1 and time_flag == 0:
+    print("Section 6 took: %s seconds.\n\n" % (time.time() - start_time))
+#
+#
+#
+#
+#
+## TIME_FLAG END
+#
+if time_flag == 1:
+    print('Program "master_data_6_final.py" took: %s seconds to run.\n\n' % (time.time() - start_time))
+#
+#
+#
+#
+#                        
+###### PROGRAM END ######
