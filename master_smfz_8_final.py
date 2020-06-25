@@ -31,28 +31,44 @@ Created on Sun Jun 21 14:28:35 2020
 ##
 ##
 #
-# plot stellar mass function:
-## (1)    collect masses into SORTED arrays for SF & Q;
-## (1.1)   add DIAG_FLAG_1: summarize sorted arrays;
-## (1.2)   import FIELD data;
-## (2)    bin into HISTOGRAMS;
-## (2.1)    compute bin mid-points; add DIAG_FLAG_2: sub-samples check;
-## (3)    CORRECTIONS to raw counts;
-## (3.1)   calculate limiting MASS COMPLETENESS correction for low-mass bins; add DIAG_FLAG_3: 
-##         display mass correction factors;
-## (3.2)   calculate false pos/neg (i.e. spectroscopic) completeness correction for all bins
-##         include FIGURE for SPECTROSCOPIC COMPLETENESS; add DIAG_FLAG_4: display 
-##         corrections for different bin #s; add DIAG_FLAG_5: # of false pos/neg check 
-##         & display spec correction factors;
-## (3.3)  NORMALIZE;
-## (4)    add ERROR BARS to scatter plot;
-## (5)    EMCEE simulation; see emcee_chi2_final.py;
-## (6)    build SCHECTER best-fit models;
-## (7)    plot that shit;
+### Section summary:
 #
+### PROGRAM START
+#
+### PLOTS THE STELLAR MASS FUNCTION:
+### (1)    collect masses into SORTED arrays for SF & Q;
+### (1.1)   add DIAG_FLAG_1: summarize sorted arrays;
+### (1.2)   import FIELD data;
+### (2)    bin into HISTOGRAMS;
+### (2.1)    compute bin mid-points; add DIAG_FLAG_2: sub-samples check;
+### (3)    CORRECTIONS to raw counts;
+### (3.1)   calculate limiting MASS COMPLETENESS correction for low-mass bins; add DIAG_FLAG_3: 
+###         display mass correction factors;
+### (3.2)   calculate false pos/neg (i.e. spectroscopic) completeness correction for all bins;
+###         includes FIGURE for SPECTROSCOPIC COMPLETENESS; add DIAG_FLAG_4: display 
+###         corrections for different bin #s; add DIAG_FLAG_5: # of false pos/neg check 
+###         & display spec correction factors;
+### (3.3)  NORMALIZE; add DIAG_FLAG_6: check normalization result
+### (4)    add ERROR BARS to scatter plot;
+### (5)    EMCEE simulation; see emcee_chi2_final.py;
+### (6)    build SCHECTER best-fit models;
+### (7)    PLOT that shit;
+#
+### PROGRAM END
 #
 ## NOTE: there are flags for diagnostics and plotting throughout the script. search "MAY NEED TO EDIT" to identify where these flags are
 #
+#
+#
+###################     PROGRAM START
+#
+## TIME_FLAG: START
+## superior time_flag which supercedes all others and times the entire program
+time_flag = 0     # track & print time to execute current section
+#
+if time_flag == 1:
+    start_time = time.time()
+#  
 # Import modules
 import numpy as np
 import matplotlib as mpl
@@ -63,8 +79,12 @@ from astropy.table import Table
 from astropy.table import Column
 from scipy.optimize import curve_fit
 #
+# this line is specific to jupyter notebook, and allows for Figure editting in a GUI, instead of inline
+%matplotlib qt  
 #
 #
+## MASTER DIAGNOSTIC FLAG: allows you to "turn off" all diagnostics at once (if equals 0), otherwise diagnostic flags are set one at a time (search "MAY NEED TO EDIT")
+diag_flag_master = 1
 #
 ## SECTION (1): collect objects above limiting mass by cluster into a single array in order to plot 
 ## SF_*/Q_*, and track sublists of objects which have spec vs those which only have phot, separately for SF/Q; creates list of samples to be binned & plotted as histogram/scatterplot
@@ -127,7 +147,7 @@ for cluster in range(len(limiting_mass)):          # loop through clusters one a
 ##  displays summary of sorted lists above
 diag_flag_1 = 1             # 0=off (don't display diagnostic); 1=on (display diagnostic table)
 #
-if diag_flag_1 == 1:
+if diag_flag_1 == 1 and diag_flag_master == 1:
     ## Summarize initial data stats in table
     #
     # calculate list lengths
@@ -261,9 +281,9 @@ Q_spec_smf = np.array(Q_spec_smf)
 #
 ### MAY NEED TO EDIT: diag_flag_2
 ## DIAGNOSTIC: add spec & phot subsampes together for each cluster, and ensure they equal the total raw count in each mass bin
-diag_flag_2 = 1   # 0=off, i.e. don't do diagnostic; 1=on, i.e. perform diagnostic
+diag_flag_2 = 0           # 0=off, i.e. don't do diagnostic; 1=on, i.e. perform diagnostic
 #
-if diag_flag_2 == 1:
+if diag_flag_2 == 1 and diag_flag_master == 1:
     # compute differences, e.g.: SF_smf1 = SF1_spec_smf + SF1_phot_smf for each mass bin. they should be the same
     SF_diff = np.array([[0]*len(SF_midbins)]*6)     # initialize array to store difference between sample & sub-samples, by cluster
     Q_diff = np.array([[0]*len(Q_midbins)]*6)
@@ -313,17 +333,19 @@ Q_mass_completeness_diff = correction_difference(Q_raw_smf,mass_completeness_cor
 total_mass_completeness_diff = correction_difference(total_raw_smf,mass_completeness_correction)
 #
 ### MAY NEED TO EDIT: diag_flag_3
-diag_flag_3 = 1
+diag_flag_3 = 0
 #
-if diag_flag_3 == 1:
+if diag_flag_3 == 1 and diag_flag_master == 1:
 # Display correction factors
     print('/nSection 3.1: Mass completeness correction factors by bin: ',str(mass_completeness_correction),'\n')
     #
     # Display some data for total, SF, Q: 
-    print('Galaxies added due to MASS COMPLETENESS correction')
+    print('Section 3.1: Galaxies added due to MASS COMPLETENESS correction')
     print('SF: ',str(SF_mass_completeness_diff),'\nor ',str((np.sum(SF_mass_completeness_diff)/np.sum(SF_raw_smf))*100),'%\n')
     print('Q: ',str(Q_mass_completeness_diff),'\nor ',str((np.sum(Q_mass_completeness_diff)/np.sum(Q_raw_smf))*100),'%\n')
     print('Total: ',str(total_mass_completeness_diff),'\nor ',str((np.sum(total_mass_completeness_diff)/np.sum(total_raw_smf))*100),'%\n')
+else:
+    print('Section 3.1: Galaxies added due to MASS COMPLETENESS correction\nSF: %s'%np.sum(SF_mass_completeness_diff),'\nQ: %s'%np.sum(SF_mass_completeness_diff))
 #
 #
 #
@@ -377,7 +399,7 @@ num_bins_array = [8,7,6,5,4,3,2]   # number of histogram (i.e. SMF) mass bins to
 # SPEC. BINNING: iterate through different number of histogram bins to see which yields a set of corrections closest in general to ~1
 diag_flag_4 = 0
 #
-if diag_flag_4 == 1:
+if diag_flag_4 == 1 and diag_flag_master == 1:
     # write a loop that interatively uses a different number of bins in the histrogram, to isolate the largest number for which all bins have at least one entry; NOTE: the lines that stop the loop have been commented out, to investigate the relative fraction of false pos/neg for each different # of bins
     print('Section 3.2: Spec. completeness correction binning\n')
     #SF
@@ -439,9 +461,9 @@ Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_binsQ, range=range2)
 #
 ### MAY NEED TO EDIT: diag_flag_5
 # display diagnostics
-diag_flag_5 = 1              # 0=off, 1=on
+diag_flag_5 = 0              # 0=off, 1=on
 #
-if diag_flag_5 == 1:
+if diag_flag_5 == 1 and diag_flag_master == 1:
     # sum into total list, to compare with totals reported in "spec_stats1" table from "master_data_*.py"
 #    total_pos_hist = SF_pos_hist + Q_pos_hist     
 #    total_neg_hist = SF_neg_hist + Q_neg_hist
@@ -523,7 +545,7 @@ Q_frac_err = np.sqrt((Q_relerr_pos**2) + (Q_relerr_neg**2))*Q_frac
 ## FIGURE ##
 #
 ### MAY NEED TO EDIT: plot_flag
-plot_flag = 1        # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
+plot_flag = 0        # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
 if plot_flag == 1:
     # plot Spectroscopic completion correction factors 
     plt.close()
@@ -542,7 +564,7 @@ if plot_flag == 1:
     plt.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='on', labelleft='on')
     plt.minorticks_on()
     plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = ':')
-    plt.xlim=(7.1,12.5)
+    MC.xlim=(7.1,12.5)
     #
 ## Now interpolate/extrapolate between these data points
 #
@@ -596,7 +618,7 @@ for ii in range(len(Q_midbins)):
 if plot_flag == 1:                       # plot interpolated/extrapolated points on top of computed correction fractions
     plt.scatter(SF_midbins,SF_spec_completeness_correction,c='b', marker='+', linewidths = 0)
     plt.scatter(Q_midbins,Q_spec_completeness_correction,c='r', marker='x', linewidths = 0)
-    plt.xlim=(7.25,12.5)
+    MC.xlim=(7.25,12.5)
 #
 # apply correction; NOTE: need to divide raw_SMF by the spec_completeness_correction, not multiply, hence taking the inverse
 SF_spec_completeness_correction = (1/SF_spec_completeness_correction)   
@@ -606,9 +628,9 @@ SF_spec_completeness_diff = correction_difference(SF_phot_smf,np.transpose(SF_sp
 Q_spec_completeness_diff = correction_difference(Q_phot_smf,np.transpose(Q_spec_completeness_correction))
 total_spec_completeness_diff = SF_spec_completeness_diff + Q_spec_completeness_diff
 #
-if diag_flag_5 == 1:
+if diag_flag_5 == 1 and diag_flag_master == 1:
     # Display correction factors
-    print('\nSpectroscopic completeness correction factors by bin (multiplicative): ')
+    print('\nSection 3.2: Spectroscopic completeness correction factors by bin (multiplicative): ')
     print('SF: ',str(np.transpose(SF_spec_completeness_correction)))
     print('Q: ',str(np.transpose(Q_spec_completeness_correction)),'\n')
     # Display some data for total, SF, Q: 
@@ -616,44 +638,135 @@ if diag_flag_5 == 1:
     print('SF: ',str(SF_spec_completeness_diff),'\nor ',str((np.sum(SF_spec_completeness_diff)/np.sum(SF_raw_smf))*100),'%\n')
     print('Q: ',str(Q_spec_completeness_diff),'\nor ',str((np.sum(Q_spec_completeness_diff)/np.sum(Q_raw_smf))*100),'%\n')
     print('Total: ',str(total_spec_completeness_diff),'\n')
+else:
+    print('\nSection 3.2: Galaxies added due to SPEC COMPLETENESS correction\nSF: %s'%np.sum(SF_spec_completeness_diff),'\nQ: %s'%np.sum(Q_spec_completeness_diff))
+    #
 #
 #
 #
 #
-#
-
-
-
-
-
-
-
-
-
-
-
-
-
-## SECTION (iii.3): NORMALIZE the SMF lists for each cluster by the total mass in that cluster (e.g. SF_smf1 / sum(total_smf1), sum into full SMF list; begin by adding the corrections just computed to the raw totals
+## SECTION (3.3): NORMALIZE the SMF lists for each cluster by the TOTAL MASS in that cluster (i.e. integral under the SMF - so cluster*_smf x *_midbins); begin by adding the corrections just computed to the raw totals
 #
 ## Add mass & spec corrections to *_raw_smf lists
-SF          
-          
+SF_raw_smf_corrected = SF_raw_smf + SF_mass_completeness_diff + SF_spec_completeness_diff
+Q_raw_smf_corrected = Q_raw_smf + Q_mass_completeness_diff + Q_spec_completeness_diff
+#
+## fix the shape of these arrays to be [6 clusters ,# of midbins in SMF], i.e. an array with 6 cells, each cell containing an array with (#of midbins) data points
+SF_raw_smf_corrected = SF_raw_smf_corrected.reshape((6,25))
+Q_raw_smf_corrected = Q_raw_smf_corrected.reshape((6,25))
+#
+N,M = SF_raw_smf_corrected.shape      # store dimensions of raw_smf lists
+#
+## compute the total mass (i.e. sum((# of galaxies in each bin)*(bin mass))
+total_mass = np.array([0]*6,dtype='float32')
+for ii in range(N):          # go through clusters 1 at a time
+    total_mass[ii] = np.sum((SF_raw_smf_corrected[ii]+Q_raw_smf_corrected[ii])*SF_midbins)
+#
+## now compute the raw relative mass fraction in each bin, for SF/Q by cluster; that is, create an array (row_1=SF, row_2=Q)
+SF_rel_mass = np.empty_like(SF_raw_smf_corrected)
+Q_rel_mass = np.empty_like(SF_raw_smf_corrected)
+for ii in range(N):          # go through clusters 1 at a time
+    for jj in range(M):      # go through each mass bin one at a time
+        SF_rel_mass[ii][jj] = ((SF_raw_smf_corrected[ii][jj]*SF_midbins[0][jj]) / total_mass[ii])   # mass in the jj'th bin of cluster ii, divided by total mass of cluster ii
+        Q_rel_mass[ii][jj] = (Q_raw_smf_corrected[ii][jj]*SF_midbins[0][jj]) / total_mass[ii] # NOT AN ERROR: Q_midbins are offset by 0.05 for plotting purposes. the true value of the point is store in SF_midbins
+#
+## compute relative mass fractions of SF/Q by cluster after normalization
+mass_fraction_by_cluster = np.array([[0]*6]*2,dtype='float32')
+#
+mass_fraction_by_cluster[0] = np.sum(SF_rel_mass, axis=1)
+mass_fraction_by_cluster[1] = np.sum(Q_rel_mass, axis=1)
+#
+# Mass in a bin is equal to: (# count in that bin) * (mass value of that bin). The above normalizes by mass, so the arrays "*_normalied_mass" contain the normalized amount of MASS IN EACH MASS BIN. To get the normalized # count, you need to divide (the normalized amount of mass in each bin) by (the mass value of that bin)
+## Normalize SMFs by cluster. 
+SF_smf_by_cluster = np.empty_like(SF_raw_smf_corrected)     #initialize arrays for FINAL SMF
+Q_smf_by_cluster = np.empty_like(Q_raw_smf_corrected)
+## normalize each cluster individually, for both SF & Q
+#
+for ii in range(N):          # go through clusters 1 at a time
+    for jj in range(M):      # go through each mass bin (within each cluster) 1 at a time
+        SF_smf_by_cluster[ii][jj] = (SF_rel_mass[ii][jj]) / SF_midbins[0][jj]  # normalize each cluster by the TOTAL MASS IN EACH CLUSTER (hence the midbins multiplication); 
+        Q_smf_by_cluster[ii][jj] = Q_rel_mass[ii][jj] / SF_midbins[0][jj] 
+#
+## for ease of future calling, combine all clusters into a sinlge SMF
+SF_smf = np.sum(SF_smf_by_cluster,axis=0)
+Q_smf = np.sum(Q_smf_by_cluster,axis=0)
+total_smf = SF_smf + Q_smf
+#
+#
+## now we check that the mass fractions are still the same
+## now compute the normalized amount of mass in each bin, for SF/Q by cluster; that is, create an array (row_1=SF, row_2=Q)
+## compute the total mass (i.e. sum((# of galaxies in each bin)*(bin mass))
+total_norm_mass = np.array([0]*6,dtype='float32')
+for ii in range(N):          # go through clusters 1 at a time
+    total_norm_mass[ii] = np.sum((SF_smf_by_cluster[ii]+Q_smf_by_cluster[ii])*SF_midbins)
+#
+SF_norm_mass = np.empty_like(SF_smf_by_cluster)
+Q_norm_mass = np.empty_like(Q_smf_by_cluster)
+for ii in range(N):      # go through each mass bin one at a time
+    for jj in range(M):      # go through each mass bin (within each cluster) 1 at a time
+        SF_norm_mass[ii][jj] = ((SF_smf_by_cluster[ii][jj]*SF_midbins[0][jj]) / total_norm_mass[ii])   # mass in the ii'th bin
+        Q_norm_mass[ii][jj] = ((Q_smf_by_cluster[ii][jj]*SF_midbins[0][jj]) / total_norm_mass[ii]) # NOT AN ERROR: Q_midbins are offset by 0.05 for plotting purposes. the true value of the point is store in SF_midbins
+#
+## compute relative mass fractions of SF/Q by cluster after normalization
+mass_fraction_by_cluster_norm = np.array([[0]*6]*2,dtype='float32')
+#
+mass_fraction_by_cluster_norm[0] = np.sum(SF_norm_mass, axis=1)
+mass_fraction_by_cluster_norm[1] = np.sum(Q_norm_mass, axis=1)
+#
 
-## Normalize SMFs
-# by cluster. 
-SF_smf1 = SF_smf1 / np.sum(total_raw_smf1)
-Q_smf1 = Q_smf1 / np.sum(total_raw_smf1)
-SF_smf2 = SF_smf2 / np.sum(total_raw_smf2)
-Q_smf2 = Q_smf2 / np.sum(total_raw_smf2)
-SF_smf3 = SF_smf3 / np.sum(total_raw_smf3)
-Q_smf3 = Q_smf3 / np.sum(total_raw_smf3)
-SF_smf4 = SF_smf4 / np.sum(total_raw_smf4)
-Q_smf4 = Q_smf4 / np.sum(total_raw_smf4)
-SF_smf5 = SF_smf5 / np.sum(total_raw_smf5)
-Q_smf5 = Q_smf5 / np.sum(total_raw_smf5)
-SF_smf6 = SF_smf6 / np.sum(total_raw_smf6)
-Q_smf6 = Q_smf6 / np.sum(total_raw_smf6)
+
+
+
+
+
+### MAY NEED TO EDIT: diag_flag_6
+# display diagnostics before/after normalization
+diag_flag_6 = 0              # 0=off, 1=on
+#
+if diag_flag_6 == 1 and diag_flag_master == 1:
+    # the above should make the area under each of the SF/Q curves equal to 1 (by cluster), so the total area under the curve (sum of all clusters) should be 6. 
+    print('\nSection 3.3: Normalization diagnostic:\nMass fractions below are per cluster. The mass in each bin was calculated as: \n(count in mass bin)*(value of mass bin) = mass in that bin')
+    print('\nTotal corrected raw samples\nSF: %s'%np.sum(SF_raw_smf_corrected,axis=1),'\nQ: %s'%np.sum(Q_raw_smf_corrected,axis=1))
+    
+#    print('\nTotal SF fraction by mass in each cluster - raw: \n%s'%     $$$   )
+    
+    print('\nPre-Normalization:\nTotal SF fraction by mass in each cluster: \n%s'%mass_fraction_by_cluster[0])
+    print('Total Q fraction by mass in each cluster: \n%s'%mass_fraction_by_cluster[1])
+    print('Total relative mass per cluster (check by summing SF + Q from above): \n%s'%np.sum(mass_fraction_by_cluster,axis=0))
+    print('\nPost-Normalization:\nTotal SF fraction by mass in each cluster: \n%s'%mass_fraction_by_cluster_norm[0])
+    print('Total Q fraction by mass in each cluster: \n%s'%mass_fraction_by_cluster_norm[1])
+    print('Total relative mass per cluster (check by summing SF + Q from above): \n%s'%np.sum(mass_fraction_by_cluster_norm,axis=0))
+    #
+    ## so we normalized the area under each cluster to 1, then summed all 6 clusters. so the total area under the curve should be 6. CHECK THAT
+    SF_area = np.sum(SF_smf*SF_midbins)
+    Q_area = np.sum(Q_smf*SF_midbins)
+    print('\nCheck on final SMF - total area under curve should be 6\nArea under SF_smf: %s'%SF_area,'\nArea under Q_smf: %s'%Q_area,'\nArea under TOTAL curve: %s'%(SF_area+Q_area))
+    print('\nTotal NORMALIZED SF fraction by mass in each cluster: \n%s'%mass_fraction_by_cluster_norm[0])
+    print('Total Q fraction by mass in each cluster: \n%s'%mass_fraction_by_cluster_norm[1])
+    print('Total relative mass per cluster (check by summing SF + Q from above): \n%s'%np.sum(mass_fraction_by_cluster_norm,axis=0))
+else:
+    print('\nSection 3.3 NORMALIZATION\nTotal RAW SF: %s'%np.sum(SF_raw_smf_corrected),'\nTotal RAW Q: %s'%np.sum(Q_raw_smf_corrected))
+    print('Rel. MASS fractions - pre-normalization:   SF: %s'%(np.sum(mass_fraction_by_cluster[0])/6),'    Q: %s'%(np.sum(mass_fraction_by_cluster[1])/6))
+    print('\nNOTE: each cluster was normalized by mass to 1, so total normalized curve has area of 6\nTotal NORMALIZED SF: %s'%np.sum(mass_fraction_by_cluster_norm[0]))    
+    print('Total NORMALIZED Q: %s'%np.sum(mass_fraction_by_cluster_norm[1]))
+    print('Rel. MASS fractions - post-normalization:   SF: %s'%(np.sum(mass_fraction_by_cluster_norm[0])/6),'    Q: %s'%(np.sum(mass_fraction_by_cluster_norm[1])/6))
+
+    
+    
+    
+    
+    
+                                                                      
+# sum cluster array into a single SMF array for the entire sample
+SF_smf = np.sum(SF_smf_by_cluster, axis=0)
+Q_smf = np.sum(Q_smf_by_cluster, axis=0)
+
+  
+
+
+
+
+
 #
 #
 ## combine all clusters into full SMF list
