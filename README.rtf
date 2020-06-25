@@ -1,0 +1,40 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2513
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 ###############################################################\
+###############################################################\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \
+NSERC2017 HFF ENVIRONMENTAL QUENCHING PROJECT\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \
+###############################################################\
+###############################################################\
+06/24/20\
+\
+The following project was started in May 2017 under an NSERC USRA grant, to study the stellar mass function (SMF) in the Hubble Frontier Fields (HFF) catalogue, comparing members of the cluster to a general \'93field\'94 population (i.e. galaxies isolated on their own in \'93empty\'94 space). \
+\
+It was my first research project, and my first coding project. As such, the code is riddled with both errors (i.e. my writing instructions for the program to carry out, but writing the wrong instructions s.t. the operation performed was not what was intended) and mistakes (i.e. the task I set the computer to perform was the wrong task). \
+\
+After a few months of trying to correct it in the winter of 2019-2020, I finally decided in the spring to RE-WRITE ALL PROGRAMS, and to essentially redo the project, given my additional 3 years\'92 experience as a researcher and programmer as compared to when the project was begun. I also downloaded the most recent data set (DR v.3.9 from http://cosmos.phy.tufts.edu/~danilo/HFF/Download.html), since the data I received in 2017 (v.3.5) was a preliminary release.\
+\
+###############################################################\
+\
+The following is a summary of the key files in this directory (also a GitHub repository):\
+NOTE: various version exist for most programs. Where multiple versions exist, the most recent versions all end in the suffice \'93_final\'94, indicated below by the wildcard \'93*\'94.\
+\
+1. master_data_*.py: main data handling file. _v6 & _v7 are essentially the same (except v6 doesn\'92t identify BCGs), however v6 uses the old data set (v.3.5) and v7 uses the most up-to-date data set (DR v.3.9). program imports all data, aggregates into a single primary catalogue table (\'93master_cat\'94), and assigns galaxies to various filters (e.g. star-forming/quiescent, phot subsample/spec subsample, cluster member/field/false pos/false neg). diagnostic & summary output is available, and may be suppressed  by editing the diagnostic flags (diag_flag_*, or search \'93MAY NEED TO EDIT\'94 in the code).\
+\
+2. master_zplots*.py\
+\
+3. data_completeness_*.py\
+\
+4. mass_mag.py\
+\
+5. master_smfz_*.py: constructs the main result - the SMF. computes mass completeness & spectroscopic completeness corrections (produces figure for corrections as well), applies correction. This program has a BREAK in it, which requires the use of \'93emcee_chi2_final.py\'94, below, to perform MCMC simulations to fit parameters of Schechter function (alpha, M*, phi). The MCMC simulations must be run separately, and their results hard-coded back into this file in SECTION (6). The program then finishes constructing the final SMF plot. diagnostic & summary output is available, and may be suppressed  by editing the diagnostic flags (diag_flag_*, or search \'93MAY NEED TO EDIT\'94 in the code).\
+\
+6. emcee_chi2_final.py: wrapper program which calls the EMCEE sampler (see Foreman-Mackey et al., 2013), to fit Schechter function parameters (alpha, M*, phi) for 3 populations: SF, Q, Total. All 3 simulations are embedded within flag, and may be turned \'93on\'94 or \'93off\'94 for convenience. Results must then be MANUALLY recorded back into \'93master_smfz_*.py\'94}
