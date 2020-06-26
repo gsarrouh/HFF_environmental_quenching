@@ -396,7 +396,7 @@ for counter in range(len(master_cat)):
 #
 ### MAY NEED TO EDIT: diag_flag_4
 # SPEC. BINNING: iterate through different number of histogram bins to see which yields a set of corrections closest in general to ~1
-diag_flag_4 = 2     # 0=off;    1=on, run through different numbers for SYMMETRIC BINS
+diag_flag_4 = 2     # 0=off;    1=on, run through different numbers for SYMMETRIC BINS;     2=on, use ASUMMETRIC BINS
 #
 if diag_flag_4 == 1 and diag_flag_master == 1:
     #

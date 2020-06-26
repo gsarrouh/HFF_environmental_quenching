@@ -46,6 +46,7 @@ Created on Wed Jun 24 10:23:11 2020
 ## 2: false positive
 ## 3: false negative
 ## 4: field outlier   <-- objects well outside the redshift range of the clusters (e.g. z > 0.55)
+## 5: BCGs            <-- identified in the last section of the program, over-writing MEMBER assignment from section 4
 #
 #
 #
@@ -213,6 +214,7 @@ master_cat.add_columns([E1,E2,E3],[-1,-1,-1])                   # add columns to
 spec_only = np.array([0]*6)    # to keep track by cluster
 phot_only = np.array([0]*6)
 error = 0
+other = 0
 both = np.array([0]*6)
 no_data = np.array([0]*6)
 stars_sub = np.array([0]*6)
@@ -275,8 +277,7 @@ for counter in range(len(master_cat)):
                 else:
                     no_data[(jj)]+=1
                     master_cat['sub'][counter] = 0          # APPLY FILTER: sub=0 for objects w/ NEITHER SPEC NOR PHOT
-    else: counter+=1
-print('Other skipped objects: %s'%counter)
+    else: other+=1
 #
 #
 ## SECTION (1.2): SUMMARY table
@@ -296,6 +297,7 @@ if diag_flag_1 == 1:
     #
     print('Catalogue by SUB-type:')
     print(sub_stats)
+    print('Other skipped objects: %s'%other)
 #
 #
 ## SECTION (1.3): convert FLUX TO MAGNITUDE; using well-known mag = -2.5*log_10(flux) + zero_pt. zero_pt = 25
@@ -805,9 +807,18 @@ time_flag_6 = 1     # track & print time to execute current section
 if time_flag_6 == 1 and time_flag == 0:
     start_time = time.time()
 #
+## BCGs are identified in the "flag_{band}" column, flag_{ban} = 4 for BCGs. I will use band=F160W to identify BCGs
 #
-#####       UNFINISHED        #####
-##### INSERT code to model out BCGs
+num_BCG = np.array([0]*6)
+for counter in range(len(master_cat)):
+    if master_cat['flag_F160W'][counter] == 4:
+        master_cat['member'][counter] = 5              # member=5 for BCGs so they don't contaminate the "member=0" cluster member sample
+        for ii in range(len(num_BCG)):
+            if master_cat['cluster'][counter] == (ii+1):
+                num_bcg[ii]+=1
+#
+## print summary of operation
+print('Total BCGs removed from catalogue: %s'%np.sum(num_BCG),'.\nBCGs removed by cluster: %s'%num_BCG)
 #
 #
 ## TIME_FLAG_6 END
