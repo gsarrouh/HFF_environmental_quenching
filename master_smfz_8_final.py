@@ -178,7 +178,7 @@ if diag_flag_1 == 1 and diag_flag_master == 1:
     Q_phot_tabular = ['Q_phot',np.sum(Q_phot_len),Q_phot_len[0],Q_phot_len[1],Q_phot_len[2],Q_phot_len[3],Q_phot_len[4],Q_phot_len[5]]
     Q_spec_tabular = ['Q_spec',np.sum(Q_spec_len),Q_spec_len[0],Q_spec_len[1],Q_spec_len[2],Q_spec_len[3],Q_spec_len[4],Q_spec_len[5]]
     # display table
-    print('\nSection 1: Cluster MEMBERSHIP stats: ')
+    print('\nSection 1: Cluster MEMBER stats: ')
     from tabulate import tabulate
     print(tabulate([SF_tabular,Q_tabular,SF_phot_tabular,SF_spec_tabular,Q_phot_tabular,Q_spec_tabular],headers=col_names))
     #
@@ -395,58 +395,78 @@ for counter in range(len(master_cat)):
 #
 #
 ### MAY NEED TO EDIT: diag_flag_4
-# SPEC. BINNING: iterate through different number of histogram bins to see which yields a set of corrections closest in general to ~1
+# SPEC. BINNING: iterate through different number of histogram bins to see which yields a set of corrections closest in general to ~1; this has now been expanded to test: diag_flag4 = 1, symmetric binning; diag_flag4 = 2, asymmetric binning, equal number of objects in each bin;
 diag_flag_4 = 2     # 0=off;    1=on, run through different numbers for SYMMETRIC BINS;     2=on, use ASUMMETRIC BINS
 #
 if diag_flag_4 == 1 and diag_flag_master == 1:
     #
     ### bin SF & Q, then compute false pos/neg fractions by mass bin for correction factors. 
     ### NOTE: that # of bins was determined as the largest number which would ensure that all bins are populated
-    num_bins_array = [8,7,6,5,4,3,2]   # number of histogram (i.e. SMF) mass bins to try
+    num_bins_to_try = [8,7,6,5,4,3,2]   # number of histogram (i.e. SMF) mass bins to try
     # write a loop that interatively uses a different number of bins in the histrogram, to isolate the largest number for which all bins have at least one entry; NOTE: the lines that stop the loop have been commented out, to investigate the relative fraction of false pos/neg for each different # of bins
-    print('Section 3.2: Spec. completeness correction binning\n')
+    ## open a file to print to
+    f = open('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/master_smf_symmetric_bins_false_pos_neg_%s'%Q_cutoff[1]+'_phot_cutoff.txt','w+')
+    #print('Section 3.2: Spec. completeness correction binning\n')
     #SF
-    for number in range(len(num_bins_array)):
-        print('# of bins to try (SF): %s'%num_bins_array[number])
+    for number in range(len(num_bins_to_try)):
+        ## sort false pos/neg lists in ascending order
+        SF_pos = np.sort(SF_pos)
+        SF_neg = np.sort(SF_neg)
+        Q_pos = np.sort(Q_pos)
+        Q_neg = np.sort(Q_neg)
+        #
         # make histograms
-        SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=num_bins_array[number], range=range2)
-        SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_bins_array[number], range=range2)
-        print('SF_pos: %s'%SF_pos_hist)
-        print('SF_neg: %s'%SF_neg_hist)
-        print('SF Bins: %s'%bins_SF)
+        SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=num_bins_to_try[number], range=range2)
+        SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_bins_to_try[number], range=range2)
+        Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=num_bins_to_try[number], range=range2)
+        Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_bins_to_try[number], range=range2)
+        #print('# of bins to try (SF): %s'%num_bins_to_try[number])
+        #print('SF_pos: %s'%SF_pos_hist)
+        #print('SF_neg: %s'%SF_neg_hist)
+        #print('SF Bins: %s'%bins_SF)
+        #print('# of bins to try (Q): %s'%num_bins_to_try[number])
+        #print('Q_pos: %s'%Q_pos_hist)
+        #print('Q_neg: %s'%Q_neg_hist)
+        #print('Q Bins: %s'%bins_Q)
+        SF_ratio = SF_pos_hist / SF_neg_hist
+        Q_ratio = Q_pos_hist / Q_neg_hist
         for jj in range(len(SF_pos_hist)):
             if SF_pos_hist[jj] == 0 and SF_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
-                SF_pos_hist[jj] = 1
-                SF_neg_hist[jj] = 1
-        SF_fraction = SF_pos_hist / SF_neg_hist
-        print('SF_fraction: %s'%SF_fraction)
-        total = np.sum(SF_pos_hist==0) + np.sum(SF_neg_hist==0)
-        #if total == 0:
-        #    num_binsSF = num_bins_array[number]         # set number of SF bins as greatest number for which each bin is populated
-        #    print('# of SF bins: %s'%num_bins_array[number])
-        #    break
-    # Q
-    for number in range(len(num_bins_array)):
-        print('# of bins to try (Q): %s'%num_bins_array[number])
-        # make histograms
-        Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=num_bins_array[number], range=range2)
-        Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_bins_array[number], range=range2)
-        print('Q_pos: %s'%Q_pos_hist)
-        print('Q_neg: %s'%Q_neg_hist)
-        print('Q Bins: %s'%bins_Q)
+                SF_ratio[jj] = 1
         for jj in range(len(Q_pos_hist)):
             if Q_pos_hist[jj] == 0 and Q_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
-                Q_pos_hist[jj] = 1
-                Q_neg_hist[jj] = 1
-        Q_fraction = Q_pos_hist / Q_neg_hist
-        print('Q_fraction: %s'%Q_fraction,'\n')
-        total = np.sum(Q_pos_hist==0) + np.sum(Q_neg_hist==0)
+                Q_ratio[jj] = 1
+        #print('SF_ratio: %s'%SF_fraction)
+        #print('Q_ratio: %s'%Q_fraction,'\n')
+        #total = np.sum(SF_pos_hist==0) + np.sum(SF_neg_hist==0)
+        #total = np.sum(Q_pos_hist==0) + np.sum(Q_neg_hist==0)
         #if total == 0:
-        #    num_binsQ = num_bins_array[number]           # set number of Q bins as greatest number for which each bin is populated
-        #    print('# of Q bins: %s'%num_bins_array[number])
+        #    num_binsSF = num_bins_to_try[number]         # set number of SF bins as greatest number for which each bin is populated
+        #    print('# of SF bins: %s'%num_bins_to_try[number])
+        #    break        
+        #if total == 0:
+        #    num_binsQ = num_bins_to_try[number]           # set number of Q bins as greatest number for which each bin is populated
+        #    print('# of Q bins: %s'%num_bins_to_try[number])
     #    break
+    #
+        ## prepare what to write to file
+        bin_entry = '\n\n****************\nFOR %s'%(num_bins_to_try[number]-1)+' BINS\n\nSF bins: '+str(bins_SF)+'\nSF pos: '+str(SF_pos_hist)+'\nSF neg: '+str(SF_neg_hist)+'\nSF false pos/neg ratio: '+str(SF_ratio)+'\n\nQ bins: '+str(bins_Q)+'\nQ pos: '+str(Q_pos_hist)+'\nQ neg: '+str(Q_neg_hist)+'\nQ false pos/neg ratio: '+str(Q_ratio)
+        # write it
+        if number == 0:      # setup header of document
+            asterisks = '*********************************************************\n*********************************************************'
+            header1 = "\n\n### This file shows first a sorted list of false pos/neg \nfor the SF/Q samples. It then lists bin edges for \nSYMMETRIC BINNING, reporting the FALSE POS/NEG RATIO in \neach bin, & the # of false pos/neg in each bin. \nNOTE: bins which have a count of 0 for both false pos & \nfalse neg have a ratio set equal to 1.\nYou'll just have to make up your own mind from there###\n"
+            header2 = '\nSF_pos sorted list: \n'+str(SF_pos)+'\n\nSF_neg sorted list: \n'+str(SF_neg)+'\n\nQ_pos sorted list: \n'+str(Q_pos)+'\n\nQ_neg sorted list: \n'+str(Q_neg)+'\n'
+
+            writer = asterisks+'%s\n'%header1+asterisks+'\n\n\nSORTED LISTS%s'%header2+str(bin_entry)
+            f.write(writer)
+        else: 
+            writer = '\n%s'%str(bin_entry)+'\n'
+            f.write(writer)
+    ##        
+    f.close()
 #
-elif diag_flag_4 ==2 and diag_flag_master ==1:      # NEW FLAG DESIGNATION: ASYMMETRIC BINS for bins with ~equal # of objects in each bin
+## NEW FLAG DESIGNATION - diag_flag_4 = 2: ASYMMETRIC BINS for bins with ~equal # of objects in each bin (for each of the SF/Q false pos/neg pairs), return the asymmetric bin edges and compute the midpoints b/w the *_pos/*_neg bin edges. Use these midpoints as the bin edges for a new histogram for the *_pos/*_neg lists, and re-compute the false pos/neg ratio for each of SF/Q. Then print relevant data to a file.
+elif diag_flag_4 ==2 and diag_flag_master ==1:      
     ## sort false pos/neg lists in ascending order
     SF_pos = np.sort(SF_pos)
     SF_neg = np.sort(SF_neg)
@@ -454,19 +474,19 @@ elif diag_flag_4 ==2 and diag_flag_master ==1:      # NEW FLAG DESIGNATION: ASYM
     Q_neg = np.sort(Q_neg)
     #
     ## find index corresponding to the 25th, 50th, 75th & 100th percentiles
-    num_bins_to_try = [3,4,5,6]      # set number of asymmetric bins; run through in a loop and PRINT TO OUTPUT FILE
+    num_bins_to_try = [3,4,5,6,7,8]      # set number of asymmetric bins; run through in a loop and PRINT TO OUTPUT FILE
     ## open a file to print to
-    f = open('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/master_smf_asymmetric_bins_false_pos_neg.txt','w+')
-    for n in range(len(nn)):
-        SF_pos_index = int(np.round(len(SF_pos)/num_bins_to_try[n]))
-        SF_neg_index = int(np.round(len(SF_neg)/num_bins_to_try[n]))
-        Q_pos_index = int(np.round(len(Q_pos)/num_bins_to_try[n]))
-        Q_neg_index = int(np.round(len(Q_neg)/num_bins_to_try[n]))
+    f = open('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/master_smf_asymmetric_bins_false_pos_neg_%s'%Q_cutoff[1]+'_phot_cutoff.txt','w+')
+    for number in range(len(num_bins_to_try)):
+        SF_pos_index = int(np.round(len(SF_pos)/num_bins_to_try[number]))
+        SF_neg_index = int(np.round(len(SF_neg)/num_bins_to_try[number]))
+        Q_pos_index = int(np.round(len(Q_pos)/num_bins_to_try[number]))
+        Q_neg_index = int(np.round(len(Q_neg)/num_bins_to_try[number]))
         ## build arrays over range [7.3,12.3] with 4 bins, where each bin has ~equal # of objects in it; then COMPARE BY EYE AND CHOOSE
         num_bins_SF = [[],[]]     # [pos, neg]
         num_bins_Q = [[],[]]     # [pos, neg]
-        for ii in range(num_bins_to_try[n]):
-            if ii != (num_bins_to_try[n]-1):
+        for ii in range(num_bins_to_try[number]):
+            if ii != (num_bins_to_try[number]-1):
                 num_bins_SF[0].append(SF_pos[(ii*SF_pos_index)])
                 num_bins_SF[1].append(SF_neg[(ii*SF_neg_index)])
                 num_bins_Q[0].append(Q_pos[(ii*Q_pos_index)])
@@ -479,30 +499,54 @@ elif diag_flag_4 ==2 and diag_flag_master ==1:      # NEW FLAG DESIGNATION: ASYM
         num_bins_SF = np.array(num_bins_SF)
         num_bins_Q = np.array(num_bins_Q)
         #
+        ## compute midpoints between false pos/neg bin edges
+        bin_midpoints_SF = np.mean(num_bins_SF,axis=0)
+        bin_midpoints_Q = np.mean(num_bins_Q,axis=0)
+        ## set first/last entry as limits of mass range for smf
+        bin_midpoints_SF[0] = range2[0]
+        bin_midpoints_SF[-1] = range2[-1]
+        bin_midpoints_Q[0] = range2[0]
+        bin_midpoints_Q[-1] = range2[-1]
+        ## build new histograms
+        SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=num_binsSF, range=range2)
+        SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_binsSF, range=range2)
+        Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=num_binsQ, range=range2)
+        Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_binsQ, range=range2)
+        ## find ratios, set ratio==1 for bins with no false pos or false neg
+        SF_ratio = SF_pos_hist / SF_neg_hist
+        Q_ratio = Q_pos_hist / Q_neg_hist
+        for jj in range(len(SF_pos_hist)):
+            if SF_pos_hist[jj] == 0 and SF_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
+                SF_ratio[jj] = 1
+        for jj in range(len(Q_pos_hist)):
+            if Q_pos_hist[jj] == 0 and Q_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
+                Q_ratio[jj] = 1
+        
         ## prepare what to write to file
-        bin_entry = '\n\n****************\nFOR %s'%(num_bins_to_try[n]-1)+' BINS\n\nSF_pos bin edges: '+str(num_bins_SF[0])+'\nSF_neg bin edges: '+str(num_bins_SF[1])+'\n\nQ_pos bin edges: '+str(num_bins_Q[0])+'\nQ_neg bin edges: '+str(num_bins_Q[1])
+        bin_entry1 = '\n\n****************\nFOR %s'%(num_bins_to_try[number]-1)+' BINS\n\nSF_pos bin edges: '+str(num_bins_SF[0])+'\nSF_neg bin edges: '+str(num_bins_SF[1])+'\n\nQ_pos bin edges: '+str(num_bins_Q[0])+'\nQ_neg bin edges: '+str(num_bins_Q[1])
+        bin_entry2 = '\nHistogram based on midpoints of the above\nSF:\nBINS: '+str(bins_SF)+'\nSF pos: '+str(SF_pos_hist)+'\nSF neg: '+str(SF_neg_hist)+'\nSF false pos/neg ratio: '+str(SF_ratio)+'\n\nQ:\nBINS: '+str(bins_Q)+'\nQ pos: '+str(Q_pos_hist)+'\nQ neg: '+str(Q_neg_hist)+'\nQ false pos/neg ratio: '+str(Q_ratio)
         # write it
-        if n == 0:      # setup header of document
-            asterisks = '***********************************************\n***********************************************'
-            header1 = "\n\n### This file shows first a sorted list of false pos/neg \nfor the SF/Q samples. It then lists bin edges for \nASYMMETRIC BINNING, reporting an equal number of objects in each bin. \nYou'll just have to make up your own mind from there###\n"
+        if number == 0:      # setup header of document
+            asterisks = '*********************************************************\n*********************************************************'
+            header1 = "\n\n### This file shows first a sorted list of false pos/neg \nfor the SF/Q samples. It then lists bin edges for \nASYMMETRIC BINNING, reporting an equal number of objects\nin each bin. It then computes the midpoint between the\nbin edges of the i'th false pos bin and the i'th false neg\nbin. Histograms are then computed for false pos/neg using\nthose midpoints as the histogram bin edges, and the\ncorresponsing false pos/neg RATIO is printed.\nNOTE: bins which have\na count of 0 for both false pos & false neg have a ratio set equal\nto 1.\nYou'll just have to make up your own mind from there###\n"
             header2 = 'SF_pos sorted list: \n'+str(SF_pos)+'\n\nSF_neg sorted list: \n'+str(SF_neg)+'\n\nQ_pos sorted list: \n'+str(Q_pos)+'\n\nQ_neg sorted list: \n'+str(Q_neg)+'\n'
 
-            writer = asterisks+'%s\n'%header1+asterisks+'\n\n\nSORTED LISTS%s'%header2+str(bin_entry)
+            writer = asterisks+'%s\n'%header1+asterisks+'\n\n\nSORTED LISTS%s'%header2+str(bin_entry1)+'\n%s'%str(bin_entry2)+'\n'
             f.write(writer)
         else: 
-            writer = '\n%s'%str(bin_entry)+'\n'
+            writer = '\n%s'%str(bin_entry1)+'\n'+'\n%s'%str(bin_entry2)+'\n'
             f.write(writer)
-##        
-f.close()
+    ##        
+    f.close()
 #
 else:
-###### The following few lines are for if you want to choose the # of bins independent of the criteria described above (i.e. if you want to try fewer bins than the largest # for which each bin is populated, or if you want to specify non-symmetric bin widths); marked by 5 hashtags #####
+###### The following few lines are for if you want to choose the # of bins independent of the criteria described above; once a final decision is made on the bin edges (i.e. bin widths) to use for making the final histogram of false pos/neg, enter then in arrays 'num_bins*' below, and set diag_flag_f = 0; lines to uncomment marked by 5 hashtags #####
 ###### recall: range2 = [7.3,12.3]
-    num_binsSF = [7.3,8.55,9.8,11.14,12.3]#3   ### ASYMMETRIC BINNING: even bins would be [ 7.3   8.55  9.8  11.05 12.3 ] for 4 bins; i made the last bin a bit smaller so that it is empty for SF false pos, given there are no hi-mass false neg. (max SF_neg = 10.63, max SF_pos = 11.13)
-    #####num_binsQ = [7.3,8.85,10.1,11.05,12.3]#4
+    num_binsSF = 3#[7.3,8.5,8.93,9.42,9.94,12.3]#3   ### ASYMMETRIC BINNING
+    #####[7.3,8.85,10.1,11.05,12.3]#4
     #
-    ###num_binsSF = 5
-    num_binsQ = 5
+    ##num_binsSF = 5
+    num_binsQ = 4#[7.3,9.0,9.4,10.7,12.3]
     #
     SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=num_binsSF, range=range2)
     SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_binsSF, range=range2)
@@ -521,7 +565,7 @@ if diag_flag_5 == 1 and diag_flag_master == 1:
 #    total_pos_hist = SF_pos_hist + Q_pos_hist     
 #    total_neg_hist = SF_neg_hist + Q_neg_hist
     # print
-    print('Section 3.2: spec.completeness correction:\nThe data preparation file reports:')
+    print('Section 3.2: spec.completeness correction:\n\nThe data preparation file reports:')
     print('# of SF false pos: ',str(np.sum(pos[0])))
     print('# of SF false neg: ',str(np.sum(neg[0])))
     print('# of Q false pos: ',str(np.sum(pos[1])))
@@ -600,7 +644,7 @@ Q_frac_err = np.sqrt((Q_relerr_pos**2) + (Q_relerr_neg**2))*Q_frac
 ## FIGURE ##
 #
 ### MAY NEED TO EDIT: plot_flag
-plot_flag_1 = 0        # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
+plot_flag_1 = 1        # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
 if plot_flag_1 == 1:
     # plot Spectroscopic completion correction factors 
     plt.close()
@@ -699,7 +743,7 @@ else:
     #
 #
 #
-
+#
 #
 #
 #
