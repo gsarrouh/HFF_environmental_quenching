@@ -10,11 +10,10 @@ Created on Wed Jun 24 10:23:11 2020
 #
 #
 ### WHAT THIS PROGRAM DOES:
-###This script reads in all data for the Hubble Frontier Fields images and prepares data for plotting and analysis. Key information is summarized in the tables: 
+### This script reads in all data for the Hubble Frontier Fields images and prepares data for plotting and analysis. Key information is summarized in the tables: 
 ###     **"sub_stats","type_stats","SF_spec_stats","Q_spec_stats","SF_phot_stats","Q_phot_stats"**
 #
 ### Data is organized in a single catalogue ("master_cat"), and objects are identified through applying a series of "FILTERS" to designate key populations using a numerical designation for ease of writing code.
-#
 #
 #
 ## FILTER 1 - 'cluster':  cluster catalogues are designated as follows: 
@@ -363,27 +362,33 @@ for counter in range(len(master_cat)):
                 master_cat['z_clusterphot'][counter] = ((master_cat['z_peak'][counter] - z_cluster[ii]) / (1 + master_cat['z_peak'][counter]))
 #
 #
-## SECTION(2.1): separate OUTLIERS from both phot & spec sub-sample, defined as |del_z| < 0.15. apply FILTER TYPE = 3 for outliers;   
+## SECTION (2.1): separate OUTLIERS from both phot & spec sub-sample, defined as |del_z| < 0.15. apply FILTER TYPE = 3 for outliers;   
 #
 outliers = np.array([0]*6)      # initialize array to track outliers by cluster, for computing outlier fraction later
 sum_delz = []                   # for computing mean |del_z|
-
+count_stars = 0
 #
 for counter in range(len(master_cat)):
     if master_cat['sub'][counter] == 1:                        # sub=1 for objects with both spec & phot; total # of such objects tracked by cluster above in the array called "both"
         if np.abs(master_cat['del_z'][counter]) > 0.15:        # |del_z| > 0.15 for outliers, threshold chosen for historical reasons to facilitate comparison with other studies
-            master_cat['type'][counter] = 3                  # type = 3 identifies outliers
+            master_cat['type'][counter] = 3                  # type=3 identifies outliers
             for ii in range(len(outliers)):
                 if master_cat['cluster'][counter] == (ii+1):   # keep track of outliers by cluster
                     outliers[ii]+=1
-        sum_delz.append(np.abs(master_cat['del_z'][counter]))
+            sum_delz.append(np.abs(master_cat['del_z'][counter]))    # keep track of all |del_z| measurements for stats computation
+        else:
+            sum_delz.append(np.abs(master_cat['del_z'][counter]))
+        if master_cat['type'][counter] == 3 and master_cat['star_flag'][counter] == 1:                  # overwrite designation for stars
+            master_cat['type'][counter] = 0                        # type=0 for stars
+            outliers-=1
+            count_stars+=1
 #
 #
-## SECTION(2.2): compute & DISPLAY OUTLIER FRACTION, SCATTER (i.e. std dev), and MEAN of |del_z|.
+## SECTION (2.2): compute & DISPLAY OUTLIER FRACTION, SCATTER (i.e. std dev), and MEAN of |del_z|.
 #
-delz_mean = np.sum(sum_delz)/len(sum_delz)
+delz_mean = np.mean(sum_delz)
 delz_scatter = np.std(sum_delz)
-print('OUTLIERS: %s' % np.sum(outliers))
+print('OUTLIERS total: %s' % np.sum(outliers))
 print('Outlier fraction: %s' % (np.sum(outliers)/np.sum(both)))
 print('|del_z| mean: %s'%delz_mean)
 print('|del_z| scatter: %s\n'%delz_scatter)
@@ -420,15 +425,17 @@ for counter in range(len(master_cat)):
                 stars_type[ii]+=1
     elif master_cat['sub'][counter]==1 or master_cat['sub'][counter]==2:    # sub=1 for (spec & phot) subsample, sub=2 for phot subsample; i.e. look at all objects with photometry
         if master_cat['uv'][counter] > 1.3 and master_cat['vj'][counter] < 1.6 and master_cat['uv'][counter] > ((0.88*master_cat[counter]['vj']) + 0.6): 
-            master_cat['type'][counter] = 2             # identify passive (QUIESCENT) galaxies, type=2
-            for ii in range(len(Q_type)):
-                if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
-                    Q_type[ii]+=1
+            if master_cat['type'][counter] !=3:             # skip outliers
+                master_cat['type'][counter] = 2             # identify passive (QUIESCENT) galaxies, type=2
+                for ii in range(len(Q_type)):
+                    if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
+                        Q_type[ii]+=1
         else:
-            master_cat['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1
-            for ii in range(len(SF_type)):
-                if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
-                    SF_type[ii]+=1
+            if master_cat['type'][counter] !=3:             # skip outliers    
+                master_cat['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1
+                for ii in range(len(SF_type)):
+                    if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
+                        SF_type[ii]+=1
     else:
         for ii in range(len(lost_type)):
             if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
@@ -442,12 +449,12 @@ diag_flag_2 = 1
 #
 if diag_flag_2 == 1:
     ## Summarize initial data stats in table
-    type_names = Column(['Total','SF','Q','Other'],name='Property')
+    type_names = Column(['Total','SF','Q','Outliers','Other'],name='Property')
     col_names = ['macs0416','macs1149','macs0717','abell370','abell1063','abell2744']
-    type0 = Column([np.sum([np.sum(SF_type),np.sum(Q_type),np.sum(lost_type),np.sum(stars_type)]),np.sum(SF_type),np.sum(Q_type),np.sum(lost_type+stars_type)],name='Total')  # total column
+    type0 = Column([np.sum([np.sum(SF_type),np.sum(Q_type),np.sum(outliers),np.sum(lost_type),np.sum(stars_type)]),np.sum(SF_type),np.sum(Q_type),np.sum(outliers),np.sum(lost_type+stars_type)],name='Total')  # total column
     type_stats = Table([type_names,type0])
     for ii in range(len(spec_only)):
-        type_col = Column([np.sum([SF_type[ii],Q_type[ii],lost_type[ii],stars_type[ii]]),SF_type[ii],Q_type[ii],(lost_type[ii]+stars_type[ii])],name=col_names[ii])
+        type_col = Column([np.sum([SF_type[ii],Q_type[ii],outliers[ii],lost_type[ii],stars_type[ii]]),SF_type[ii],Q_type[ii],outliers[ii],(lost_type[ii]+stars_type[ii])],name=col_names[ii])
         type_stats.add_column(type_col)  # add columns to table one cluster at a time
     #
     print('Catalogue by TYPE:')
@@ -489,7 +496,7 @@ if time_flag_4 == 1 and time_flag == 0:
 # define cut-offs for SF & Q
 z_cutoff = np.linspace(0.01,0.09,9)       # create array from [0.01,0.09] in steps of 0.01; replace in loop below with SF_cutoff & Q_cutoff once cutoffs are determined 
 SF_cutoff = [0.01,0.03]      # [spec,phot]
-Q_cutoff = [0.01,0.06]
+Q_cutoff = [0.01,0.07]
 #
 #
 ## these lists don't have a purpose but might come in handy later
@@ -834,7 +841,7 @@ if time_flag_6 == 1 and time_flag == 0:
 ## TIME_FLAG END
 #
 if time_flag == 1:
-    print('Program "master_data_6_final.py" took: %s seconds to run.\n\n' % (time.time() - start_time))
+    print('Program "master_data_7_final.py" took: %s seconds to run.\n\n' % (time.time() - start_time))
 #
 #
 #
