@@ -513,13 +513,15 @@ diag_flag_4 = 1         #   0=off, don't do redshift cutoff variational test;   
 #
 space = ' '
 if (diag_flag_4 == 1  and diag_flag_master == 2) or diag_flag_master == 1:
-    print('Entering redshift cutoff diagnostic...')
+    print('Diagnostic flag 4: entering redshift cutoff diagnostic...')
     ## the following code is part of a diagnostic to test the # of false pos/neg produced by altering the photometric/spectroscopic redshift cutoff. upon completion it will be commented out permenantly.
     #
+    ## MAY NEED TO EDIT: "increment" & cutoff_range, for both SPEC (immediately below) and PHOT (after the first 'for' loop)
+    ## SPEC cuts
     increment = np.array([0.01,0.010])   # [spec,phot]
     z_cutoff_spec_range = np.array([0.010,(0.020+increment[0])])
     # define cut-offs for SF & Q
-    z_cutoff_spec = np.round(np.arange(z_cutoff_spec_range[0],z_cutoff_spec_range[1],increment[0]),decimals=3)       # create array from [0.01,0.05] in steps of
+    z_cutoff_spec = np.round(np.arange(z_cutoff_spec_range[0],z_cutoff_spec_range[1],increment[0]),decimals=3)       # create array from [0.01,0.05] in steps of "increment"
     #
     #
     ## these lists don't have a purpose but might come in handy later
@@ -544,7 +546,13 @@ if (diag_flag_4 == 1  and diag_flag_master == 2) or diag_flag_master == 1:
     df_list = []
     ## create file looping through different values for spec/phot membeship cutoff
     for cutoff_spec in range(len(z_cutoff_spec)):
-        z_cutoff_phot_range = [max(z_cutoff_spec[cutoff_spec],0.03),(0.5+(increment[1]))]
+        #
+        ## print diagnostic progress
+        if ii%5 == 0:
+            progress = (cutoff_spec / len(z_cutoff_spec)*100)    # calculate progress through z_cutoff_spec_range
+            print('%s'%ii,'th cut of %s'%len(z_cutoff_spec),' being investigated.\nz_spec cut: %.3f'%z_cutoff_spec[cutoff_spec],'; in range %.3f'%z_cutoff_spec[0],' to %.3f'%z_cutoff_spec[-1],'\nCurrent progress: %.3f'%progress,'%')
+        ## PHOT cuts
+        z_cutoff_phot_range = [max(z_cutoff_spec[cutoff_spec],0.03),(0.05+(increment[1]))]
         z_cutoff_phot = np.round(np.arange(z_cutoff_phot_range[0],z_cutoff_phot_range[1],increment[1]),decimals=3) # create array from [0.01,0.05] in steps of increment_phot; replace in loop below with z_cutoff once cutoffs are determined
         for cutoff_phot in range(len(z_cutoff_phot)):
             #
