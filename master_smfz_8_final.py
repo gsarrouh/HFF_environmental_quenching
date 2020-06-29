@@ -59,6 +59,7 @@ Created on Sun Jun 21 14:28:35 2020
 #
 ## NOTE: there are flags for diagnostics and plotting throughout the script. search "MAY NEED TO EDIT" to identify where these flags are
 #
+## NOTE: search "MAY NEED TO EDIT" to find where user-input is required
 #
 #
 ###################     PROGRAM START
