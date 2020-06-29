@@ -228,6 +228,8 @@ if (diag_flag_1 == 1 and diag_flag_master == 2) or diag_flag_master == 1:
 #
 ## cluster populations arrays: (SF/Q/total)_smf & (SF/Q/total)_field_smf
 #
+## MAY NEED TO EDIT
+## you may change the # of bin points by adjusting the bin width, however IF YOU DO IT HERE, DO THE SAME IN "spec_completeness_binnning.py". search "MAY NEED TO EDIT"
 range2 = [7.3,12.3]     #sets range for all histrograms to be computer: cluster,field,false pos/neg
 bin_width = 0.2  # in dex
 num_points = (round((range2[1]-range2[0])/bin_width))+1       # compute # of data points
@@ -279,6 +281,10 @@ for ii in range(len(SF_spec_list)):
     SF_phot_smf[ii].append(SF_phot)
     Q_spec_smf[ii].append(Q_spec)
     Q_phot_smf[ii].append(Q_phot)
+#
+## define mass_bins midpoints
+SF_midbins = midbins(mass_bins)
+Q_midbins = SF_midbins + 0.05
 #
 ## convert lists to arrays so we can do math operations on them
 SF_phot_smf = np.array(SF_phot_smf)
