@@ -34,6 +34,8 @@
 #
 ## NOTE: there are flags for diagnostics and plotting throughout the script. search "MAY NEED TO EDIT" to identify where these flags are
 #
+## NOTE: search "MAY NEED TO EDIT" to find where user-input is required
+#
 #
 #
 ###################     PROGRAM START
@@ -72,13 +74,27 @@ if time_flag == 1:
 #
 #
 #
+## MASTER DIAGNOSTIC FLAG: this will enable (1=on) or suppress (0=off) the diagnostic output of this file, for de-bugging purposes
+diag_flag = 0
+#
+#
 ## SECTION (1): setup LISTS, i.e. compile lists of SF/Q false pos/neg populations; define "midbins" function
 # 
 ## ignore 'divide by zero' errors, since they are handled with exceptions below
 np.seterr(divide='ignore')
 #
+## define some key information about the study: limiting mass, mass range, SMF bin midpoints
 limiting_mass = [7.5,7.8,8.0,7.5,7.4,7.3] # clusters 1,2,3,4,5,6, see IDs below
 range2 = [7.3,12.3]
+## now setup of the bin midpoints for the SMF. no need to actually create the SMF, just define an array with the same bin midpoints
+#
+## MAY NEED TO EDIT!!!
+## if you change the bin width in the "master_smf*.py" code, YOU MUST ALSO CHANGE IT HERE. just search search "MAY NEED TO EDIT" in that file.
+bin_width = 0.2  # in dex
+num_points = (round((range2[1]-range2[0])/bin_width))+1       # compute # of data points
+num_bins = np.linspace(range2[0],range2[1],num_points)
+#
+SF_midbins = midbins(num_bins)                                # define 
 #
 SF_pos = []
 SF_neg = []
@@ -145,7 +161,7 @@ f.write(header1)
 ### METHOD 1: bin SF & Q in SYMMETRIC BINS, then compute false pos/neg fractions by mass bin for correction factors. 
 #
 ## number of histogram mass bins to try for spec. completeness correction
-num_bins_to_try = np.arange(2,5,1)   # np.arange([...]) = [array_start,array_end_plus_increment,increment]
+num_bins_to_try = np.arange(2,8,1)   # np.arange([...]) = [array_start,array_end_plus_increment,increment]
 # write a loop that interatively uses a different number of bins in the histrogram, to isolate the largest number for which all bins have at least one entry; NOTE: the lines that stop the loop have been commented out, to investigate the relative fraction of false pos/neg for each different # of bins
 #
 # 
@@ -170,8 +186,8 @@ for number in range(len(num_bins_to_try)):
         if Q_pos_hist[jj] == 0 and Q_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
             Q_ratio[jj] = float('NaN')
     # compute midbins for spec. mass completeness plot (i.e. plot of false pos/false neg ratios)
-    SF_frac_midbins = midbins(bins_SF)
-    Q_frac_midbins = midbins(bins_Q)
+    SF_ratio_midbins = midbins(bins_SF)
+    Q_ratio_midbins = midbins(bins_Q)
     #
     #
     #    
@@ -203,15 +219,13 @@ method_designations = [2,3]
 ##
 for m in range(len(method_designations)):
     method = method_designations[m]
-    if method == 2:
-        #
-        #
         #
         #
         #
 ### SECTION (3): METHOD 2
 ### METHOD 2: ASYMMETRIC BINS for bins with ~EQUAL NUMBER OF OBJECTS in each bin (for each of the SF/Q false pos/neg pairs), return the asymmetric bin edges and compute the midpoints b/w the *_pos/*_neg bin edges. Use these midpoints as the bin edges for a new histogram for the *_pos/*_neg lists, and re-compute the false pos/neg ratio for each of SF/Q. Then print relevant data to a file.
-#
+        #
+    if method == 2:
         #    
         for number in range(len(num_bins_to_try)):    #number of bin EDGES (i.e. # of bins + 1)
             ## compute the index corresponding to the first evenly-space bin edge
@@ -317,12 +331,54 @@ for m in range(len(method_designations)):
             num_bins_SF_index[1].append(len(SF_neg)-1)
             num_bins_Q_index[0].append(len(Q_pos)-1)
             num_bins_Q_index[1].append(len(Q_neg)-1)
+            #
+            ## check that the length of the false pos list matches the length of the false neg list before converting the lists to arrays (i.e. check that the length matches the # of bin edges). if one is short, append a value of [0] to its list. this is just a patch to make the code run. introducing a zero at the end of the index list will mean the lowest mass is both the first and last bin edge. the algorithm will penalize this selection when computing the metric of merit, assigning it a value of "NaN", thus it will not contaminate our analysis
+            #
+            ## record length of each list
+            len_SF_pos = len(num_bins_SF_index[0])
+            len_SF_neg = len(num_bins_SF_index[1])
+            len_Q_pos = len(num_bins_Q_index[0])
+            len_Q_neg = len(num_bins_Q_index[1])
+            #
+            ## now compare to number of bin edges (or # of bins + 1, per below. same difference)
+            ## check SF false pos
+            while len_SF_pos < (num_bins_to_try[number]+1): 
+                num_bins_SF_index[0].append(0)
+                len_SF_pos = len(num_bins_SF_index[0])
+            while len_SF_pos > (num_bins_to_try[number]+1): 
+                del num_bins_SF_index[0][-1]
+                len_SF_pos = len(num_bins_SF_index[0])
+            ## check SF false neg
+            while len_SF_neg < (num_bins_to_try[number]+1): 
+                num_bins_SF_index[1].append(0)
+                len_SF_neg = len(num_bins_SF_index[1])
+            while len_SF_neg > (num_bins_to_try[number]+1): 
+                del num_bins_SF_index[1][-1]
+                len_SF_neg = len(num_bins_SF_index[1])
+            ## check Q false pos    
+            while len_Q_pos < (num_bins_to_try[number]+1): 
+                num_bins_Q_index[0].append(0)
+                len_Q_pos = len(num_bins_Q_index[0])
+            while len_Q_pos > (num_bins_to_try[number]+1): 
+                del num_bins_Q_index[0][-1]
+                len_Q_pos = len(num_bins_Q_index[0])
+            ## check Q false neg    
+            while len_Q_neg < (num_bins_to_try[number]+1): 
+                num_bins_Q_index[1].append(0)
+                len_Q_neg = len(num_bins_Q_index[1])
+            while len_Q_neg > (num_bins_to_try[number]+1): 
+                del num_bins_Q_index[1][-1]
+                len_Q_neg = len(num_bins_Q_index[1])
+            #
             ## convert to arrays
             num_bins_SF_index = np.array(num_bins_SF_index)
             num_bins_Q_index = np.array(num_bins_Q_index)
-            #print('# bins: %s'%(num_bins_to_try[number]-1))
-            #print('length of num_bins_* array: %s'%len(num_bins_SF_index[0]),'\nlength of SF array: %s'%len(SF_pos),'\nlength of Q array: %s'%len(Q_pos))
-            #print('indices corresponding to bin edges\nSF: %s'%num_bins_SF_index,'\nQ: %s'%num_bins_Q_index)
+            #
+            ## enable diagnostic output
+            if diag_flag == 1:
+                print('# bins: %s'%(num_bins_to_try[number]-1))
+                print('length of num_bins_* array: %s'%len(num_bins_SF_index[0]),'\n# of SF false pos.: %s'%len(SF_pos),'\n# of SF false neg.: %s'%len(SF_neg),'\n# of Q false pos.: %s'%len(Q_pos),'\n# of Q false neg.: %s'%len(Q_neg))
+                print('indices corresponding to bin edges\nSF: %s'%num_bins_SF_index,'\nQ: %s'%num_bins_Q_index)
             #
             ## convert to arrays
             num_bins_SF = np.empty_like(num_bins_SF_index,dtype='float32')
@@ -357,218 +413,264 @@ for m in range(len(method_designations)):
     ## The goal now is to produce a list of bin edges that will be applied to both the false pos/neg lists. for the ii'th bin edge from each of the false pos/neg lists, test all possible values for the ii'th bin between false_pos_bin_edge[ii] & false_neg_bin_edge[ii] in increments of 0.01. choose the bin edge which yields the lowest average deviation from 1. then call (i.e. execute the file) "correction_factors.py", which is based on code from "master_smfz*" S3.2. It interpolates/extrapolates SMF bin correction factors from the false pos/neg ratios computed below, and returns the "metric of merit", i.e. (the sum of squared deviations from 1 for each pos/neg ratio bin) divided by (the number of bins). 
     #
     ## SF
-    for ii in range(len(bin_edge_means_SF)):
-        SF_var_list = []
-        if num_bins_SF[0][ii] < num_bins_SF[1][ii]:    # this if statement won't apply to the first/last bin, since they have been set to equal "range2", the mass range for the study
-            bin_edge_SF_start = num_bins_SF[0][ii]     # store the lower bound of the ii'th bin edge b/w the false pos/neg bin edges
-            bin_edge_SF_end = num_bins_SF[1][ii]
-            equal_flag = 0
-        elif num_bins_SF[0][ii] > num_bins_SF[1][ii]:
-            bin_edge_SF_start = num_bins_SF[1][ii]
-            bin_edge_SF_end = num_bins_SF[0][ii]
-            equal_flag = 0
-        else:                                          # for when the i'th bin edge is the same for both false pos/neg lists
-            equal_flag = 1
-            bin_edge_SF_start = num_bins_SF[0][ii]
-            bin_edge_SF_end = num_bins_SF[0][ii]
-            mid_pt_to_use = num_bins_SF[0][ii]
-        print('Start of : %.2f'%bin_edge_SF_start)
-        #print(bin_edge_SF_start)
-        #print(bin_edge_SF_end)
-        #
-        ## 
-        while bin_edge_SF_start < bin_edge_SF_end:
-            if ii == 0:
-                bin_edge_means_SF[ii] = range2[0]    
-            elif ii == (len(bin_edge_means_SF)-1):
-                bin_edge_means_SF[ii] = range2[1]  
-            else:
-                bin_edge_means_SF[ii] = bin_edge_SF_start
-            try:     # try making histograms. if it doesn't work because the bin_edge* array isn't monotonically increasing, raise an error and record a variance of 'NaN'
-                SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=bin_edge_means_SF, range=range2)
-                SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=bin_edge_means_SF, range=range2)
-                bins_SF = np.round(bins_SF,decimals=3)
-                ## find ratios, set ratio==1 for bins with no false pos or false neg
-                SF_ratio = np.round((SF_pos_hist/SF_neg_hist),decimals=3)
-                for jj in range(len(SF_pos_hist)):      # go through each bin 
-                    if np.isnan(bins_SF[jj]) == 1:
-                        SF_ratio[jj] = float('NaN')
-                    elif SF_pos_hist[jj] == 0 and SF_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
-                        SF_ratio[jj] = 1
-                    elif SF_pos_hist[jj] == 0 or SF_neg_hist[jj] == 0:
-                        SF_ratio[jj] = float('NaN') 
-                #
-                ## compute variance of SF/Q ratios from 1
-                SF_var = np.sum((1 - SF_ratio)**2)
-                #
-                ## store variance in array for comparison of different values of bin edges
-                SF_var_list.append([SF_var,bin_edge_means_SF[ii],num_bins_to_try[number]])
-                #print('No error. appended to list for # of bins: %s'%num_bins_to_try[number])
-                #break
-            except:
-                print("ERROR 1: SF false pos/neg bins overlap s.t. bin edges don't increase\nmonotonically for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS\n"NaN" appended to list.')
-                bins_SF = np.array([float('NaN')]*len(num_bins_SF[0]))
-                SF_var = float('NaN')
-                SF_var_list.append([SF_var,bin_edge_means_SF[ii],num_bins_to_try[number]])
-                #print('error_flag=1 appended list for # of bins: %s'%num_bins_to_try[number])
-                #break            
-            bin_edge_SF_start = np.round(bin_edge_SF_start+0.01,decimals=2)
-            print(bin_edge_SF_start)
-        print(bin_edge_means_SF)
-        if equal_flag == 0:
-            #print('SF_var_list: %s'%SF_var_list)
-            #    
-            SF_var_list.sort(key=lambda x: x[0])
-            mid_pt_to_use = SF_var_list[0][1]        # assign best midpoint to bin_edge* array 
-        if ii == 0 or ii == (len(bin_edge_means_SF)-1):
-            pass
-        else:
-            bin_edge_means_SF[ii] = mid_pt_to_use 
-        #print('bin_edge_means_SF[%s]'%ii,' = %s'%bin_edge_means_SF[ii])
-        if ii != (len(bin_edge_means_SF)-1):
-            if bin_edge_means_SF[ii] > bin_edge_means_SF[(ii+1)]:
-                print("ERROR 2: the next bin value is lower than the current bin value for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS')
-                bin_edge_means_SF[ii] = bin_edge_means_SF[(ii+1)]            
     #
-    # make histograms
-    SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=num_bins_to_try[number], range=range2)
-    SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_bins_to_try[number], range=range2)
+    ## add a loop to ignore the case where the number of bins exceeds the population of false pos/neg.
+    pop_SF_pos = len(SF_pos)
+    pop_SF_neg = len(SF_neg)
     #
-    bins_SF = np.round(bins_SF,decimals=3)
-    #
-    SF_ratio = np.round((SF_pos_hist/SF_neg_hist),decimals=3)
-    for jj in range(len(SF_pos_hist)):
-        if SF_pos_hist[jj] == 0 and SF_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
-            SF_ratio[jj] = float('NaN')
-    #
-    # compute midbins for spec. mass completeness plot (i.e. plot of false pos/false neg ratios)
-    SF_frac_midbins = midbins(bins_SF)
-    #
-    if np.sum(np.isnan(SF_ratio)) > 0:     # if the ratios are bad, don't both interpolating the correction factors
+    if num_bins_to_try[number] > pop_SF_pos or num_bins_to_try[number] > pop_SF_neg:
+        print('ERROR: # of bins exceeds population of SF false pos/neg for %s'%num_bins_to_try[number],' bins and cutoffs:\n%s'%z_cutoff[0],' spec and %s'%z_cutoff[1],' phot\nUSE FEWER BINS')
         SF_var = float('NaN')
-    else:                                  # call correction factors file and compute metric of merit
+        pass
+    else:
+        #
+        for ii in range(len(bin_edge_means_SF)):
+            SF_var_list = []
+            if num_bins_SF[0][ii] < num_bins_SF[1][ii]:    # this if statement won't apply to the first/last bin, since they have been set to equal "range2", the mass range for the study
+                bin_edge_SF_start = num_bins_SF[0][ii]     # store the lower bound of the ii'th bin edge b/w the false pos/neg bin edges
+                bin_edge_SF_end = num_bins_SF[1][ii]
+                equal_flag = 0
+            elif num_bins_SF[0][ii] > num_bins_SF[1][ii]:
+                bin_edge_SF_start = num_bins_SF[1][ii]
+                bin_edge_SF_end = num_bins_SF[0][ii]
+                equal_flag = 0
+            else:                                          # for when the i'th bin edge is the same for both false pos/neg lists
+                equal_flag = 1
+                bin_edge_SF_start = num_bins_SF[0][ii]
+                bin_edge_SF_end = num_bins_SF[0][ii]
+                mid_pt_to_use = num_bins_SF[0][ii]
+            #
+            ## enable diagnostic output
+            if diag_flag == 1:
+                print('Start of : %.2f'%bin_edge_SF_start,' for SF method: %s'%method)
+                #print(bin_edge_SF_start)
+                #print(bin_edge_SF_end)
+            #
+            ## 
+            while bin_edge_SF_start < bin_edge_SF_end:
+                if ii == 0:
+                    bin_edge_means_SF[ii] = range2[0]    
+                elif ii == (len(bin_edge_means_SF)-1):
+                    bin_edge_means_SF[ii] = range2[1]  
+                else:
+                    bin_edge_means_SF[ii] = bin_edge_SF_start
+                try:     # try making histograms. if it doesn't work because the bin_edge* array isn't monotonically increasing, raise an error and record a variance of 'NaN'
+                    SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=bin_edge_means_SF, range=range2)
+                    SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=bin_edge_means_SF, range=range2)
+                    bins_SF = np.round(bins_SF,decimals=3)
+                    ## find ratios, set ratio==1 for bins with no false pos or false neg
+                    SF_ratio = np.round((SF_pos_hist/SF_neg_hist),decimals=3)
+                    for jj in range(len(SF_pos_hist)):      # go through each bin 
+                        if np.isnan(bins_SF[jj]) == 1:
+                            SF_ratio[jj] = float('NaN')
+                        elif SF_pos_hist[jj] == 0 and SF_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
+                            SF_ratio[jj] = 1
+                        elif SF_pos_hist[jj] == 0 or SF_neg_hist[jj] == 0:
+                            SF_ratio[jj] = float('NaN') 
+                    #
+                    ## compute variance of SF/Q ratios from 1
+                    SF_var = np.sum((1 - SF_ratio)**2)
+                    #
+                    ## store variance in array for comparison of different values of bin edges
+                    SF_var_list.append([SF_var,bin_edge_means_SF[ii],num_bins_to_try[number]])
+                    #print('No error. appended to list for # of bins: %s'%num_bins_to_try[number])
+                    #break
+                except:
+                    #
+                    ## enable diagnostic output
+                    if diag_flag == 1:
+                        print("ERROR 1: SF false pos/neg bins overlap s.t. bin edges don't increase\nmonotonically for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS\n"NaN" appended to list.')
+                    bins_SF = np.array([float('NaN')]*len(num_bins_SF))
+                    SF_var_bin_edges = float('NaN')
+                    SF_var_list.append([SF_var_bin_edges,bin_edge_means_SF[ii],num_bins_to_try[number]])
+                    #print('error_flag=1 appended list for # of bins: %s'%num_bins_to_try[number])
+                    #break            
+                bin_edge_SF_start = np.round(bin_edge_SF_start+0.01,decimals=2)
+                print(bin_edge_SF_start)
+            print(bin_edge_means_SF)
+            if equal_flag == 0:
+                #print('SF_var_list: %s'%SF_var_list)
+                #    
+                SF_var_list.sort(key=lambda x: x[0])
+                mid_pt_to_use = SF_var_list[0][1]        # assign best midpoint to bin_edge* array 
+            if ii == 0 or ii == (len(bin_edge_means_SF)-1):
+                pass
+            else:
+                bin_edge_means_SF[ii] = mid_pt_to_use 
+            #print('bin_edge_means_SF[%s]'%ii,' = %s'%bin_edge_means_SF[ii])
+            if ii != (len(bin_edge_means_SF)-1):
+                if bin_edge_means_SF[ii] > bin_edge_means_SF[(ii+1)]:
+                    #
+                    ## enable diagnostic output
+                    if diag_flag == 1:
+                        print("ERROR 2: the next bin value is lower than the current bin value for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS')
+                    bin_edge_means_SF[ii] = bin_edge_means_SF[(ii+1)]            
+        #
+        # make histograms
+        SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=num_bins_to_try[number], range=range2)
+        SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_bins_to_try[number], range=range2)
+        #
+        bins_SF = np.round(bins_SF,decimals=3)
+        #
+        SF_ratio = np.round((SF_pos_hist/SF_neg_hist),decimals=3)
+        for jj in range(len(SF_pos_hist)):
+            if SF_pos_hist[jj] == 0 and SF_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
+                SF_ratio[jj] = float('NaN')
+        #
+        ## compute midbins for spec. mass completeness plot (i.e. plot of false pos/false neg ratios)
+        SF_ratio_midbins = midbins(bins_SF)
         #
         #
-        #    
-        ## call a new file: "correction_factors.py" to interpolate/extrapolate the correction factors to the SMF, and return the metric of merit
-        #
-        exec(open('correction_factors.py').read())      #opens and executes the script
-        #
-        #
-        ## compute variance of SF/Q ratios from 1
-        SF_var = SF_metric        
+        if np.sum(np.isnan(SF_ratio)) > 0:     # if the ratios are bad, don't both interpolating the correction factors
+            SF_var = float('NaN')
+        else:                                  # call correction factors file and compute metric of merit
+            #
+            #
+            #    
+            ## call a new file: "correction_factors.py" to interpolate/extrapolate the correction factors to the SMF, and return the metric of merit
+            #
+            exec(open('correction_factors.py').read())      #opens and executes the script
+            #
+            #
+            ## compute variance of SF/Q ratios from 1
+            SF_var = SF_metric        
     #
     #       
     ## Q
-    for ii in range(len(bin_edge_means_Q)):
-        Q_var_list = []
-        if num_bins_Q[0][ii] < num_bins_Q[1][ii]:    # this if statement won't apply to the first/last bin, since they have been set to equal "range2", the mass range for the study
-            bin_edge_Q_start = num_bins_Q[0][ii]     # store the lower bound of the ii'th bin edge b/w the false pos/neg bin edges
-            bin_edge_Q_end = num_bins_Q[1][ii]
-            equal_flag = 0
-        elif num_bins_Q[0][ii] > num_bins_Q[1][ii]:
-            bin_edge_Q_start = num_bins_Q[1][ii]
-            bin_edge_Q_end = num_bins_Q[0][ii]
-            equal_flag = 0
-        else:                                          # for when the i'th bin edge is the same for both false pos/neg lists
-            equal_flag = 1
-            bin_edge_Q_start = num_bins_Q[0][ii]
-            bin_edge_Q_end = num_bins_Q[0][ii]
-            mid_pt_to_use = num_bins_Q[0][1]
-        print('Start of : %.2f'%bin_edge_Q_start)
-        print(bin_edge_Q_start)
-        print(bin_edge_Q_end)
-        #
-        ## 
-        while bin_edge_Q_start < bin_edge_Q_end:
-            if ii == 0:
-                bin_edge_means_Q[ii] = range2[0]    
-            elif ii == (len(bin_edge_means_Q)-1):
-                bin_edge_means_Q[ii] = range2[1]  
-            else:
-                bin_edge_means_Q[ii] = bin_edge_Q_start
-            try:     # try making histograms. if it doesn't work because the bin_edge* array isn't monotonically increasing, raise an error and record a variance of 'NaN'
-                Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=bin_edge_means_Q, range=range2)
-                Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=bin_edge_means_Q, range=range2)
-                bins_Q = np.round(bins_Q,decimals=3)
-                ## find ratios, set ratio==1 for bins with no false pos or false neg
-                Q_ratio = np.round((Q_pos_hist/Q_neg_hist),decimals=3)
-                for jj in range(len(Q_pos_hist)):      # go through each bin 
-                    if np.isnan(bins_Q[jj]) == 1:
-                        Q_ratio[jj] = float('NaN')
-                    elif Q_pos_hist[jj] == 0 and Q_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
-                        Q_ratio[jj] = 1
-                    elif Q_pos_hist[jj] == 0 or Q_neg_hist[jj] == 0:
-                        Q_ratio[jj] = float('NaN') 
-                #
-                ## compute variance of SF/Q ratios from 1
-                Q_var = np.sum((1 - Q_ratio)**2)
-                #
-                ## store variance in array for comparison of different values of bin edges
-                Q_var_list.append([Q_var,bin_edge_means_Q[ii],num_bins_to_try[number]])
-                #print('No error. appended to list for # of bins: %s'%num_bins_to_try[number])
-                #break
-            except:
-                print("ERROR 1: Q false pos/neg bins overlap s.t. bin edges don't increase\nmonotonically for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS\n"NaN" appended to list.')
-                bins_Q = np.array([float('NaN')]*len(num_bins_Q[0]))
-                Q_var = float('NaN')
-                Q_var_list.append([Q_var,bin_edge_means_Q[ii],num_bins_to_try[number]])
-                #print('error_flag=1 appended list for # of bins: %s'%num_bins_to_try[number])
-                #break            
-            bin_edge_Q_start = np.round(bin_edge_Q_start+0.01,decimals=2)
-            print(bin_edge_Q_start)
-        print(bin_edge_means_Q)
-        if equal_flag == 0:
-            #print('SF_var_list: %s'%Q_var_list)
-            #    
-            Q_var_list.sort(key=lambda x: x[0])
-            mid_pt_to_use = Q_var_list[0][1]        # assign best midpoint to bin_edge* array 
-        if ii == 0 or ii == (len(bin_edge_means_Q)-1):
-            pass
-        else:
-            bin_edge_means_Q[ii] = mid_pt_to_use 
-        #print('bin_edge_means_Q[%s]'%ii,' = %s'%bin_edge_means_Q[ii])
-        if ii != (len(bin_edge_means_Q)-1):
-            if bin_edge_means_Q[ii] > bin_edge_means_Q[(ii+1)]:
-                print("ERROR 2: the next bin value is lower than the current bin value for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS')
-                bin_edge_means_Q[ii] = bin_edge_means_Q[(ii+1)]
     #
+    ## add a loop to ignore the case where the number of bins exceeds the population of false pos/neg.
+    pop_Q_pos = len(Q_pos)
+    pop_Q_neg = len(Q_neg)
     #
-    ## make histograms
-    Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=num_bins_to_try[number], range=range2)
-    Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_bins_to_try[number], range=range2)
-    #
-    bins_Q = np.round(bins_Q,decimals=3)
-    #
-    Q_ratio = np.round((Q_pos_hist/Q_neg_hist),decimals=3)
-    for jj in range(len(Q_pos_hist)):
-        if Q_pos_hist[jj] == 0 and Q_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
-            Q_ratio[jj] = 1
-        elif Q_pos_hist[jj] == 0 or Q_neg_hist[jj] == 0:
-            Q_ratio[jj] = float('NaN')
-    #
-    # compute midbins for spec. mass completeness plot (i.e. plot of false pos/false neg ratios)
-    Q_frac_midbins = midbins(bins_Q)
-    #
-    if np.sum(np.isnan(Q_ratio)) > 0:     # if the ratios are bad, don't both interpolating the correction factors
+    if num_bins_to_try[number] > pop_Q_pos or num_bins_to_try[number] > pop_Q_neg:
+        print('ERROR: # of bins exceeds population of Q false pos/neg for %s'%num_bins_to_try[number],' bins and cutoffs:\n%s'%z_cutoff[0],' spec and %s'%z_cutoff[1],' phot\nUSE FEWER BINS')
         Q_var = float('NaN')
-    else:                                  # call correction factors file and compute metric of merit
+        pass
+    else:
+        #
+        for ii in range(len(bin_edge_means_Q)):
+            Q_var_list = []
+            if num_bins_Q[0][ii] < num_bins_Q[1][ii]:    # this if statement won't apply to the first/last bin, since they have been set to equal "range2", the mass range for the study
+                bin_edge_Q_start = num_bins_Q[0][ii]     # store the lower bound of the ii'th bin edge b/w the false pos/neg bin edges
+                bin_edge_Q_end = num_bins_Q[1][ii]
+                equal_flag = 0
+            elif num_bins_Q[0][ii] > num_bins_Q[1][ii]:
+                bin_edge_Q_start = num_bins_Q[1][ii]
+                bin_edge_Q_end = num_bins_Q[0][ii]
+                equal_flag = 0
+            else:                                          # for when the i'th bin edge is the same for both false pos/neg lists
+                equal_flag = 1
+                bin_edge_Q_start = num_bins_Q[0][ii]
+                bin_edge_Q_end = num_bins_Q[0][ii]
+                mid_pt_to_use = num_bins_Q[0][1]
+            #
+            ## enable diagnostic output
+            if diag_flag == 1:
+                print('Start of : %.2f'%bin_edge_Q_start,' for Q method: %s'%method)
+                #print(bin_edge_Q_start)
+                #print(bin_edge_Q_end)
+            #
+            ## 
+            while bin_edge_Q_start < bin_edge_Q_end:
+                if ii == 0:
+                    bin_edge_means_Q[ii] = range2[0]    
+                elif ii == (len(bin_edge_means_Q)-1):
+                    bin_edge_means_Q[ii] = range2[1]  
+                else:
+                    bin_edge_means_Q[ii] = bin_edge_Q_start
+                try:     # try making histograms. if it doesn't work because the bin_edge* array isn't monotonically increasing, raise an error and record a variance of 'NaN'
+                    Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=bin_edge_means_Q, range=range2)
+                    Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=bin_edge_means_Q, range=range2)
+                    bins_Q = np.round(bins_Q,decimals=3)
+                    ## find ratios, set ratio==1 for bins with no false pos or false neg
+                    Q_ratio = np.round((Q_pos_hist/Q_neg_hist),decimals=3)
+                    for jj in range(len(Q_pos_hist)):      # go through each bin 
+                        if np.isnan(bins_Q[jj]) == 1:
+                            Q_ratio[jj] = float('NaN')
+                        elif Q_pos_hist[jj] == 0 and Q_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
+                            Q_ratio[jj] = 1
+                        elif Q_pos_hist[jj] == 0 or Q_neg_hist[jj] == 0:
+                            Q_ratio[jj] = float('NaN') 
+                    #
+                    ## compute variance of SF/Q ratios from 1
+                    Q_var_bin_edges = np.sum((1 - Q_ratio)**2)
+                    #
+                    ## store variance in array for comparison of different values of bin edges
+                    Q_var_list.append([Q_var_bin_edges,bin_edge_means_Q[ii],num_bins_to_try[number]])
+                    #print('No error. appended to list for # of bins: %s'%num_bins_to_try[number])
+                    #break
+                except:
+                    #
+                    ## enable diagnostic output
+                    if diag_flag == 1:
+                        print("ERROR 1: Q false pos/neg bins overlap s.t. bin edges don't increase\nmonotonically for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS\n"NaN" appended to list.')
+                    bins_Q = np.array([float('NaN')]*len(num_bins_Q[0]))
+                    Q_var = float('NaN')
+                    Q_var_list.append([Q_var,bin_edge_means_Q[ii],num_bins_to_try[number]])
+                    #print('error_flag=1 appended list for # of bins: %s'%num_bins_to_try[number])
+                    #break            
+                bin_edge_Q_start = np.round(bin_edge_Q_start+0.01,decimals=2)
+                print(bin_edge_Q_start)
+            print(bin_edge_means_Q)
+            if equal_flag == 0:
+                #print('SF_var_list: %s'%Q_var_list)
+                #    
+                Q_var_list.sort(key=lambda x: x[0])
+                mid_pt_to_use = Q_var_list[0][1]        # assign best midpoint to bin_edge* array 
+            if ii == 0 or ii == (len(bin_edge_means_Q)-1):
+                pass
+            else:
+                bin_edge_means_Q[ii] = mid_pt_to_use 
+            #print('bin_edge_means_Q[%s]'%ii,' = %s'%bin_edge_means_Q[ii])
+            if ii != (len(bin_edge_means_Q)-1):
+                if bin_edge_means_Q[ii] > bin_edge_means_Q[(ii+1)]:
+                    #
+                    ## enable diagnostic output
+                    if diag_flag == 1:
+                        print("ERROR 2: the next bin value is lower than the current bin value for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS')
+                    bin_edge_means_Q[ii] = bin_edge_means_Q[(ii+1)]
         #
         #
-        #    
-        ## call a new file: "correction_factors.py" to interpolate/extrapolate the correction factors to the SMF, and return the metric of merit
+        ## make histograms
+        Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=num_bins_to_try[number], range=range2)
+        Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_bins_to_try[number], range=range2)
         #
-        exec(open('correction_factors.py').read())      #opens and executes the script
+        bins_Q = np.round(bins_Q,decimals=3)
         #
+        Q_ratio = np.round((Q_pos_hist/Q_neg_hist),decimals=3)
+        for jj in range(len(Q_pos_hist)):
+            if Q_pos_hist[jj] == 0 and Q_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
+                Q_ratio[jj] = 1
+            elif Q_pos_hist[jj] == 0 or Q_neg_hist[jj] == 0:
+                Q_ratio[jj] = float('NaN')
         #
-        ## compute variance of SF/Q ratios from 1
-        Q_var = Q_metric      
+        # compute midbins for spec. mass completeness plot (i.e. plot of false pos/false neg ratios)
+        Q_ratio_midbins = midbins(bins_Q)
+        #
+        if np.sum(np.isnan(Q_ratio)) > 0:     # if the ratios are bad, don't both interpolating the correction factors
+            Q_var = float('NaN')
+        else:                                  # call correction factors file and compute metric of merit
+            #
+            #
+            #    
+            ## call a new file: "correction_factors.py" to interpolate/extrapolate the correction factors to the SMF, and return the metric of merit
+            #
+            exec(open('correction_factors.py').read())      #opens and executes the script
+            #
+            #
+            ## compute variance of SF/Q ratios from 1
+            Q_var = Q_metric      
+    #
     #
     if np.isnan(SF_var) == 1 or np.isnan(Q_var) == 1:
         total_var = float('NaN')
     else: 
         total_var = np.round((SF_var + Q_var),decimals=3)
     #
+    #
+    
+    
+    
     #
     #
     #
@@ -628,7 +730,9 @@ if time_flag == 1:
 #
 #
 #
-print('\n\nProgram terminated successfully.')
+## enable diagnostic output
+if diag_flag == 1:
+    print('\n\nProgram terminated successfully.')
 #
 #                      
 ###### PROGRAM END ######
