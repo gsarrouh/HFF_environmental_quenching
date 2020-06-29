@@ -37,14 +37,14 @@ import matplotlib.pyplot as plt
 #
 #
 def metric(correction_factors):
-    sum_of_sq_deviations = 0
-    if correction_factors[ii] < 0:
-        return float('NaN')
-    else:
-        for ii in range(len(correction_factors)):
+    for ii in range(len(correction_factors)):
+        sum_of_sq_deviations = 0
+        if correction_factors[ii] < 0:
+            return float('NaN')
+        else:
             sum_of_sq_deviations = sum_of_sq_deviations + (1 - correction_factors[ii])**2
-        metric_of_merit = (np.round(sum_of_sq_deviations[ii] / len(correction_factors),decimals=5))
-        return metric_of_merit
+            metric_of_merit = (np.round(sum_of_sq_deviations[ii] / len(correction_factors),decimals=5))
+            return metric_of_merit
 #
 #
 ## SECTION (1)
@@ -52,55 +52,55 @@ def metric(correction_factors):
 ## Now interpolate/extrapolate between the SF_ratio/Q_ratio data points from "spec_completeness_binning.py"
 #
 # initialize arrays to store slopes/intercepts for extrapolation/interpolation of spec mass completeness correction factors
-m_SF = np.zeros((len(SF_frac_midbins)-1))     
-b_SF = np.zeros((len(SF_frac_midbins)-1))
-m_Q = np.zeros((len(Q_frac_midbins)-1))     
-b_Q = np.zeros((len(Q_frac_midbins)-1))
-SF_spec_completeness_correction = np.zeros_like(SF_midbins,dtype='float32')
-Q_spec_completeness_correction = np.zeros_like(Q_midbins,dtype='float32')
+m_SF = np.zeros((len(SF_ratio_midbins)-1))     
+b_SF = np.zeros((len(SF_ratio_midbins)-1))
+m_Q = np.zeros((len(Q_ratio_midbins)-1))     
+b_Q = np.zeros((len(Q_ratio_midbins)-1))
+SF_spec_completeness_correction = np.zeros_like(SF_midbins,dtype='float32')   # "SF_midbins are the bin midpoints of SF STELLAR MASS FUNCTION
+Q_spec_completeness_correction = np.zeros_like(SF_midbins,dtype='float32')     # NOT A MISTAKE: the "Q_midbins" array has been offset from the SF_midbins"" array by 0.05 for plotting/visual clarity, but the bin points themselves are the same, so the correction factors should be computed for "SF_midbins", not "Q_midbins"
 #
 ## SF
-for ii in range(len(SF_frac_midbins)-1):
-    m_SF[ii] = (SF_frac[ii+1] - SF_frac[ii]) / (SF_frac_midbins[ii+1] - SF_frac_midbins[ii]) # calc slope
-    b_SF[ii] = SF_frac[ii] - (SF_frac_midbins[ii]*m_SF[ii])   # calc intercept
+for ii in range(len(SF_ratio_midbins)-1):
+    m_SF[ii] = (SF_ratio[ii+1] - SF_ratio[ii]) / (SF_ratio_midbins[ii+1] - SF_ratio_midbins[ii]) # calc slope
+    b_SF[ii] = SF_ratio[ii] - (SF_ratio_midbins[ii]*m_SF[ii])   # calc intercept
 #
 for ii in range(len(SF_midbins)):
     if SF_spec_completeness_correction[ii] == 0:     # only write in cell once, don't overwrite cell once correction factor has been computed
-        if SF_midbins[ii] < SF_frac_midbins[0]:      # extrapolate below lowest mass bin
+        if SF_midbins[ii] < SF_ratio_midbins[0]:      # extrapolate below lowest mass bin
             SF_spec_completeness_correction[ii] = m_SF[0]*SF_midbins[ii] + b_SF[0]    
-        elif SF_midbins[ii] > SF_frac_midbins[-1]:    # extrapolate above highest mass bin
+        elif SF_midbins[ii] > SF_ratio_midbins[-1]:    # extrapolate above highest mass bin
             SF_spec_completeness_correction[ii] = m_SF[-1]*SF_midbins[ii] + b_SF[-1]    
-        elif SF_midbins[ii] > SF_frac_midbins[0] and SF_midbins[ii] < SF_frac_midbins[-1]:    # interpolate in between all other points
-            for jj in range(len(SF_frac_midbins)-1):
-                if SF_midbins[ii] > SF_frac_midbins[jj] and SF_midbins[ii] < SF_frac_midbins[jj+1]:
+        elif SF_midbins[ii] > SF_ratio_midbins[0] and SF_midbins[ii] < SF_ratio_midbins[-1]:    # interpolate in between all other points
+            for jj in range(len(SF_ratio_midbins)-1):
+                if SF_midbins[ii] > SF_ratio_midbins[jj] and SF_midbins[ii] < SF_ratio_midbins[jj+1]:
                     SF_spec_completeness_correction[ii] = m_SF[jj]*SF_midbins[ii] + b_SF[jj]
         else:
             SF_spec_completeness_correction[ii] = float('NaN')
             print('Error in SF spec completeness correction computation. ABORT')
-            break
+            pass#break
 #
 ## now compute the metric of merit
 SF_metric = metric(SF_spec_completeness_correction)
 #
 #
 ## Q
-for ii in range(len(Q_frac_midbins)-1):
-    m_Q[ii] = (Q_frac[ii+1] - Q_frac[ii]) / (Q_frac_midbins[ii+1] - Q_frac_midbins[ii]) # calc slope
-    b_Q[ii] = Q_frac[ii] - (Q_frac_midbins[ii]*m_Q[ii])   # calc intercept
+for ii in range(len(Q_ratio_midbins)-1):
+    m_Q[ii] = (Q_ratio[ii+1] - Q_ratio[ii]) / (Q_ratio_midbins[ii+1] - Q_ratio_midbins[ii]) # calc slope
+    b_Q[ii] = Q_ratio[ii] - (Q_ratio_midbins[ii]*m_Q[ii])   # calc intercept
 #
 for ii in range(len(Q_midbins)):
     if Q_spec_completeness_correction[ii] == 0:     # don't overwrite cell once correction factor is computed
-        if Q_midbins[ii] < Q_frac_midbins[0]:      # extrapolate below lowest mass bin
+        if Q_midbins[ii] < Q_ratio_midbins[0]:      # extrapolate below lowest mass bin
             Q_spec_completeness_correction[ii] = m_Q[0]*Q_midbins[ii] + b_Q[0]    
-        elif Q_midbins[ii] > Q_frac_midbins[-1]:    # extrapolate above highest mass bin
+        elif Q_midbins[ii] > Q_ratio_midbins[-1]:    # extrapolate above highest mass bin
             Q_spec_completeness_correction[ii] = m_Q[-1]*Q_midbins[ii] + b_Q[-1]    
-        elif Q_midbins[ii] > Q_frac_midbins[0] and Q_midbins[ii] < Q_frac_midbins[-1]:    # interpolate in between all other points
-            for jj in range(len(Q_frac_midbins)-1):
-                if Q_midbins[ii] > Q_frac_midbins[jj] and Q_midbins[ii] < Q_frac_midbins[jj+1]:
+        elif Q_midbins[ii] > Q_ratio_midbins[0] and Q_midbins[ii] < Q_ratio_midbins[-1]:    # interpolate in between all other points
+            for jj in range(len(Q_ratio_midbins)-1):
+                if Q_midbins[ii] > Q_ratio_midbins[jj] and Q_midbins[ii] < Q_ratio_midbins[jj+1]:
                     Q_spec_completeness_correction[ii] = m_Q[jj]*Q_midbins[ii] + b_Q[jj]
         else:
             print('Error in Q spec completeness correction computation. ABORT')
-            break   
+            pass#break   
 #
 ## now compute the metric of merit
 Q_metric = metric(Q_spec_completeness_correction)
