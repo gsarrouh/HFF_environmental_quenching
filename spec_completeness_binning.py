@@ -35,8 +35,6 @@
 #
 ## NOTE: there are flags for diagnostics and plotting throughout the script. search "MAY NEED TO EDIT" to identify where these flags are
 #
-## NOTE: search "MAY NEED TO EDIT" to find where user-input is required
-#
 #
 #
 ###################     PROGRAM START
@@ -376,10 +374,13 @@ for m in range(len(method_designations)):
             num_bins_Q_index = np.array(num_bins_Q_index)
             #
             ## enable diagnostic output
-            if diag_flag == 1:
-                print('# bins: %s'%(num_bins_to_try[number]-1))
-                print('length of num_bins_* array: %s'%len(num_bins_SF_index[0]),'\n# of SF false pos.: %s'%len(SF_pos),'\n# of SF false neg.: %s'%len(SF_neg),'\n# of Q false pos.: %s'%len(Q_pos),'\n# of Q false neg.: %s'%len(Q_neg))
-                print('indices corresponding to bin edges\nSF: %s'%num_bins_SF_index,'\nQ: %s'%num_bins_Q_index)
+            if diag_flag == 1 or project_diagnostic_flag == 1:
+                if project_diagnostic_flag == 0:
+                    pass
+                else:
+                    print('# bins: %s'%(num_bins_to_try[number]-1))
+                    print('length of num_bins_* array: %s'%len(num_bins_SF_index[0]),'\n# of SF false pos.: %s'%len(SF_pos),'\n# of SF false neg.: %s'%len(SF_neg),'\n# of Q false pos.: %s'%len(Q_pos),'\n# of Q false neg.: %s'%len(Q_neg))
+                    print('indices corresponding to bin edges\nSF: %s'%num_bins_SF_index,'\nQ: %s'%num_bins_Q_index)
             #
             ## convert to arrays
             num_bins_SF = np.empty_like(num_bins_SF_index,dtype='float32')
@@ -420,7 +421,11 @@ for m in range(len(method_designations)):
     pop_SF_neg = len(SF_neg)
     #
     if num_bins_to_try[number] > pop_SF_pos or num_bins_to_try[number] > pop_SF_neg:
-        print('ERROR: # of bins exceeds population of SF false pos/neg for %s'%num_bins_to_try[number],' bins and cutoffs:\n%s'%z_cutoff[0],' spec and %s'%z_cutoff[1],' phot\nUSE FEWER BINS')
+        if diag_flag == 1 or project_diagnostic_flag == 1:
+            if project_diagnostic_flag == 0:
+                pass
+            else:
+                print('ERROR: # of bins exceeds population of SF false pos/neg for %s'%num_bins_to_try[number],' bins and cutoffs:\n%s'%z_cutoff[0],' spec and %s'%z_cutoff[1],' phot\nUSE FEWER BINS')
         SF_var = float('NaN')
         pass
     else:
@@ -442,10 +447,13 @@ for m in range(len(method_designations)):
                 mid_pt_to_use = num_bins_SF[0][ii]
             #
             ## enable diagnostic output
-            if diag_flag == 1:
-                print('Start of : %.2f'%bin_edge_SF_start,' for SF method: %s'%method)
-                #print(bin_edge_SF_start)
-                #print(bin_edge_SF_end)
+            if diag_flag == 1 or project_diagnostic_flag == 1:
+                if project_diagnostic_flag == 0:
+                    pass
+                else:
+                    print('Start of : %.2f'%bin_edge_SF_start,' for SF method: %s'%method)
+                    #print(bin_edge_SF_start)
+                    #print(bin_edge_SF_end)
             #
             ## 
             while bin_edge_SF_start < bin_edge_SF_end:
@@ -479,16 +487,24 @@ for m in range(len(method_designations)):
                 except:
                     #
                     ## enable diagnostic output
-                    if diag_flag == 1:
-                        print("ERROR 1: SF false pos/neg bins overlap s.t. bin edges don't increase\nmonotonically for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS\n"NaN" appended to list.')
+                    if diag_flag == 1 or project_diagnostic_flag == 1:
+                        if project_diagnostic_flag == 0:
+                            pass
+                        else:
+                            print("ERROR 1: SF false pos/neg bins overlap s.t. bin edges don't increase\nmonotonically for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS\n"NaN" appended to list.')
+                            #print('error_flag=1 appended list for # of bins: %s'%num_bins_to_try[number])
                     bins_SF = np.array([float('NaN')]*len(num_bins_SF))
                     SF_var_bin_edges = float('NaN')
                     SF_var_list.append([SF_var_bin_edges,bin_edge_means_SF[ii],num_bins_to_try[number]])
-                    #print('error_flag=1 appended list for # of bins: %s'%num_bins_to_try[number])
+                            
                     #break            
                 bin_edge_SF_start = np.round(bin_edge_SF_start+0.01,decimals=2)
-                print(bin_edge_SF_start)
-            print(bin_edge_means_SF)
+                if diag_flag == 1 or project_diagnostic_flag == 1:
+                    if project_diagnostic_flag == 0:
+                        pass
+                    else:
+                        print(bin_edge_SF_start)
+                        print(bin_edge_means_SF)
             if equal_flag == 0:
                 #print('SF_var_list: %s'%SF_var_list)
                 #    
@@ -503,8 +519,11 @@ for m in range(len(method_designations)):
                 if bin_edge_means_SF[ii] > bin_edge_means_SF[(ii+1)]:
                     #
                     ## enable diagnostic output
-                    if diag_flag == 1:
-                        print("ERROR 2: the next bin value is lower than the current bin value for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS')
+                    if diag_flag == 1 or project_diagnostic_flag == 1:
+                        if project_diagnostic_flag == 0:
+                            pass
+                        else:
+                            print("ERROR 2: the next bin value is lower than the current bin value for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS')
                     bin_edge_means_SF[ii] = bin_edge_means_SF[(ii+1)]            
         #
         # make histograms
@@ -544,7 +563,11 @@ for m in range(len(method_designations)):
     pop_Q_neg = len(Q_neg)
     #
     if num_bins_to_try[number] > pop_Q_pos or num_bins_to_try[number] > pop_Q_neg:
-        print('ERROR: # of bins exceeds population of Q false pos/neg for %s'%num_bins_to_try[number],' bins and cutoffs:\n%s'%z_cutoff[0],' spec and %s'%z_cutoff[1],' phot\nUSE FEWER BINS')
+        if diag_flag == 1 or project_diagnostic_flag == 1:
+            if project_diagnostic_flag == 0:
+                pass
+            else:            
+                print('ERROR: # of bins exceeds population of Q false pos/neg for %s'%num_bins_to_try[number],' bins and cutoffs:\n%s'%z_cutoff[0],' spec and %s'%z_cutoff[1],' phot\nUSE FEWER BINS')
         Q_var = float('NaN')
         pass
     else:
@@ -566,10 +589,13 @@ for m in range(len(method_designations)):
                 mid_pt_to_use = num_bins_Q[0][1]
             #
             ## enable diagnostic output
-            if diag_flag == 1:
-                print('Start of : %.2f'%bin_edge_Q_start,' for Q method: %s'%method)
-                #print(bin_edge_Q_start)
-                #print(bin_edge_Q_end)
+            if diag_flag == 1 or project_diagnostic_flag == 1:
+                if project_diagnostic_flag == 0:
+                    pass
+                else:                
+                    print('Start of : %.2f'%bin_edge_Q_start,' for Q method: %s'%method)
+                    #print(bin_edge_Q_start)
+                    #print(bin_edge_Q_end)
             #
             ## 
             while bin_edge_Q_start < bin_edge_Q_end:
@@ -603,8 +629,11 @@ for m in range(len(method_designations)):
                 except:
                     #
                     ## enable diagnostic output
-                    if diag_flag == 1:
-                        print("ERROR 1: Q false pos/neg bins overlap s.t. bin edges don't increase\nmonotonically for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS\n"NaN" appended to list.')
+                    if diag_flag == 1 or project_diagnostic_flag == 1:
+                        if project_diagnostic_flag == 0:
+                            pass
+                        else:                        
+                            print("ERROR 1: Q false pos/neg bins overlap s.t. bin edges don't increase\nmonotonically for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS\n"NaN" appended to list.')
                     bins_Q = np.array([float('NaN')]*len(num_bins_Q[0]))
                     Q_var = float('NaN')
                     Q_var_list.append([Q_var,bin_edge_means_Q[ii],num_bins_to_try[number]])
@@ -627,8 +656,11 @@ for m in range(len(method_designations)):
                 if bin_edge_means_Q[ii] > bin_edge_means_Q[(ii+1)]:
                     #
                     ## enable diagnostic output
-                    if diag_flag == 1:
-                        print("ERROR 2: the next bin value is lower than the current bin value for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS')
+                    if diag_flag == 1 or project_diagnostic_flag == 1:
+                        if project_diagnostic_flag == 0:
+                            pass
+                        else:                        
+                            print("ERROR 2: the next bin value is lower than the current bin value for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS')
                     bin_edge_means_Q[ii] = bin_edge_means_Q[(ii+1)]
         #
         #
@@ -732,8 +764,11 @@ if time_flag == 1:
 #
 #
 ## enable diagnostic output
-if diag_flag == 1:
-    print('\n\nProgram terminated successfully.')
+if diag_flag == 1 or project_diagnostic_flag == 1:
+    if project_diagnostic_flag == 0:
+        pass
+    else:    
+        print('\n\nProgram terminated successfully.')
 #
 #                      
 ###### PROGRAM END ######
