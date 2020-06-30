@@ -1,10 +1,11 @@
-#Created on Sun Jun 28 17:48:55 2020
+# Created on Sun Jun 28 17:48:55 2020
 #
 ################## correction_factors.py ##################
 #
 #
+### This program is based on code from the latter half of "master_smfz*.py" Section (3.2). The purpose of this file is to be CALLED ITERATIVELY BY "spec_completeness_binning.py" during the diagnostic loop varying bin numbers/binning methods for various redshift cuts to cluster membership. 
 #
-### This program is based on code from the latter half of "master_smfz*.py" Section (3.2). The purpose of this file is to be called iteratively by "spec_completeness_binning.py" during the diagnostic loop varying bin numbers/binning methods for various redshift cuts to cluster membership. This file will look at the spectroscopic FALSE POS/NEG RATIO  calculated in "spec_completeness_binning.py", INTERPOLATE/EXTRAPOLATE the CORRECTION FACTORS to the SMF mass bins, calculate and return the "metric of merit", which is the average squared deviation from 1 for all correction factors (i.e. {sum_of squares_across_all_bins_of (1 - correction_factor_for_a_given_bin)} divided by the number of bins.
+### This program will take as INPUTS the spectroscopic FALSE POS/NEG RATIO calculated in "spec_completeness_binning.py", INTERPOLATE/EXTRAPOLATE the CORRECTION FACTORS to the SMF mass bins, calculate and return the "METRIC OF MERIT", which is the average squared deviation from 1 for all correction factors (i.e. {sum_of_squares_across_all_bins_of (1 - correction_factor_for_a_given_bin)} divided by the_number_of_bins.
 #
 #
 #
@@ -22,16 +23,18 @@
 #
 #
 #
-###################     PROGRAM START
+###################     PROGRAM START     ###################
 #
 #
 ## SECTION (0): modules & definitions
 #
 ## MODULES
+#
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 #
+## DEFINITIONS
 #
 def metric(correction_factors):
     for ii in range(len(correction_factors)):
@@ -109,7 +112,7 @@ Q_metric = metric(Q_spec_completeness_correction)
 #
 #
 #                        
-###### PROGRAM END ######
+###################     PROGRAM END     ###################
 
 
 
