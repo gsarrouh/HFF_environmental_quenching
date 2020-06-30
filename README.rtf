@@ -27,7 +27,7 @@ After a few months of trying to correct it in the winter of 2019-2020, I finally
 The following is a summary of the key files in this directory (also a GitHub repository):\
 NOTE: various version exist for most programs. Where multiple versions exist, the most recent versions all end in the suffice \'93_final\'94, indicated below by the wildcard \'93*\'94.\
 \
-1. master_data_*.py: main data handling file. _v6 & _v7 are essentially the same (except v6 doesn\'92t identify BCGs), however v6 uses the old data set (v.3.5) and v7 uses the most up-to-date data set (DR v.3.9). program imports all data, aggregates into a single primary catalogue table (\'93master_cat\'94), and assigns galaxies to various filters (e.g. star-forming/quiescent, phot subsample/spec subsample, cluster member/field/false pos/false neg). diagnostic & summary output is available, and may be suppressed  by editing the diagnostic flags (diag_flag_*, or search \'93MAY NEED TO EDIT\'94 in the code).\
+1. master_data_*.py: MAIN DATA FILE, must be run first for all other programs to run. _v6 & _v7 are essentially the same (except v6 doesn\'92t identify BCGs), however v6 uses the old data set (v.3.5) and v7 uses the most up-to-date data set (DR v.3.9). program imports all data, aggregates into a single primary catalogue table (\'93master_cat\'94), and assigns galaxies to various filters (e.g. star-forming/quiescent, phot subsample/spec subsample, cluster member/field/false pos/false neg). diagnostic & summary output is available, and may be suppressed  by editing the diagnostic flags (diag_flag_*, or search \'93MAY NEED TO EDIT\'94 in the code).\
 \
 2. master_zplots*.py\
 \
