@@ -14,7 +14,7 @@
 ### PROGRAM START
 #
 ### EVALUATE DIFFERENT BIN #s & BINNING TECHNIQUES:
-### (0)    import modules & definitions
+### (0)    import modules, definitions, flags
 ### (1)    INTERPOLATE/EXTRAPOLATE SMF midbins onto false pos/neg ratios to determine spec. completeness correction factor by mass bin for the SMF;  
 ### (2):   compute METRIC of MERIT;
 #
@@ -46,6 +46,8 @@ def metric(correction_factors):
             metric_of_merit = (np.round(sum_of_sq_deviations[ii] / len(correction_factors),decimals=5))
             return metric_of_merit
 #
+##
+diag_flag = 0
 #
 ## SECTION (1)
 #
@@ -76,7 +78,8 @@ for ii in range(len(SF_midbins)):
                     SF_spec_completeness_correction[ii] = m_SF[jj]*SF_midbins[ii] + b_SF[jj]
         else:
             SF_spec_completeness_correction[ii] = float('NaN')
-            print('Error in SF spec completeness correction computation. ABORT')
+            if diag_flag = 1 or project_diagnostic_flag == 1:
+                print('Error in SF spec completeness correction computation. ABORT')
             pass#break
 #
 #
@@ -97,7 +100,8 @@ for ii in range(len(SF_midbins)):
                     Q_spec_completeness_correction[ii] = m_Q[jj]*SF_midbins[ii] + b_Q[jj]
         else:
             Q_spec_completeness_correction[ii] = float('NaN')
-            print('Error in Q spec completeness correction computation. ABORT')
+            if diag_flag = 1 or project_diagnostic_flag == 1:
+                print('Error in Q spec completeness correction computation. ABORT')
             pass#break   
 #
 #
