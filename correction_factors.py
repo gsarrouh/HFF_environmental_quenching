@@ -78,8 +78,11 @@ for ii in range(len(SF_midbins)):
                     SF_spec_completeness_correction[ii] = m_SF[jj]*SF_midbins[ii] + b_SF[jj]
         else:
             SF_spec_completeness_correction[ii] = float('NaN')
-            if diag_flag = 1 or project_diagnostic_flag == 1:
-                print('Error in SF spec completeness correction computation. ABORT')
+            if diag_flag == 1 or project_diagnostic_flag == 1:
+                if project_diagnostic_flag == 0:
+                    pass
+                else:                
+                    print('Error in SF spec completeness correction computation. ABORT')
             pass#break
 #
 #
@@ -100,8 +103,11 @@ for ii in range(len(SF_midbins)):
                     Q_spec_completeness_correction[ii] = m_Q[jj]*SF_midbins[ii] + b_Q[jj]
         else:
             Q_spec_completeness_correction[ii] = float('NaN')
-            if diag_flag = 1 or project_diagnostic_flag == 1:
-                print('Error in Q spec completeness correction computation. ABORT')
+            if diag_flag == 1 or project_diagnostic_flag == 1:
+                if project_diagnostic_flag == 0:
+                    pass
+                else:                
+                    print('Error in Q spec completeness correction computation. ABORT')
             pass#break   
 #
 #
