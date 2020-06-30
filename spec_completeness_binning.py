@@ -1,13 +1,13 @@
-#Created on Fri Jun 27 13:17:46 2020
+# Created on Fri Jun 26 13:17:46 2020
 #
 ################## spec_mass_binning.py ##################
 #
 #
-#
-### This program used to be SECTION (3.2) from "master_smfz*.py". Now it stands alone, and is called by "master_data*.py". For a given spectroscopic & photometric redshift cut, a population of false positives & false negatives results. The following program uses 3 different binning techniques to try various numbers of bins, evaluating the resulting spectroscopic correction factors, and computing a "mertic of merit", by which we may judge various combinations of redshift cuts, bins, and binning techniques.
+### WHAT THIS PROGRAM DOES:
+### This program used to be SECTION (3.2) from "master_smfz*.py". Now it stands alone, and is CALLED BY "master_data*.py". For a given spectroscopic & photometric redshift cut, a population of false positives & false negatives results. The following program uses 3 different binning techniques to try various numbers of bins, evaluating the resulting spectroscopic correction factors, and computing a "mertic of merit", by which we may judge various combinations of redshift cuts, bins, and binning techniques.
 #
 ## This is the old description of SECTION (3.2):
-### SECTION (3.2): calculate SPECTROSCOPIC COMPLETENESS correction. basically, look at all the false positives/false negatives, and sort them by type (i.e. SF/Q). then bin them (i.e. make histograms of false pos/neg for each of SF/Q). take their ratio of false pos to false neg, and plot that ratio. it is the correction factor to be applied to the photometric subsample
+### SECTION (3.2): calculate SPECTROSCOPIC COMPLETENESS correction. basically, look at all the false positives/false negatives, and sort them by type (i.e. SF/Q). then bin them (i.e. make histograms of false pos/neg for each of SF/Q). take their ratio of false pos to false neg, and plot that ratio. this is the correction factor to be applied to the photometric subsample
 #
 ## SPEC. BINNING: iterate through different number of histogram bins to see which yields a set of corrections closest in general to ~1; this has now been expanded to test: 
 #
@@ -15,6 +15,7 @@
 ## method = 2, ASYMMETRIC binning, EQUAL NUMBER of objects in each bin; 
 ## method = 3, ASYMMETRIC binning, EQUAL MASS in each bin; 
 ## method = 4; ASYMMETRIC binning using built-in "np.histogram_bin_edges" function, using black-box binning method "auto", which is the Maximum of the "STURGES" & "FREEDMAN DIACONIS" estimators
+#
 #
 #
 ### Section summary:
