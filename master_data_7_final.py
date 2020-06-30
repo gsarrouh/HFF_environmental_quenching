@@ -1,10 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jun 24 10:23:11 2020
-
-@author: gsarrouh
-"""
+# Created on Wed Jun 24 10:23:11 2020
+#
 #### UPDATE 06/24/20 ####
 ## The previous versions of this file all used HFF DR v3.5, a preliminary data release from the summer of 2017. The paper Shipley et al. 2018 (which I reference extensively in my work) corresponds to the finished data release, v3.9. That final, most up-tp-date data release is what is implemented in the following work. 
 #
@@ -60,10 +55,12 @@ Created on Wed Jun 24 10:23:11 2020
 ### (1.3)  convert flux to mag.,
 ### (2) calculate various del_z's, 
 ### (2.1)  identify outliers; add DIAG_FLAG_2: summarize outliers
-### (2.2)  compute & DISPLAY OUTLIER FRACTION, SCATTER (i.e. std dev), and MEAN of |del_z|.
+### (2.2)  compute & DISPLAY OUTLIER FRACTION, SCATTER (i.e. std dev), 
+###        and MEAN of |del_z|.
 ### (3) distinguish b/w SF/Q: apply TYPE FILTER
 ### (3.1)  add DIAG_FLAG_3: summarize in table "type_stats"
-### (4) make membership cuts to spec samples (i.e. apply MEMBER FILTER), add DIAG_FLAG_4: apply diagnostic to test different redshift cutoff (OUTPUT FILE: /Documents/Programs/Python/nserc17/HFF_ToAdamFinal/working_data/section_4_false_pos_neg_redshift_cuts_*.txt) 
+### (4) make membership cuts to spec samples (i.e. apply MEMBER FILTER),
+###     add DIAG_FLAG_4: apply diagnostic to test different redshift cutoff (OUTPUT FILE: /Documents/Programs/Python/nserc17/HFF_ToAdamFinal/working_data/section_4_false_pos_neg_redshift_cuts_*.txt) 
 ### (4.1) add DIAG_FLAG_5: summarize in table "SF_spec_stats" & "Q_spec_stats"
 ### (5) make membership cuts to phot samples
 ### (5.1) add DIAG_FLAG_6: summarize in table "SF_phot_stats" & "Q_phot_stats"
@@ -105,6 +102,7 @@ diag_flag_master = 2
 #
 ##SECTION 1: import all data from HFF team, convert flux to luminosity & gather full 
 #
+print('Section 1: importing data beginning...')
 ## TIME_FLAG_1 START
 time_flag_1 = 1     # track & print time to execute current section
 #
@@ -334,6 +332,8 @@ for counter in range(len(master_cat)):
         master_cat['uv'][counter] = master_cat['L_u'][counter] - master_cat['L_v'][counter]
         master_cat['vj'][counter] = master_cat['L_v'][counter] - master_cat['L_j'][counter]
 #
+print('Section 1 complete.')
+#
 ## TIME_FLAG_1 END
 #
 if time_flag_1 == 1 and time_flag == 2:
@@ -344,6 +344,8 @@ if time_flag_1 == 1 and time_flag == 2:
 #
 #
 ## SECTION (2): calulate DEL_Z's & separate OUTLIERS
+#
+print("Section 2: calculating del_z's and identifying outliers...")
 #
 ## TIME_FLAG_2 START
 time_flag_2 = 1     # track & print time to execute current section
@@ -409,10 +411,13 @@ if (diag_flag_2 == 1 and diag_flag_master == 2) or diag_flag_master == 1:
     print('|del_z| mean: %s'%delz_mean)
     print('|del_z| scatter: %s\n'%delz_scatter)
 #
+#
 ## TIME_FLAG_2 END
 #
 if time_flag_2 == 1 and time_flag == 2:
     print("Section 2 took: %s seconds.\n\n" % (time.time() - start_time))
+else:
+    print('Section 2 complete.')
 #  
 #
 #
@@ -422,6 +427,7 @@ if time_flag_2 == 1 and time_flag == 2:
 ## colour criteria;    filter name: 'type'  IDs below
 ##   0 = stars;  1 = SF (star-forming);    2 = Q (quiscient);    3 = outliers
 #
+print('Section 3: classifying galaxy TYPE as star-forming or quiescent...')
 #
 ## TIME_FLAG_3 START
 time_flag_3 = 1     # track & print time to execute current section
@@ -481,6 +487,8 @@ if (diag_flag_3 == 1 and diag_flag_master == 2) or diag_flag_master == 1:
 #
 if time_flag_3 == 1 and time_flag == 2:
     print("Section 3 took: %s seconds.\n\n" % (time.time() - start_time))
+else:
+    print('Section 3 complete.')
 #
 #
 #
@@ -488,6 +496,7 @@ if time_flag_3 == 1 and time_flag == 2:
 #
 ## SECTION 4: apply MEMBER FILTER based on cuts discussed with AM in 2017 (see comments below), based on cuts made in VDB2013. MEMBER isolates: 0=cluster member (secure); 1=field (secure); 2=false pos; 3=false neg; write an interative loop which test varying values for redshift membership cutoffs, and print result to an output document. Then INSPECT BY EYE and pick the one you want, and hard code the cuts after the diag_flag_ loop
 #
+print('Section 4: spectroscopic membership cuts and classifying cluster members, field, false pos/neg...')
 ## CRITERIA:
 #
 ## SF: cluster = 0: abs(z_clusterspec) < 0.01 & abs(z_cluster phot) < 0.03; 
@@ -502,7 +511,7 @@ if time_flag_3 == 1 and time_flag == 2:
 #
 #
 ## TIME_FLAG_4 START
-time_flag_4 = 1     # track & print time to execute current section
+time_flag_4 = 1     # 0=off;   1=on;   track & print time to execute current section
 #
 if time_flag_4 == 1 and time_flag == 2:
     start_time = time.time()
@@ -516,7 +525,7 @@ if (diag_flag_4 == 1  and diag_flag_master == 2) or diag_flag_master == 1:
     print('Diagnostic flag 4: entering redshift cutoff diagnostic...')
     ## the following code is part of a diagnostic to test the # of false pos/neg produced by altering the photometric/spectroscopic redshift cutoff. upon completion it will be commented out permenantly.
     #
-    ## MAY NEED TO EDIT: "increment" & cutoff_range, for both SPEC (immediately below) and PHOT (after the first 'for' loop)
+    ## MAY NEED TO EDIT: "increment" & "*cutoff_range", for both SPEC (immediately below) and PHOT (after the first 'for' loop)
     ## SPEC cuts
     increment = np.array([0.01,0.010])   # [spec,phot]
     z_cutoff_spec_range = np.array([0.010,(0.020+increment[0])])
@@ -660,8 +669,8 @@ if (diag_flag_4 == 1  and diag_flag_master == 2) or diag_flag_master == 1:
     #
     ## TIME_FLAG END
     #
-    if time_flag_4 == 2 or time_flag == 1:
-        print('\Section 4 of "master_data_7_final.py" took: %s seconds to run variational analysis on spec/phot membership cutoffs.\n\n' % (time.time() - start_time))
+    if time_flag_4 == 1 or time_flag == 2:
+        print('\nSection 4 diagnostic complete.\n\nSection 4 of "master_data_7_final.py" took: %s seconds to run variational analysis on spec/phot membership cutoffs.\n\n' % (time.time() - start_time))
     #
     print('PROGRAM SHOULD EXIT AFTER PRINTING THIS STATEMENT')
     sys.exit()
@@ -809,6 +818,8 @@ print('NOTE: Differences b/w Total row and sum of other rows might arise due to 
 #
 if time_flag_4 == 1 and time_flag == 2:
     print("Section 4 took: %s seconds.\n\n" % (time.time() - start_time))
+else:
+    print('Section 4 complete.')
 #
 #
 #
@@ -816,6 +827,7 @@ if time_flag_4 == 1 and time_flag == 2:
 #
 ## SETION (5): make cuts to PHOTOMETRIC SUBSAMPLE based on defintion for del_z:  del_z = (z_phot - z_cl)/(1 + z_phot) < **some number** (to match cut made above in z_cutoff[1]; apply MEMBER FILTER for PHOTOMETRIC SUBSAMPLE MEMBERS); same photometric cut made to specroscopic sub-sample. this is a preliminary measure for determining the photometric sample, final corrections will be made by mass bins to match false pos/neg fractions in spec. sample per van der Burg (2013)
 #
+print('Section 5: photometric cluster membership selection beginning...')          
 ## apply cut at |z_clusterphot| < z_cutoff[1] to separate cluster members from field for targets with photometry only. store in MEMBER FILTER: 
 ## 0 = cluster member; 1 = field; 2 = false pos; 3 = false neg; 4 = field outlier
 #
@@ -947,6 +959,8 @@ print('NOTE: Differences b/w Total row and sum of other rows might arise due to 
 #
 if time_flag_5 == 1 and time_flag == 2:
     print("Section 5 took: %s seconds.\n\n" % (time.time() - start_time))
+else:
+    print('Section 5 complete.')
 #
 #
 #
@@ -954,6 +968,7 @@ if time_flag_5 == 1 and time_flag == 2:
 #                        
 ## SECTION (6): BCGs. Brightest Cluster Galaxies (BCGs) need to be taken out of the cluster sample as they are unique to overly dense environments and so lack a counterpart in the field against which to make a fair comparison. as such, we remove them from our sample before making the SMF
 #
+print('Section 6: removing BCGs beginning...')
 #
 ## TIME_FLAG_6 START
 time_flag_6 = 0     # track & print time to execute current section
@@ -980,6 +995,8 @@ time_flag_6 = 1     # track & print time to execute current section
 #
 if time_flag_6 == 1 and time_flag == 2:
     print("Section 6 took: %s seconds.\n\n" % (time.time() - start_time))
+else:
+    print('Section 6 complete.')
 #
 #
 #
