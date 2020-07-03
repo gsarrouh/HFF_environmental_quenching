@@ -68,7 +68,7 @@ def midbins(bins):
 #
 ## TIME_FLAG: START
 ## superior time_flag which supercedes all others and times the entire program
-time_flag = 0     # track & print time to execute current section
+time_flag = 1     # track & print time to execute current section
 #
 if time_flag == 1:
     start_time = time.time()
@@ -198,14 +198,20 @@ for number in range(len(num_bins_to_try)):
     #
     #
     #    
-    ## call a new file: "correction_factors.py" to interpolate/extrapolate the correction factors to the SMF, and return the metric of merit
+    ## call a new file: "spec_correction_factors.py" to interpolate/extrapolate the correction factors to the SMF, and return the metric of merit
     #
-    exec(open('correction_factors.py').read())      #opens and executes the script
+    exec(open('spec_correction_factors.py').read())      #opens and executes the script
     #
     #
     ## compute variance of SF/Q ratios from 1
-    SF_var = SF_metric
-    Q_var = Q_metric
+    if np.isnan(SF_metric) == 1:
+        SF_var = float('NaN')
+    else:
+        SF_var = SF_metric
+    if np.isnan(Q_metric) == 1:
+        Q_var = float('NaN')
+    else:
+        Q_var = Q_metric
     print('#bins: %s'%num_bins_to_try[number],'; method: %s'%method,'; spec cut: %s'%z_cutoff[0],'; phot cut: %s'%z_cutoff[1])
     print('SF metric: %s'%SF_var,';  Q metric: %s'%Q_var)
     #
