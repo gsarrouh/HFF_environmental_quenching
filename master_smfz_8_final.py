@@ -120,7 +120,11 @@ SF_spec_list = [[],[],[],[],[],[]]
 Q_phot_list = [[],[],[],[],[],[]]
 Q_spec_list = [[],[],[],[],[],[]]
 #
-limiting_mass = [7.5,7.8,8.0,7.5,7.4,7.3] # clusters 1,2,3,4,5,6, see IDs below
+
+if 'limiting_mass' in locals():
+    pass
+else:
+    limiting_mass = [6.6,7.63,8.2,7.5,6.75,6.64] # clusters 1,2,3,4,5,6, see IDs below; 
 #
 SF_pos_lost = np.array([0]*6)        # to track SF/Q false pos/neg objects lost due to their being below the mass limit, by cluster
 SF_neg_lost = np.array([0]*6)
@@ -412,7 +416,7 @@ if (diag_flag_4 == 1 and diag_flag_master == 2) or diag_flag_master == 1:   # SY
 else:
 ###### The following few lines are for if you want to choose the # of bins independent of the criteria described above; once a final decision is made on the bin edges (i.e. bin widths) to use for making the final histogram of false pos/neg, enter then in arrays 'num_bins*' below, and set diag_flag_f = 0; lines to uncomment marked by 5 hashtags #####
 ###### recall: range2 = [7.3,12.3]
-    num_bins = [7.3,8.84,9.99,10.43,10.72,12.3]#for z_cutoff=[0.01,0.04]#[7.3,9.8,12.3]#for z_cutoff=[0.05,0.05]   
+    num_bins = [6.6,8.967,10.633,12.3]#for z_cutoff=[0.01,0.04]#[7.3,9.8,12.3]#for z_cutoff=[0.05,0.05]   
     #
     #
     SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=num_bins, range=range2)
@@ -511,7 +515,7 @@ Q_frac_err = np.sqrt((Q_relerr_pos**2) + (Q_relerr_neg**2))*Q_frac
 ## FIGURE ##
 #
 ### MAY NEED TO EDIT: plot_flag
-plot_flag_1 = 0        # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
+plot_flag_1 = 1        # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
 if plot_flag_1 == 1:
     # plot Spectroscopic completion correction factors 
     plt.close()
