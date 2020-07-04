@@ -290,7 +290,7 @@ if plot_flag_1 == 1:
         sm =  ScalarMappable(cmap=c_map)
         sm.set_array([])
         cbar = fig.colorbar(sm, ax=ax)
-        cbar.ax.set_title("del_z$_{phot}$")
+        cbar.ax.set_title("|${\Delta}$z|$_{phot}$")
         #ax.pcolormesh(plotting_array_temp[0], plotting_array_temp[1], plotting_array_temp[2], cmap=c_map)
         #ax.colorbar()
 
@@ -301,7 +301,7 @@ if plot_flag_1 == 1:
         ax.set_ylabel('$log(M/M_{\odot})$')
         ax.set_ylim(5,13)
         ax.grid(b=False, which='major', axis='both', color = 'k', linestyle = ':')
-        ax.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='off', labelleft='on')
+        ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True)
         ax.minorticks_on()
         #
         plt.text(22.1,12.1,cluster_names[cluster],fontsize=12)
