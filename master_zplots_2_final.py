@@ -54,24 +54,35 @@ import time
 #
 #
 ## SECTION (0): set PLOT_FLAGS    # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
-### MAY NEED TO EDIT ### diag_flag_1
+### MAY NEED TO EDIT ### plot_flag_*/time_flag_*/diag_flag_*
 #
 plot_flag_1 = 1           # Fig.1 - z_spec v z_phot plot
-plot_flag_2 = 0           # Fig.2 - del_z plot
-plot_flag_3 = 0           # Fig.3 - UVJ diagram
+plot_flag_2 = 1           # Fig.2 - del_z plot
+plot_flag_3 = 1           # Fig.3 - UVJ diagram
 #
+time_flag_1 = 0
+time_flag_2 = 0
+time_flag_3 = 1     # 0=off;   1=on;   track & print time to execute current section
 #
+diag_flag_1 = 0           #
+diag_flag_2 = 0           #
+diag_flag_3 = 1           # Section 3: UVJ diagram
 #
 ## SECTION (1): create plot comparing photometric ('z_peak') v specroscopic redshift ('z_spec') (Fig. 1)
 #
 if plot_flag_1 == 1:
-    plt.close()
-    plt.clf()
     #
     ## PLOT 1: make z_spec vs z_phot plot
     #
-    zees = plt.figure(num=1)
-    zvz = zees.add_subplot(111)
+    ## Make figure
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    #fig.suptitle('Horizontally stacked subplots')
+    ## SF plot
+    ## scatter the points
+    ax1.scatter(SF_members[0],SF_members[1],s=(SF_members[2])*10,c='g', marker='o',alpha=0.4, linewidths = 0, label='Member')
+    ax1.scatter(SF_fields[0],SF_fields[1],s=(SF_fields[2])*10,c='b', marker='o',alpha=0.4, linewidths = 0, label='Field')
+    #
+    
     ## plot spec subsample using [ 'sub'==1 (phot+spec subsample) & 'sub'!=4 (stars) ] as identifier for loop
     mem_scatter = []               # list del_z values for caluclating stats later
     outlier_scatter = []
@@ -149,132 +160,206 @@ if plot_flag_1 == 1:
 ## SECTION (2): del_z(spec) vs del_z(phot)
 #
 if plot_flag_2 == 1:
-    delzees = plt.figure(num=2)
-    delzSF = delzees.add_subplot(121) #SF plot
     #
-    SF_membership = ([0]*4) # [(memebrs),(field),(false pos),(false neg)]
-    Q_membership = ([0]*4) # [(memebrs),(field),(false pos),(false neg)]
-    counter = 0
-    size = len(master_cat)
-    while counter < size:
-        if master_cat[counter]['sub'] == 1 and master_cat[counter]['type']==1:      #only look at SF spec sub-sample, type 1 = SF
-            if master_cat[counter]['member'] == 0:        #secure cluster member
-                SF_membership[0] +=1
-                Smem = delzSF.scatter(master_cat[counter]['z_clusterspec'],master_cat[counter]['z_clusterphot'],c='g', marker='+', linewidths = 0)
-            elif master_cat[counter]['member'] == 1:        #secure field
-                SF_membership[1] +=1
-                Sfield = delzSF.scatter(master_cat[counter]['z_clusterspec'],master_cat[counter]['z_clusterphot'],c='b', marker='+', linewidths = 0)
-            elif master_cat[counter]['member'] == 2:        #false pos
-                SF_membership[2] +=1
-                Spos = delzSF.scatter(master_cat[counter]['z_clusterspec'],master_cat[counter]['z_clusterphot'],c='r', marker='x', linewidths = 0)
-            elif master_cat[counter]['member'] == 3:        #false neg
-                SF_membership[3] +=1
-                Sneg = delzSF.scatter(master_cat[counter]['z_clusterspec'],master_cat[counter]['z_clusterphot'],c='m', marker='x', linewidths = 0)
-        counter +=1
+    SF_counting_array = np.array([0]*4)
+    Q_counting_array = np.array([0]*4)
+    SF_members = [ [], [], [] ]                      # [ [z_clusterspec (x)], [z_clusterphot (y)], [mass (size)]]
+    SF_fields = [ [], [], [] ]
+    SF_poss = [ [], [], [] ]
+    SF_negs = [ [], [], [] ]
+    Q_members = [ [], [], [] ]                      # [ [z_clusterspec (x)], [z_clusterphot (y)], [mass (size)] ]
+    Q_fields = [ [], [], [] ]
+    Q_poss = [ [], [], [] ]
+    Q_negs = [ [], [], [] ]
     #
-    plt.xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$')
-    plt.xscale('linear')
-    plt.xlim(-0.125,0.125)
-    plt.tick_params(axis='both', which='both',direction='in',color='k')
-    plt.ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$')
-    delzSF.yaxis.tick_left()
-    plt.yscale('linear')
-    plt.ylim(-0.15,0.15)
-    lin = delzSF.plot([-0.5,1],[0.03,0.03],':k', linewidth=1)  # horizontal cuts
-    lin = delzSF.plot([-0.5,1],[-0.03,-0.03],':k', linewidth=1)
-    lin = delzSF.plot([-0.01,-0.01],[-0.5,1],':k', linewidth=1)  #vertical cuts
-    lin = delzSF.plot([0.01,0.01],[-0.5,1],':k', linewidth=1)  
-    plt.legend((Smem,Sfield,Spos,Sneg),('secure member','secure field','false positive','false negative'),scatterpoints=1,loc='upper left', fontsize=8, frameon=False)
-    plt.title('Star-Forming')
-    plt.minorticks_on()
-    plt.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright=False,labelleft=True)
+    for counter in range(len(master_cat)):
+        if master_cat['sub'][counter] == 1:                # only look at spec. sub-sample
+            if master_cat[counter]['member'] == 0:                                     # member=0: cluster members
+                if master_cat['type'][counter] == 1:       # type=1: SF
+                    SF_members[0].append(master_cat[counter]['z_clusterspec'])
+                    SF_members[1].append(master_cat[counter]['z_clusterphot'])
+                    SF_members[2].append(master_cat[counter]['lmass'])
+                    SF_counting_array[0]+=1
+                elif master_cat['type'][counter] == 2:       # type=2: Q
+                    Q_members[0].append(master_cat[counter]['z_clusterspec'])
+                    Q_members[1].append(master_cat[counter]['z_clusterphot'])
+                    Q_members[2].append(master_cat[counter]['lmass'])
+                    Q_counting_array[0]+=1
+            elif master_cat[counter]['member'] == 1:                                   # member=1: field
+                if master_cat['type'][counter] == 1:       # type=1: SF
+                    SF_fields[0].append(master_cat[counter]['z_clusterspec'])
+                    SF_fields[1].append(master_cat[counter]['z_clusterphot'])
+                    SF_fields[2].append(master_cat[counter]['lmass'])
+                    SF_counting_array[1]+=1
+                elif master_cat['type'][counter] == 2:       # type=2: Q
+                    Q_fields[0].append(master_cat[counter]['z_clusterspec'])
+                    Q_fields[1].append(master_cat[counter]['z_clusterphot'])
+                    Q_fields[2].append(master_cat[counter]['lmass'])                    
+                    Q_counting_array[1]+=1
+            elif master_cat[counter]['member'] == 2:                                   # member=2: false pos
+                if master_cat['type'][counter] == 1:       # type=1: SF
+                    SF_poss[0].append(master_cat[counter]['z_clusterspec'])
+                    SF_poss[1].append(master_cat[counter]['z_clusterphot'])
+                    SF_poss[2].append(master_cat[counter]['lmass'])
+                    SF_counting_array[2]+=1
+                elif master_cat['type'][counter] == 2:       # type=2: Q
+                    Q_poss[0].append(master_cat[counter]['z_clusterspec'])
+                    Q_poss[1].append(master_cat[counter]['z_clusterphot'])
+                    Q_poss[2].append(master_cat[counter]['lmass'])
+                    Q_counting_array[2]+=1
+            elif master_cat[counter]['member'] == 3:                                   # member=3: false neg
+                if master_cat['type'][counter] == 1:       # type=1: SF
+                    SF_negs[0].append(master_cat[counter]['z_clusterspec'])
+                    SF_negs[1].append(master_cat[counter]['z_clusterphot'])
+                    SF_negs[2].append(master_cat[counter]['lmass'])
+                    SF_counting_array[3]+=1
+                elif master_cat['type'][counter] == 2:       # type=2: Q
+                    Q_negs[0].append(master_cat[counter]['z_clusterspec'])
+                    Q_negs[1].append(master_cat[counter]['z_clusterphot'])
+                    Q_negs[2].append(master_cat[counter]['lmass'])
+                    Q_counting_array[3]+=1
     #
     #
+    ## convert to arrays
+    SF_members = np.array(SF_members)
+    SF_fields = np.array(SF_fields)
+    SF_poss = np.array(SF_poss)
+    SF_negs = np.array(SF_negs)
+    Q_members = np.array(Q_members)
+    Q_fields = np.array(Q_fields)
+    Q_poss = np.array(Q_poss)
+    Q_negs = np.array(Q_negs)
     #
-    delzPass = delzees.add_subplot(122) #Passive plot
-    counter = 0
-    size = len(master_cat)
-    while counter < size:
-        if master_cat[counter]['sub'] == 1 and master_cat[counter]['type']==2:      #only look at Q spec sub-sample, type 2 = Q
-            if master_cat[counter]['member'] == 0:        #secure cluster member
-                Q_membership[0] +=1
-                Qmem = delzPass.scatter(master_cat[counter]['z_clusterspec'],master_cat[counter]['z_clusterphot'],c='g', marker='+', linewidths = 0)
-            elif master_cat[counter]['member'] == 1:        #secure field
-                Q_membership[1] +=1
-                Qfield = delzPass.scatter(master_cat[counter]['z_clusterspec'],master_cat[counter]['z_clusterphot'],c='b', marker='+', linewidths = 0)
-            elif master_cat[counter]['member'] == 2:        #false pos
-                Q_membership[2] +=1
-                Qpos = delzPass.scatter(master_cat[counter]['z_clusterspec'],master_cat[counter]['z_clusterphot'],c='r', marker='x', linewidths = 0)
-            elif master_cat[counter]['member'] == 3:        #false neg
-                Q_membership[3] +=1
-                Qneg = delzPass.scatter(master_cat[counter]['z_clusterspec'],master_cat[counter]['z_clusterphot'],c='m', marker='x', linewidths = 0)
-        counter +=1
-    plt.xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$')
-    plt.xscale('linear')
-    plt.xlim(-0.125,0.125)
-    plt.tick_params(axis='both', which='both',direction='in',color='k',top=True)
-    plt.ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$')
-    #delzPass.yaxis.tick_right()
-    delzPass.yaxis.set_label_position("right")
-    plt.yscale('linear')
-    plt.ylim(-0.15,0.15)
-    lin = delzPass.plot([-0.5,1],[0.07,0.07],':k', linewidth=1)  # horizontal cuts
-    lin = delzPass.plot([-0.5,1],[-0.07,-0.07],':k', linewidth=1)
-    lin = delzPass.plot([-0.01,-0.01],[-0.5,1],':k', linewidth=1)  #vertical cuts
-    lin = delzPass.plot([0.01,0.01],[-0.5,1],':k', linewidth=1)  
-    #plt.legend((SFz,Passz),('del_z < 0.1','del_z > 0.1'),scatterpoints=1,loc='lower left', fontsize=10)
-    plt.title('Passive')
-    plt.minorticks_on()
-    plt.tick_params(axis='y', which='both', direction='in',color='k',top=True,right=True,labelright=True,labelleft=False)
+    ## print information for user - diagnostic check
+    if diag_flag_2 == 1:
+        print('\n"master_data*.py" REPORTS:\nSF - members: %s'%np.sum(mem[0]),'; fields: %s'%np.sum(field[0]),'; false pos: %s'%np.sum(pos[0]),'; false neg: %s'%np.sum(neg[0]))
+        print('Q - members: %s'%np.sum(mem[1]),'; fields: %s'%np.sum(field[1]),'; false pos: %s'%np.sum(pos[1]),'; false neg: %s'%np.sum(neg[1]))
+        print('\n"master_zplots*.py" REPORTS:\nSF - members: %s'%SF_counting_array[0],'; fields: %s'%SF_counting_array[1],'; false pos: %s'%SF_counting_array[2],'; false neg: %s'%SF_counting_array[3])
+        print('Q - members: %s'%Q_counting_array[0],'; fields: %s'%Q_counting_array[1],'; false pos: %s'%Q_counting_array[2],'; false neg: %s'%Q_counting_array[3])
+    #    
+    ## Make figure
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    #fig.suptitle('Horizontally stacked subplots')
+    ## SF plot
+    ## scatter the points
+    ax1.scatter(SF_members[0],SF_members[1],s=(SF_members[2])*10,c='g', marker='o',alpha=0.4, linewidths = 0, label='Member')
+    ax1.scatter(SF_fields[0],SF_fields[1],s=(SF_fields[2])*10,c='b', marker='o',alpha=0.4, linewidths = 0, label='Field')
+    ax1.scatter(SF_poss[0],SF_poss[1],s=(SF_poss[2])*10,c='firebrick', marker='d',alpha=0.4, linewidths = 0, label='False pos.')
+    ax1.scatter(SF_negs[0],SF_negs[1],s=(SF_negs[2])*10,c='darkviolet', marker='d',alpha=0.4, linewidths = 0, label='False neg.')
+    # add z_cutoff limits
+    ax1.plot([-0.5,1],[z_cutoff[1],z_cutoff[1]],':k', linewidth=1)  # horizontal cuts (phot)
+    ax1.plot([-0.5,1],[-z_cutoff[1],-z_cutoff[1]],':k', linewidth=1)
+    ax1.plot([-z_cutoff[0],-z_cutoff[0]],[-0.5,1],':k', linewidth=1)  #vertical cuts
+    ax1.plot([z_cutoff[0],z_cutoff[0]],[-0.5,1],':k', linewidth=1)  
+    # add details
+    ax1.set_title('Star-forming')
+    ax1.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$')
+    ax1.set_xlim(-0.15,0.15)
+    ax1.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$')
+    ax1.set_ylim(-0.15,0.15)
+    ax1.grid(b=False)
+    ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True, labeltop=False,labelbottom=True)
+    ax1.minorticks_on()
+    ax1.legend(loc='upper left', frameon=False)
     #
-    plt.show()
+    ## now do the Q plot
+    ## scatter the points
+    ax2.scatter(Q_members[0],Q_members[1],s=(Q_members[2]*10),c='g', marker='+',alpha=0.4, linewidths = 0)
+    ax2.scatter(Q_fields[0],Q_fields[1],s=(Q_fields[2]*10),c='b', marker='+',alpha=0.4, linewidths = 0)
+    ax2.scatter(Q_poss[0],Q_poss[1],s=(Q_poss[2]*10),c='firebrick', marker='x',alpha=0.4, linewidths = 0)
+    ax2.scatter(Q_negs[0],Q_negs[1],s=(Q_negs[2]*10),c='darkviolet', marker='x',alpha=0.4, linewidths = 0)
+    # add z_cutoff limits
+    ax2.plot([-0.5,1],[z_cutoff[1],z_cutoff[1]],':k', linewidth=1)  # horizontal cuts (phot)
+    ax2.plot([-0.5,1],[-z_cutoff[1],-z_cutoff[1]],':k', linewidth=1)
+    ax2.plot([-z_cutoff[0],-z_cutoff[0]],[-0.5,1],':k', linewidth=1)  #vertical cuts
+    ax2.plot([z_cutoff[0],z_cutoff[0]],[-0.5,1],':k', linewidth=1)  
+    # add details
+    ax2.set_title('Quiescent')
+    ax2.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$')
+    ax2.set_xlim(-0.15,0.15)
+    ax2.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$')
+    ax2.yaxis.set_label_position('right')
+    ax2.set_ylim(-0.15,0.15)
+    ax2.grid(b=False)
+    ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True, labelleft=False, labeltop=False,labelbottom=True)
+    ax2.minorticks_on()                        
     #
-#
+    fig.tight_layout()
+    
+    
+
+    
 #
 #
 #
 # SECTION 3:
 #
-## colour-colour plots; modify to add in photometric sub-sample
+## UVJ Diagram: colour-colour plots; modify to add in photometric sub-sample
 #
 if plot_flag_3 ==1:
-    check = 0
-    aa = 0
-    bb = 0          #counting variables to check plotting code
-    cc = 0
-    colcol = plt.figure(num=3)
-    cvc = colcol.add_subplot(111)
-    counter = 0
-    size = len(master_cat)
-    while counter < size:
-        if master_cat[counter]['member'] ==0:
-            if master_cat[counter]['type'] ==1:
-                aa +=1      #count for SF
-                SF = cvc.scatter(master_cat[counter]['vj'],master_cat[counter]['uv'], c='b', marker='*', linewidths=0)
-            elif master_cat[counter]['type']==2:
-                bb +=1    #count for Q
-                Q = cvc.scatter(master_cat[counter]['vj'],master_cat[counter]['uv'], c='r', marker='.', linewidths=0)
+    #
+    #
+    ## TIME_FLAG_3 START
+    #
+    #
+    if time_flag_3 == 1 or time_flag == 2:
+        start_time = time.time()
+    #
+    #
+    counting_array = np.array([0]*4)         # counts number of galaxies at each condition; diagnostic check
+    fig, ax = plt.subplots()
+    SF_array = [ [], [], [] ]                # stores: [ [(V-J)], [(U-V)], [mass] ]
+    Q_array = [ [], [], [] ]    
+    #
+    for counter in range(len(master_cat)):
+        if master_cat['use_phot'][counter] == 1:
+            counting_array[0]+=1                             # objects w/ good phot
+        #if master_cat['member'][counter] == 0:              # only plot preliminary cluster members?
+            if master_cat['type'][counter] == 1:
+                counting_array[1]+=1                         # count for SF
+                SF_array[0].append(master_cat['vj'][counter])
+                SF_array[1].append(master_cat['uv'][counter])
+                SF_array[2].append(master_cat['lmass'][counter])
+            elif master_cat['type'][counter]== 2:
+                counting_array[2]+=1                         # count for Q
+                Q_array[0].append(master_cat['vj'][counter])
+                Q_array[1].append(master_cat['uv'][counter])
+                Q_array[2].append(master_cat['lmass'][counter])
             else:
-                cc +=1
-        else:
-            check +=1
-        counter +=1  
-    bounds = cvc.plot([0,0.8],[1.3,1.3],'-k',[0.8,1.6],[1.3,2],'-k',[1.6,1.6],[2,2.5],'-k', linewidth=1) #overlay boundary cutoff for SF/Passive
-    plt.xscale('linear')
-    plt.xlabel('$(V-J)_{rest}$')
-    plt.xlim(0,2)
-    plt.yscale('linear')
-    plt.ylabel('$(U-V)_{rest}$')
-    plt.ylim(0,2.5)
-    #plt.title('V-J vs U-V')
-    plt.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on')
-    plt.minorticks_on()
-    plt.text(0.25,2,'Passive',fontsize=10)
-    plt.text(1.5,0.75,'Star-Forming',fontsize=10)
-    #plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = '--')
+                counting_array[3] +=1
+        #else:
+    #
+    ## convert lists to arrays
+    SF_array = np.array(SF_array)
+    Q_array = np.array(Q_array)    
+    #
+    if diag_flag_3 == 1:                                 # print diagnostic information
+        print('use_phot: %s'%counting_array[0],'\nSF: %s'%counting_array[1],'\nQ: %s'%counting_array[2],'\nOther than SF/Q: %s'%counting_array[3])
+    #
+    ax.scatter(SF_array[0],SF_array[1],s=(SF_array[2]*1.5),c='b', marker='*', alpha=0.2, linewidths=0)
+    ax.scatter(Q_array[0],Q_array[1],s=(Q_array[2]*1.5),c='r', marker='.', alpha=0.2, linewidths=0)
+    ax.plot([-2,0.8],[1.3,1.3],'-k',[0.8,1.6],[1.3,2],'-k',[1.6,1.6],[2,3],'-k', linewidth=1) #overlay boundary cutoff for SF/Passive
+    ax.set_xlabel('$(V-J)_{rest}$',fontsize=20)
+    ax.set_xlim(-2,2)
+    ax.set_ylabel('$(U-V)_{rest}$', fontsize=20)
+    ax.set_ylim(-1,3)
+    ax.grid(b=False)
+    ax.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='off', labelleft='on')
+    ax.minorticks_on()
+    #
+    plt.text(0.05,2.3,'SF: %s'%counting_array[1],c='b',fontsize=15)
+    plt.text(0.05,2.15,'Q: %s'%counting_array[2],c='r',fontsize=15)
+    #plt.text(18.1,6.1,'z = %s'%z_cluster[cluster],fontsize=10)
+    #plt.text(18.1,5.7,'$\sigma_{mass}$ = %s'%std_dev,fontsize=10)
     #
     plt.show()
-#
+    #
+    #
+    ## TIME_FLAG END
+    #
+    if time_flag_3 == 1 or time_flag == 2:
+        print('\n"master_zplots*.py" Section 3 (UVJ diagram) complete.\n\nIt took: %s seconds produce this figure.\n\n' % (time.time() - start_time))
+    #
 #
 #
 #
