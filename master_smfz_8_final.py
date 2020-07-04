@@ -79,7 +79,7 @@ import matplotlib.gridspec as gridspec
 import astropy
 from astropy.table import Table
 from astropy.table import Column
-from scipy.optimize import curve_fit
+#from scipy.optimize import curve_fit
 #
 #
 #
@@ -192,7 +192,7 @@ if (diag_flag_1 == 1 and diag_flag_master == 2) or diag_flag_master == 1:
         Q_phot_len[ii] = len(Q_phot_list[ii])
         Q_spec_len[ii] = len(Q_spec_list[ii])
     #
-    data_names = Column(['SF','Q','SF_phot','SF_spec','Q_phot','Q_spec','Total'],name='Property')
+    #data_names = Column(['SF','Q','SF_phot','SF_spec','Q_phot','Q_spec','Total'],name='Property')
     # 
     # setup arrays for displaying in table
     col_names=['Property','Total','macs0416','macs1149','macs0717','abell370','abell1063','abell2744']
@@ -235,7 +235,7 @@ if (diag_flag_1 == 1 and diag_flag_master == 2) or diag_flag_master == 1:
 #
 ## MAY NEED TO EDIT
 ## you may change the # of bin points by adjusting the bin width, however IF YOU DO IT HERE, DO THE SAME IN "spec_completeness_binnning.py". search "MAY NEED TO EDIT"
-range2 = [7.3,12.3]     #sets range for all histrograms to be computer: cluster,field,false pos/neg
+#range2 = [7.3,12.3]     #sets range for all histrograms to be computer: cluster,field,false pos/neg
 bin_width = 0.2  # in dex
 num_points = (round((range2[1]-range2[0])/bin_width))+1       # compute # of data points
 num_bins = np.linspace(range2[0],range2[1],num_points)
@@ -416,7 +416,7 @@ if (diag_flag_4 == 1 and diag_flag_master == 2) or diag_flag_master == 1:   # SY
 else:
 ###### The following few lines are for if you want to choose the # of bins independent of the criteria described above; once a final decision is made on the bin edges (i.e. bin widths) to use for making the final histogram of false pos/neg, enter then in arrays 'num_bins*' below, and set diag_flag_f = 0; lines to uncomment marked by 5 hashtags #####
 ###### recall: range2 = [7.3,12.3]
-    num_bins = [6.6,8.967,10.633,12.3]#for z_cutoff=[0.01,0.04]#[7.3,9.8,12.3]#for z_cutoff=[0.05,0.05]   
+    num_bins = [7.3,8.89,9.6,10.11,12.3]#for z_cutoff=[0.04,0.04];[6.6,8.967,10.633,12.3]#for z_cutoff=[0.01,0.04]#[7.3,9.8,12.3]#for z_cutoff=[0.05,0.05]   
     #
     #
     SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=num_bins, range=range2)
