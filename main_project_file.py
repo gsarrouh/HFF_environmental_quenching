@@ -67,6 +67,7 @@ import matplotlib.pyplot as plt
 #
 ## MAY NEED TO EDIT: hard code the cluster membership definition cuts if not running Variational Analysis
 z_cutoff = [0.01,0.06]
+z_cutoff_field = [0.08,0.15]
 #
 #
 ## SECIONT (0.1): FLAGS
@@ -117,7 +118,7 @@ if section_4_flag == 1:
 #
 #
 if section_1_flag == 1:
-    print('Beginning master_data*.py')
+    print('\nBeginning master_data*.py')
     exec(open('master_data_7_final.py').read())      #opens and executes the script 
 #
 #
@@ -127,7 +128,7 @@ if section_1_flag == 1:
 ## Call and execute the "master_zplots*.py" file, to create plots assessing the quality of the data and visualizes galaxy classification (i.e. SF/Q).  Fig. 1: z_phot v z_spec;  Fig. 2: cluster members/field/false pos/false neg;  Fig. 3: UVJ diagram
 #
 if section_2_flag == 1:
-    print('Beginning master_zplots*.py')
+    print('\nBeginning master_zplots*.py')
     exec(open('master_zplots_2_final.py').read())      #opens and executes the script 
 #
 #
@@ -138,7 +139,7 @@ if section_2_flag == 1:
 #
 #
 if section_3_flag == 1:
-    print('Beginning data_mass_completeness*.py')
+    print('\nBeginning data_mass_completeness*.py')
     exec(open('data_mass_completeness_5.py').read())      #opens and executes the script 
 #
 #
@@ -148,7 +149,7 @@ if section_3_flag == 1:
 #
 #
 if section_4_flag == 1:
-    print('Beginning master_smfz*.py')
+    print('\nBeginning master_smfz*.py')
     exec(open('master_smfz_8_final.py').read())      #opens and executes the script 
 #
 #
