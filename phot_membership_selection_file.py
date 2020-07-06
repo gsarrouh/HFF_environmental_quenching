@@ -21,16 +21,19 @@ n_Q = 0
 lost_due_to_buffer_phot = np.array([[0]*6]*2)    # objects lost due to buffer b/w definition of cluster and field
 #
 for counter in range(len(master_cat)):
-    if master_cat[counter]['sub'] ==2:      # sub=2 identifies phot only subsample
+    if master_cat[counter]['sub'] ==2:      # sub=2 identifies phot only subsample;   this cut works fine
         n_phot_only+=1
         if master_cat[counter]['type'] == 0 or master_cat[counter]['type'] ==3: #skip stars and outliers
-            stars_outliers+=1
+            stars_outliers+=1               # this cut does nothing
             pass       
         elif master_cat[counter]['type'] ==1:       # type=1 identifies SF
             n_SF+=1
-            if abs(master_cat[counter]['z_clusterphot']) > 0.1:     # identify field galaxies
-                if master_cat[counter]['z_peak'] >0.55 or master_cat[counter]['z_peak'] <0.3:
-                    master_cat[counter]['member'] = 4       # memfield outlier
+            if abs(master_cat[counter]['z_clusterphot']) > z_cutoff_field[1]:     # identify field galaxies
+                if master_cat[counter]['z_peak'] >0.6 or master_cat[counter]['z_peak'] <0.25:
+                    #
+                    #pass            ### EDIT HERE if you want to analyze the field same as well
+                    #
+                    #master_cat[counter]['member'] = 4       # memfield outlier
                     for ii in range(len(field_outliers[0])):
                         if master_cat['cluster'][counter] == (ii+1):  # keep track of field outlier galaxies by cluster
                             field_outliers[0][ii]+=1
@@ -50,9 +53,12 @@ for counter in range(len(master_cat)):
                         lost_due_to_buffer_phot[0][ii]+=1
         elif master_cat[counter]['type'] ==2:       #Q
             n_Q+=1
-            if abs(master_cat[counter]['z_clusterphot']) > 0.1:     # identify field galaxies
-                if master_cat[counter]['z_peak'] >0.55 or master_cat[counter]['z_peak'] <0.3:
-                    master_cat[counter]['member'] = 4       # memfield outlier
+            if abs(master_cat[counter]['z_clusterphot']) > z_cutoff_field[1]:     # identify field galaxies
+                if master_cat[counter]['z_peak'] >0.6 or master_cat[counter]['z_peak'] <0.3:
+                   #
+                   #pass   ##   EDIT HERE TO ANALYZE FIELD SAMPLE
+                   #
+                   #master_cat[counter]['member'] = 4       # memfield outlier
                     for ii in range(len(field_outliers[1])):
                         if master_cat['cluster'][counter] == (ii+1):  # keep track of field outlier galaxies by cluster
                             field_outliers[1][ii]+=1
