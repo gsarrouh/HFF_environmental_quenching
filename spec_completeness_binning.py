@@ -91,14 +91,14 @@ if 'limiting_mass' in locals():
 else:
     limiting_mass = [6.6,7.3,7.83,7.37,6.57,6.64]        #NOTE: limiting masses are z_cutoff dependent
 ##### OLD LIMITING MASSES   limiting_mass = [7.5,7.8,8.0,7.5,7.4,7.3] # clusters 1,2,3,4,5,6, see IDs below
-range2 = [7.3,12.3]
+range2 = [min(limiting_mass),12.3]
 cluster_names = ['M0416','M1149','M0717','A370','A1063','A2744']   # in the order corresponding to limiting mags above
 ## now setup of the bin midpoints for the SMF. no need to actually create the SMF, just define an array with the same bin midpoints
 #
 ## MAY NEED TO EDIT!!!
 ## if you change the bin width in the "master_smf*.py" code, YOU MUST ALSO CHANGE IT HERE. just search search "MAY NEED TO EDIT" in that file.
 bin_width = 0.2  # in dex
-num_points = (round((range2[1]-range2[0])/bin_width))+1       # compute # of data points
+num_points = int((round((range2[1]-range2[0])/bin_width))+1)       # compute # of data points
 num_bins = np.linspace(range2[0],range2[1],num_points)
 #
 SF_midbins = midbins(num_bins)                                # define 
@@ -157,7 +157,7 @@ f = open('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnos
 ## to be used in building strings throughout program
 delim = ','   
 ## write a header for the file, start with hashtag to identify comment
-header1 = 'z_spec_cutoff'+delim+'z_phot_cutoff'+delim+'type'+delim+'binning_method'+delim+'#_of_bins'+delim+'[limiting_mass]'+delim+'cluster_members'+delim+'false pos.'+delim+'false neg.'+delim+'var'+delim+'[bin_edges]\n'
+header1 = 'z_spec_cutoff'+delim+'z_phot_cutoff'+delim+'type'+delim+'[limiting_mass]'+delim+'M.o.M.'+delim+'cluster_members'+delim+'false pos.'+delim+'false neg.'+delim+'binning_method'+delim+'#_of_bins'+delim+'[bin_edges]\n'
 #
 f.write(header1)
 #
@@ -212,19 +212,21 @@ for number in range(len(num_bins_to_try)):
         Q_var = float('NaN')
     else:
         Q_var = Q_metric
-    print('#bins: %s'%num_bins_to_try[number],'; method: %s'%method,'; spec cut: %s'%z_cutoff[0],'; phot cut: %s'%z_cutoff[1])
-    print('SF metric: %s'%SF_var,';  Q metric: %s'%Q_var)
+    if diag_flag == 1:
+        print('#bins: %s'%num_bins_to_try[number],'; method: %s'%method,'; spec cut: %s'%z_cutoff[0],'; phot cut: %s'%z_cutoff[1])
+        print('SF metric: %s'%SF_var,';  Q metric: %s'%Q_var)
     #
     #if np.isnan(SF_var) == 1 or np.isnan(Q_var) == 1:
     #    total_var = float('NaN')
     #else: total_var = np.round((SF_var+Q_var),decimals=3)
     #
     #
-    ## prepare what to write to file
-    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(limiting_mass)+delim+str(np.sum(mem[0]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+'%s'%SF_var+delim+str(bins_SF)
-    bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(limiting_mass)+delim+str(np.sum(mem[1]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+'%s'%Q_var+delim+str(bins_Q)
+    ## SECIONT (6): prepare what to WRITE to file - (this is copied&pasted from below for formatting consistency)
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%s'%SF_var+delim+str(np.sum(mem[0]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
+    bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%s'%Q_var+delim+str(np.sum(mem[1]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
     writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
     f.write(writer)
+    #
 #
 #
 ## ASYMMETRIC BINNING START
@@ -297,8 +299,8 @@ for m in range(len(method_designations)):
             #
             #
             ## SECIONT (6): prepare what to WRITE to file
-            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(limiting_mass)+delim+str(np.sum(mem[0]))+delim+'%s'%SF_var+delim+str(bins_SF)
-            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(limiting_mass)+delim+str(np.sum(mem[1]))+delim+'%s'%Q_var+delim+str(bins_Q)
+            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%s'%SF_var+delim+str(np.sum(mem[0]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
+            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+' Q'+delim+str(limiting_mass)+delim+'%s'%Q_var+delim+str(np.sum(mem[1]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
             writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
             f.write(writer)
             #
@@ -439,6 +441,7 @@ for m in range(len(method_designations)):
             #
             ## compute midpoints between false pos/neg bin edges
             bin_edge_means_SF = np.mean(num_bins_SF,axis=0)
+            bin_edge_means_Q = np.mean(num_bins_Q,axis=0)
             #
             #
             ## Call the file that now stores Section (5) - compute midbins, correction factors, & metric of merit
@@ -452,8 +455,8 @@ for m in range(len(method_designations)):
             #
             #
             ## SECIONT (6): prepare what to WRITE to file
-            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(limiting_mass)+delim+str(np.sum(mem[0]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+'%s'%SF_var+delim+str(bins_SF)
-            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(limiting_mass)+delim+str(np.sum(mem[1]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+'%s'%Q_var+delim+str(bins_Q)
+            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%s'%SF_var+delim+str(np.sum(mem[0]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
+            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%s'%Q_var+delim+str(np.sum(mem[1]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
             writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
             f.write(writer)
             #
@@ -511,7 +514,7 @@ if diag_flag == 1 or project_diagnostic_flag == 1:
     if project_diagnostic_flag == 0:
         pass
     else:    
-        print('\n\nProgram terminated successfully.')
+        print('\n\n"spec_completeness_binning.py" terminated successfully.')
 #
 #                      
 ###### PROGRAM END ######
