@@ -126,10 +126,10 @@ variational_anaylsis_master_flag = 0         # this allows you to set the above 
 summary_flag_1 = 1          # S1.2: display diagnostic summary table, describes SUB-type filter
 summary_flag_2 = 1          # S2: display outlier fractions & UVJ table
 summary_flag_3 = 1          # S3: display TYPE filter summary table (SF/Q)
-summary_flag_4 = 1          # S4: MEMBER-filter classification (SPEC), assuming you don't run variational analysis
-summary_flag_5 = 1          # S5: MEMBER-filter classification (PHOT)
-summary_flag_6 = 1          # S6: bCGs
-summary_flag_7 = 1
+summary_flag_4 = 1          # S4: MEMBER-filter classification (SPEC subsample), assuming you don't run variational analysis
+summary_flag_5 = 1          # S5: MEMBER-filter classification (PHOT subsample)
+summary_flag_6 = 1          # S7: Full MEMBERSHIP CUT summary of full Parent sample (SPEC + PHOT subsamples)
+summary_flag_7 = 1          # S6: bCGs
 ## diagnostic flags:
 diag_flag_1 = 1             # S2: histograms of del_z spec/phot     
 diag_flag_2 = 1 
@@ -360,7 +360,7 @@ for counter in range(len(master_cat)):
 #
 if summary_flag_1 == 1 or adams_flag == 1:
         ## Summarize initial data stats in table
-        sub_names = Column(['FULL PHOT','Total','spec & phot','only phot','spec only','no data','stars','SUM'],name='Property')
+        sub_names = Column(['FULL PHOT (Parent)','Total','spec & phot','only phot','spec only','no data','stars','SUM'],name='Property')
         col_names = cluster_names
         sub0 = Column([np.sum([phot_only,both]),np.sum([np.sum(both),np.sum(phot_only),np.sum(spec_only),np.sum(no_data),np.sum(stars_sub)]),np.sum(both),np.sum(phot_only),np.sum(spec_only),np.sum(no_data),np.sum(stars_sub),np.sum([both,phot_only,spec_only,no_data,stars_sub])],name='Total')  # total column
         sub_stats = Table([sub_names,sub0])
@@ -368,10 +368,10 @@ if summary_flag_1 == 1 or adams_flag == 1:
             sub_col = Column([np.sum([phot_only[ii],both[ii]]),np.sum([both[ii],phot_only[ii],spec_only[ii],no_data[ii],stars_sub[ii]]),both[ii],phot_only[ii],spec_only[ii],no_data[ii],stars_sub[ii],np.sum([both[ii],phot_only[ii],spec_only[ii],no_data[ii],stars_sub[ii]])],name=col_names[ii])  # add columns to table one cluster at a time
             sub_stats.add_column(sub_col)
         #
-        print('Summary Table 1 - Catalogue by SUB-type:')
+        print('\nSummary Table 1 - Catalogue by SUB-type:')
         print(sub_stats)
-        print('Other skipped objects: %s'%other,'\nNOTE: use_phot = 1: %s'%np.sum(use_phot[0]),';  use_phot = 0: %s'%np.sum(use_phot[1]))
-        print('NOTE: phot only + (spec+phot) samples are the FULL PHOT sample w/: %s'%np.sum(phot_only+both),'\n')
+        print('\nOther skipped objects: %s'%other,'\nNOTE: "use_phot==1": %s'%np.sum(use_phot[0]),';  "use_phot==0": %s'%np.sum(use_phot[1]))
+        print('NOTE: phot only + (spec+phot) samples are the FULL PHOT (Parent) sample w/: %s'%np.sum(phot_only+both),'\nNOTE: Difference b/w Parent sample & "use_phot==1": %s'%np.abs((np.sum(phot_only+both)-np.sum(use_phot[0]))))
 #
 #
 ## SECTION (1.3): convert FLUX TO MAGNITUDE; using well-known mag = -2.5*log_10(flux) + zero_pt. zero_pt = 25
@@ -418,7 +418,7 @@ for counter in range(len(master_cat)):
 #
 if summary_flag_2 == 1 or adams_flag == 1:
         ## Summary table of U V J and excesses calc., total numbers should agree w/ those reported in "sub_stats"
-        UVJ_names = Column(['Total (ALL PHOT)','Objects w/ phot','Objects w/o phot','Objects not classified','SUM'],name='Property')
+        UVJ_names = Column(['Parent sample','Objects w/ phot','Objects w/o phot','Objects not classified','SUM'],name='Property')
         col_names = cluster_names
         UVJ0 = Column([np.sum([phot_only,both]), np.sum(good_objects),np.sum(skipped_UVJ),np.sum(objects_99),np.sum([good_objects,skipped_UVJ,objects_99])],name='Total')  # total column
         UVJ_stats = Table([UVJ_names,UVJ0])
@@ -426,7 +426,7 @@ if summary_flag_2 == 1 or adams_flag == 1:
             UVJ_col = Column([np.sum([phot_only[ii],both[ii]]),good_objects[ii],skipped_UVJ[ii],objects_99[ii],np.sum([good_objects[ii],skipped_UVJ[ii],objects_99[ii]])],name=col_names[ii])  # add columns to table one cluster at a time
             UVJ_stats.add_column(UVJ_col)
         #####
-        print('UVJ and excesses calculation: \n%s'%UVJ_stats,'\nNOTE: "objects w/o phot" are those w/ "use_flag" == 1 that have been classified as no good data/bad phot.\nNote: "use_phot" = 1: %s'%np.sum(use_phot[0]),'; "use_phot" = 0: %s'%np.sum(use_phot[1]))
+        print('\nUVJ and excesses calculation (identified w/ "use_phot==1": \n%s'%UVJ_stats,'\n\nNOTE: "objects w/o phot" are those w/ "use_flag" == 1 that have been classified as no good data/bad phot.\nNote: "use_phot" = 1: %s'%np.sum(use_phot[0]),'; "use_phot" = 0: %s'%np.sum(use_phot[1]))
 #########
 #
 print('"master_data*.py" Section 1 complete.\n')
@@ -521,7 +521,7 @@ for counter in range(len(master_cat)):
 #
 if summary_flag_2 == 1 or adams_flag == 1:
     ## Summary table of U V J and excesses calc., total numbers should agree w/ those reported in "sub_stats"
-    delz_names = Column(['Total (ALL PHOT)','Spec subsample','Phot subsample','SUM'],name='Property')
+    delz_names = Column(['Parent sample','Spec subsample','Phot subsample','SUM'],name='Property')
     col_names = cluster_names
     delz0 = Column([np.sum([phot_only,both]), np.sum(spec_subsample),np.sum(phot_subsample),np.sum([spec_subsample,phot_subsample])],name='Total')  # total column
     delz_stats = Table([delz_names,delz0])
@@ -529,13 +529,12 @@ if summary_flag_2 == 1 or adams_flag == 1:
         delz_col = Column([np.sum([phot_only[ii],both[ii]]),spec_subsample[ii],phot_subsample[ii],np.sum([spec_subsample[ii],phot_subsample[ii]])],name=col_names[ii])  # add columns to table one cluster at a time
         delz_stats.add_column(delz_col)
     #####
-    print('Summary Table 2: delz calculation: \n%s'%delz_stats)
-    print('NOTE: SUM + skipped objects: %s'%np.sum([spec_subsample,phot_subsample]),' + %s'%np.sum(skipped_delz),' = %s'%np.sum([spec_subsample,phot_subsample,skipped_delz]))
+    print('\nSummary Table 2: delz calculation: \n%s'%delz_stats)
+    print('\nNOTE: SUM + skipped objects: %s'%np.sum([spec_subsample,phot_subsample]),' + %s'%np.sum(skipped_delz),' = %s'%np.sum([spec_subsample,phot_subsample,skipped_delz]))
     ###
     delz_mean = np.mean(sum_delz)
     delz_scatter = np.std(sum_delz)
-    print('\nOUTLIERS total (in spec subsample): %s' % np.sum(outliers))
-    print('Outlier fraction: %s' % (np.sum(outliers)/np.sum(both)))
+    print('\nOUTLIERS total (in spec subsample): %s' % np.sum(outliers),'\nOutlier fraction: %s' % (np.sum(outliers)/np.sum(both)))
     print('|del_z| mean: %s'%delz_mean)
     print('|del_z| scatter: %s\n'%delz_scatter)
     print('NOTE: the new "use-able" number for the spec subsample is: %s'%(np.sum(both)-np.sum(outliers)))
@@ -604,7 +603,7 @@ for counter in range(len(master_cat)):
 #
 if summary_flag_3 == 1 or adams_flag == 1:
     ## Summarize initial data stats in table
-    type_names = Column(['Total','SF - total','SF - phot','SF - spec','Q - total','Q - phot','Q - spec','Outliers','SUM (less totals)'],name='Property')
+    type_names = Column(['Parent sample','SF - total','SF - phot','SF - spec','Q - total','Q - phot','Q - spec','Outliers','SUM (less totals)'],name='Property')
     col_names = cluster_names
     type0 = Column([np.sum([phot_only,both]),np.sum(SF_type),np.sum(SF_type[1]),np.sum(SF_type[0]),np.sum(Q_type),np.sum(Q_type[1]),np.sum(Q_type[0]),np.sum(outliers),np.sum([np.sum(SF_type),np.sum(Q_type),np.sum(outliers)])],name='Total')  # total column
     type_stats = Table([type_names,type0])
@@ -614,7 +613,7 @@ if summary_flag_3 == 1 or adams_flag == 1:
     #
     print('Summary Table 3 - Catalogue by TYPE:')
     print(type_stats)
-    print('NOTE: "Other" is comprised of objects without photometry (i.e. stars, and objects with either bad photometry or both bad photometry and bad spectroscopy).\n')
+    print('\nNOTE: "Other" is comprised of objects without photometry (i.e. stars, and objects with either bad photometry or both bad photometry and bad spectroscopy).\n')
 #
 ## TIME_FLAG_3 END
 #
@@ -784,8 +783,8 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
 #
 #
 #
-if adams_flag == 0:
-    pass
+#if adams_flag == 0:
+#    pass
 #
 #
 ## END of DIAGNOSTIC loop
@@ -815,7 +814,7 @@ mem_fraction_spec[1] = np.round(np.sum(mem_spec[1])/np.sum([mem_spec[1],field_sp
 #
 if summary_flag_4 == 1 or adams_flag == 1:
     ## Summarize initial data stats in table
-    spec_member_names = Column(['Total','SF member','SF field','SF fasle pos','SF false neg','Lost due to buffer (SF)','Q member','Q field','Q false pos','Q false neg','Lost due to buffer (Q)','SUM'],name='Property')
+    spec_member_names = Column(['SPEC subsample total','SF - member','SF - field','SF - fasle pos','SF - false neg','SF - LDTB','Q - member','Q - field','Q - false pos','Q - false neg','Q - LDTB','SUM'],name='Property')
     col_names = cluster_names
     # SF table
     spec_member0 = Column([(np.sum(both)-np.sum(outliers)),np.sum(mem_spec[0]),np.sum(field_spec[0]),np.sum(pos_spec[0]),np.sum(neg_spec[0]),np.sum(lost_due_to_buffer_spec[0]),np.sum(mem_spec[1]),np.sum(field_spec[1]),np.sum(pos_spec[1]),np.sum(neg_spec[1]),np.sum(lost_due_to_buffer_spec[1]),np.sum([np.sum(mem_spec),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(lost_due_to_buffer_spec)])],name='Total')  # total column
@@ -824,10 +823,10 @@ if summary_flag_4 == 1 or adams_flag == 1:
         col = Column([(both[ii]-outliers[ii]),mem_spec[0][ii],field_spec[0][ii],pos_spec[0][ii],neg_spec[0][ii],lost_due_to_buffer_spec[0][ii],mem_spec[1][ii],field_spec[1][ii],pos_spec[1][ii],neg_spec[1][ii],lost_due_to_buffer_spec[1][ii],np.sum([mem_spec[0][ii],field_spec[0][ii],pos_spec[0][ii],neg_spec[0][ii],lost_due_to_buffer_spec[0][ii],mem_spec[1][ii],field_spec[1][ii],pos_spec[1][ii],neg_spec[1][ii],lost_due_to_buffer_spec[1][ii]])],name=col_names[ii])
         spec_member_stats.add_column(col)  # add columns to table one cluster at a time
     #
-    print('Summary Table 4 - (SPEC+PHOT) Subsample\nCatalogue by MEMBER:')
+    print('\nSummary Table 4 - SPEC Subsample\nCatalogue by MEMBER:')
     print(spec_member_stats)
-    print("Recall: the def'n of 'field' doesn't start where the def'n of 'member' stops. There's a buffer in between.\n")
-    print('SF total: %s'%np.sum([mem_spec[0],field_spec[0],pos_spec[0],neg_spec[0]]),'\nQ total: %s'%np.sum([mem_spec[1],field_spec[1],pos_spec[1],neg_spec[1]]))
+    print("\nNOTE: LDTB = Lost Due To Buffer b/w member & field (recall: the def'n of 'field' doesn't start where the def'n of 'member' stops. There's a buffer in between them.\n")
+    print('SF total: %s'%np.sum([mem_spec[0],field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0]]),'\nQ total: %s'%np.sum([mem_spec[1],field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1]]),'\nSF total + Q total + Outliers = %s'%np.sum([mem_spec[0],field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0]]),' + %s'%np.sum([mem_spec[1],field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1]]),' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_spec),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(lost_due_to_buffer_spec),np.sum(outliers)]))
     #####
 #
 #                       
@@ -866,57 +865,39 @@ exec(open('phot_membership_selection_file.py').read())
 ## SECTION (5.1): SUMMARY table
 ##  summarize data population as segregated above, and display in a table
 #
-if (diag_flag_6== 1 and diag_flag_master ==2) or diag_flag_master ==1 or project_diagnostic_flag == 1:
-    if project_diagnostic_flag == 0:
-        pass
-    else:
-        ## Summarize initial data stats in table
-        member_names = Column(['Total','SF Total','SF member','SF field'],name='Property')
-        col_names = ['macs0416','macs1149','macs0717','abell370','abell1063','abell2744']
-        # SF table
-        member0 = Column([np.sum([mem_phot[0],field_phot[0]]),np.sum(mem_phot[0]),np.sum(field_phot[0])],name='Total')  # total column
-        SF_phot_stats = Table([member_names,member0])
-        for ii in range(len(mem_phot[0])):
-            col = Column([np.sum([mem_phot[0][ii],field_phot[0][ii]]),mem_phot[0][ii],field_phot[0][ii]],name=col_names[ii])
-            SF_phot_stats.add_column(col)  # add columns to table one cluster at a time
-        #
-        # Q table
-        member0 = Column([np.sum([mem_phot[1],field_phot[1]]),np.sum(mem_phot[1]),np.sum(field_phot[1])],name='Total')  # total column
-        Q_phot_stats = Table([member_names,member0])
-        for ii in range(len(mem_phot[1])):
-            col = Column([np.sum([mem_phot[1][ii],field_phot[1][ii]]),mem_phot[1][ii],field_phot[1][ii]],name=col_names[ii])
-            Q_phot_stats.add_column(col)  # add columns to table one cluster at a time
-        #
-        print('DIAG_6 - PHOT-ONLY Subsample\nCatalogue by MEMBER - Star-forming:')
-        print(SF_phot_stats)
-        print('NOTE: Total reported under each cluster is sum of SF+Q.\n')
-        print('Catalogue by MEMBER - Quiescent:')
-        print(Q_phot_stats)
-        print('Lost due to buffer b/w member & field\nSF: %s'%np.sum(lost_due_to_buffer_phot[0]),';    Q: %s'%np.sum(lost_due_to_buffer_phot[1]))
-        print('NOTE: Total reported under each cluster is sum of SF+Q.')
-        print('NOTE: Differences b/w Total row and sum of other rows might arise due to the "buffer" zone built in between classifying objects as secure member vs field.\n')
+if summary_flag_5 == 1 or adams_flag == 1:
+    ## Summarize initial data stats in table
+    phot_member_names = Column(['PHOT subsample total','SF - Total','SF - member','SF - field','SF - outlier','SF - LDTB','Q - Total','Q - member','Q - field','Q - outlier','Q - LDTB','SUM (less totals)'],name='Property')
+    col_names = cluster_names
+    # SF table
+    phot_member0 = Column([np.sum(phot_only),np.sum([np.sum(mem_phot[0]),np.sum(field_phot[0]),np.sum(lost_due_to_buffer_phot[0]),np.sum(field_outliers[0])]),np.sum(mem_phot[0]),np.sum(field_phot[0]),np.sum(field_outliers[0]),np.sum(lost_due_to_buffer_phot[0]),np.sum([np.sum(mem_phot[1]),np.sum(field_phot[1]),np.sum(lost_due_to_buffer_phot[1]),np.sum(field_outliers[1])]),np.sum(mem_phot[1]),np.sum(field_phot[1]),np.sum(field_outliers[1]),np.sum(lost_due_to_buffer_phot[1]),np.sum([np.sum(mem_phot),np.sum(field_phot),np.sum(field_outliers),np.sum(lost_due_to_buffer_phot)])],name='Total')  # total column
+    phot_member_stats = Table([phot_member_names,phot_member0])
+    for ii in range(len(mem_phot[0])):
+        col = Column([phot_only[ii],np.sum([mem_phot[0][ii],field_phot[0][ii],field_outliers[0][ii],lost_due_to_buffer_phot[0][ii]]),mem_phot[0][ii],field_phot[0][ii],field_outliers[0][ii],lost_due_to_buffer_phot[0][ii],np.sum([mem_phot[1][ii],field_phot[1][ii],field_outliers[1][ii],lost_due_to_buffer_phot[1][ii]]),mem_phot[1][ii],field_phot[1][ii],field_outliers[1][ii],lost_due_to_buffer_phot[1][ii],np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii],lost_due_to_buffer_phot[0][ii],lost_due_to_buffer_phot[1][ii]])],name=col_names[ii])
+        phot_member_stats.add_column(col)  # add columns to table one cluster at a time
+    #
+    #
+    print('\nSummary table 5 - PHOT-ONLY Subsample\nCatalogue by MEMBER - Star-forming:')
+    print(phot_member_stats)
+    print('\nNOTE: LDTB = Lost Due To Buffer b/w member & field.\nTotal Field Outliers (z>0.6 or z<0.25): %s' % np.sum(field_outliers))
+#####
 #
-mem_phot_fraction = np.array([0]*2,dtype='float32')     # to keep track of membership acceptance fraction
-mem_phot_fraction[0] = (np.sum(mem_phot[0]) / n_SF)
-mem_phot_fraction[1] = (np.sum(mem_phot[1]) / n_Q)
-#
-if (diag_flag_6== 1 and diag_flag_master ==2) or diag_flag_master ==1 or project_diagnostic_flag == 1:
-    if project_diagnostic_flag == 0:
-        pass
-    else:
-        print('\nOverall membership fraction: \nSF: %s'%mem_phot_fraction[0],' & Q: %s'%mem_phot_fraction[1],'   for cutoff: %s'%str(z_cutoff))
-        #
-        print('\nTotal catalogue length: %s'%len(master_cat))
-        print('PHOT ONLY sub-sample: %s' %n_phot_only)
-        print('SF (members + field): %s' % np.sum([mem_phot[0],field_phot[0]]))
-        print('Q (members + field): %s' % np.sum([mem_phot[1],field_phot[1]]))
-        print('Field outliers (z>0.55 or z<0.3): %s' % np.sum(field_outliers))
-        print('Lost due to buffer b/w definition of cluster member/field: %s'%np.sum(lost_due_to_buffer_phot))
-        print('Stars & outliers: %s' % stars_outliers)
-        print('Sum of the above: %s'%np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])]))
-        print('Difference between # in PHOT-ONLY subsample & sum above: %s'%(n_phot_only - np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])])))
-        print('Other (not in phot only subsample): %s'%other_phot)
-        print('NOTE: Differences b/w Total row and sum of other rows might arise due to the "buffer" zone built in between classifying objects as secure member vs field.\n')                        
+    mem_phot_fraction = np.array([0]*2,dtype='float32')     # to keep track of membership acceptance fraction
+    mem_phot_fraction[0] = (np.sum(mem_phot[0]) / n_SF)
+    mem_phot_fraction[1] = (np.sum(mem_phot[1]) / n_Q)
+    print('\nOverall membership fraction: \nSF: %s'%mem_phot_fraction[0],' & Q: %s'%mem_phot_fraction[1],'   for cutoff: %s'%str(z_cutoff))
+    #
+    print('\nTotal catalogue length: %s'%len(master_cat))
+    print('PHOT ONLY sub-sample: %s' %n_phot_only)
+    print('SF (members + field): %s' % np.sum([mem_phot[0],field_phot[0]]))
+    print('Q (members + field): %s' % np.sum([mem_phot[1],field_phot[1]]))
+    print('\nField outliers (z>0.6 or z<0.3): %s' % np.sum(field_outliers))
+    print('Lost due to buffer b/w definition of cluster member/field: %s'%np.sum(lost_due_to_buffer_phot))
+    print('Stars & outliers: %s' % stars_outliers)
+    print('Sum of the above: %s'%np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])]))
+    print('Difference between # in PHOT-ONLY subsample & sum above: %s'%(n_phot_only - np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])])))
+    print('Other (not in phot only subsample): %s'%other_phot)
+#####                      
 #
 ## TIME_FLAG_5 END
 #
@@ -925,7 +906,28 @@ if time_flag_5 == 1 and time_flag == 2:
 else:
     print('"master_data*.py" Section 5 complete.')
 #
+## SECTION (5.2): Overall MEMBERSHIP summary table (spec + phot subsamples)
 #
+if summary_flag_6 == 1 or adams_flag == 1:
+    ## Summarize initial data stats in table
+    member_names = Column(['Parent total','PHOT member','PHOT field (ALL)','PHOT TOTAL','SPEC member','SPEC field','SPEC false pos','SPEC false neg','SPEC TOTAL','SUM (less totals)'],name='Property')
+    col_names = cluster_names
+    # SF table
+    member0 = Column([np.sum([phot_only,both]),np.sum(mem_phot),np.sum([field_phot,field_outliers]),np.sum([mem_phot,field_phot,field_outliers]),np.sum([mem_spec[0],mem_spec[1]]),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum([mem_spec,field_spec,pos_spec,neg_spec]),np.sum([mem_phot,mem_spec,field_phot,field_outliers,field_spec,pos_spec,neg_spec])],name='Total')  # total column
+    #member0 = Column([np.sum([phot_only,both]),np.sum(mem_phot),np.sum(mem_phot[0]),np.sum(mem_phot[1]),np.sum([field_phot,field_outliers]),np.sum([mem_phot,field_phot,field_outliers]),np.sum([mem_spec[0],mem_spec[1]]),np.sum(mem_spec[0]),np.sum(mem_spec[1]),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum([mem_spec,field_spec,pos_spec,neg_spec]),np.sum([mem_phot,mem_spec,field_phot,field_outliers,field_spec,pos_spec,neg_spec])],name='Total')  # total column
+    member_stats = Table([member_names,member0])
+    for ii in range(len(mem_phot[0])):
+        col = Column([np.sum([phot_only[ii],both[ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii]]),np.sum([field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii]]),np.sum([field_spec[0][ii],field_spec[1][ii]]),np.sum([pos_spec[0][ii],pos_spec[1][ii]]),np.sum([neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii],mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]])],name=col_names[ii])
+        #col = Column([np.sum([phot_only[ii],both[ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii]]),mem_phot[0][ii],mem_phot[1][ii],np.sum([field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii]]),mem_spec[0][ii],mem_spec[1][ii],np.sum([field_spec[0][ii],field_spec[1][ii]]),np.sum([pos_spec[0][ii],pos_spec[1][ii]]),np.sum([neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii],mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]])],name=col_names[ii])
+        member_stats.add_column(col)  # add columns to table one cluster at a time
+    #
+    LDTB_total = np.sum([lost_due_to_buffer_spec,lost_due_to_buffer_phot])
+    #
+    print('\nSummary Table 6 - FULL Parent Sample\nCatalogue by MEMBER:')
+    print(member_stats)
+    print('\nNOTE: Lost Due To Buffer b/w member & field: %s'%LDTB_total,'.\nTotal galaxies considered: Members + Buffer + Outliers(spec) = %s'%np.sum([mem_phot,mem_spec,field_phot,field_outliers,field_spec,pos_spec,neg_spec]),' + %s'%LDTB_total,' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_phot),np.sum(mem_spec),np.sum(field_phot),np.sum(field_outliers),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(LDTB_total),np.sum(outliers)]),'\nNOTE: Total (phot) Field Outliers (z>0.6 or z<0.3): %s'%np.sum(field_outliers))
+    print('\nTOTAL MEMBERS SELECTED: phot + spec = %s'%(np.sum([mem_phot[0],mem_phot[1]])),' + %s'%(np.sum([mem_spec[0],mem_spec[1]])),' = %s'%np.sum([mem_phot,mem_spec]))
+    #
 #
 #
 #                        
@@ -942,42 +944,8 @@ if time_flag_6 == 1 and time_flag == 2:
 #
 ## BCGs are identified in the "flag_{band}" column, flag_{ban} = 4 for BCGs. I will use band=F160W to identify BCGs
 #
-num_small_BCG = np.array([0]*6)
-num_BCG = np.array([0]*6)
-BCG_spec = np.array([[0]*6]*2)       # row1=SF;  row2=Q; cols=clusters
-BCG_phot = np.array([[0]*6]*2)
-BCG_SF = np.array([0]*6)
-BCG_Q =  np.array([0]*6)
-BCG_delz = [ [], [], [], [], [], [] ]
-small_BCG_delz = [ [], [], [], [], [], [] ]
-#
-for counter in range(len(master_cat)):
-    if master_cat['lmass'][counter] >= 11:
-    #if master_cat['flag_F160W'][counter] == 4:
-        #master_cat['member'][counter] = 5              # member=5 for BCGs so they don't contaminate the "member=0" cluster member sample
-        for BCG in range(len(num_BCG)):
-            if master_cat['cluster'][counter] == (BCG+1):    # track massive galaxies by cluster
-                num_BCG[BCG]+=1
-                BCG_delz[BCG].append(master_cat['z_clusterphot'][counter])
-                if master_cat['type'][counter] == 1:         # SF sample
-                    BCG_SF[BCG]+=1    
-                    if master_cat['sub'][counter] == 1:         # spec subsample
-                        BCG_spec[0][BCG]+=1
-                    elif master_cat['sub'][counter] == 2:         # spec subsample
-                        BCG_phot[0][BCG]+=1
-                elif master_cat['type'][counter] == 2:         # Q sample
-                    BCG_Q[BCG]+=1
-                    if master_cat['sub'][counter] == 1:         # spec subsample
-                        BCG_spec[1][BCG]+=1
-                    elif master_cat['sub'][counter] == 2:         # spec subsample
-                        BCG_phot[1][BCG]+=1
-    elif master_cat['lmass'][counter] >= 10.5 and master_cat['lmass'][counter] < 11:      # track "small bCGs"
-        for BCG in range(len(num_BCG)):
-            if master_cat['cluster'][counter] == (BCG+1):    # track massive galaxies by cluster
-                small_BCG_delz[BCG].append(master_cat['z_clusterphot'][counter])
-                num_small_BCG[BCG]+=1
-    #############
-#####
+
+exec(open('bcg_hist_diagnostic.py').read())            
 #
 BCG_delz_means = np.array([0]*6,dtype='float32')
 small_BCG_delz_means = np.array([0]*6,dtype='float32')
@@ -986,43 +954,22 @@ for BCG in range(len(num_BCG)):
     BCG_delz_means[BCG] = np.round(np.median(BCG_delz[BCG]),decimals=3)
     small_BCG_delz_means[BCG] = np.round(np.median(small_BCG_delz[BCG]),decimals=3)             
 #
-if (diag_flag_7== 1 and diag_flag_master ==2) or diag_flag_master ==1 or project_diagnostic_flag == 1:
-    if project_diagnostic_flag == 0:
-        pass
-    else:
-        ## Summarize bCG stats in table
-        BCG_names = Column(['Total (>11)','Avg. delz_phot','SF_total','SF_spec','SF_phot','SF_sum','Q_total','Q_spec','Q_phot','Q_sum','SF+Q_sum'],name='Property')
-        col_names = ['macs0416','macs1149','macs0717','abell370','abell1063','abell2744']
-        BCG0 = Column([np.sum(num_BCG),np.round(np.mean(BCG_delz_means),decimals=3),np.sum(BCG_SF),np.sum(BCG_spec[0]),np.sum(BCG_phot[0]),np.sum([BCG_spec[0],BCG_phot[0]]),np.sum(BCG_Q),np.sum(BCG_spec[1]),np.sum(BCG_phot[1]),np.sum([BCG_spec[1],BCG_phot[1]]),np.sum([BCG_spec[0],BCG_phot[0],BCG_spec[1],BCG_phot[1]])],name='Total')  # total column
-        BCG_stats = Table([BCG_names,BCG0])
-        for ii in range(len(num_BCG)):
-            BCG_col = Column([num_BCG[ii],BCG_delz_means[ii],BCG_SF[ii],BCG_spec[0][ii],BCG_phot[0][ii], np.sum([BCG_spec[0][ii],BCG_phot[0][ii]]),BCG_Q[ii],BCG_spec[1][ii],BCG_phot[1][ii], np.sum([BCG_spec[1][ii],BCG_phot[1][ii]]),np.sum([BCG_spec[0][ii],BCG_phot[0][ii],BCG_spec[1][ii],BCG_phot[1][ii]])],name=col_names[ii])               # cluster columns
-            BCG_stats.add_column(BCG_col) 
-        #
-        #
-        
-        #
-        #BCG_names = Column(['Total (>11)','Avg. delz_phot','SF_total','SF_spec','SF_phot','SF_sum','Q_total','Q_spec','Q_phot','Q_sum','SF+Q_sum'],name='Property')
-        # 
-        # setup arrays for displaying in table
-        col_names=['Property','Total','M0416','M1149','M0717','A370','A1063','A2744']
-        Tot_tabular = ['Total (>11)',np.sum(SF_len),SF_len[0],SF_len[1],SF_len[2],SF_len[3],SF_len[4],SF_len[5]]
-        Q_tabular = ['Median delz',np.sum(Q_len),Q_len[0],Q_len[1],Q_len[2],Q_len[3],Q_len[4],Q_len[5]]
-        SF_phot_tabular = ['SF_phot',np.sum(SF_phot_len),SF_phot_len[0],SF_phot_len[1],SF_phot_len[2],SF_phot_len[3],SF_phot_len[4],SF_phot_len[5]]
-        SF_spec_tabular = ['SF_spec',np.sum(SF_spec_len),SF_spec_len[0],SF_spec_len[1],SF_spec_len[2],SF_spec_len[3],SF_spec_len[4],SF_spec_len[5]]
-        Q_phot_tabular = ['Q_phot',np.sum(Q_phot_len),Q_phot_len[0],Q_phot_len[1],Q_phot_len[2],Q_phot_len[3],Q_phot_len[4],Q_phot_len[5]]
-        Q_spec_tabular = ['Q_spec',np.sum(Q_spec_len),Q_spec_len[0],Q_spec_len[1],Q_spec_len[2],Q_spec_len[3],Q_spec_len[4],Q_spec_len[5]]
-        # display table
-        print('\nSection 1: Cluster MEMBER stats: ')
-        from tabulate import tabulate
-        print(tabulate([SF_tabular,Q_tabular,SF_phot_tabular,SF_spec_tabular,Q_phot_tabular,Q_spec_tabular],headers=col_names))
-        #
-        
-        #
-        print(BCG_stats)
-        
-        ## print summary of operation
-        print('Total potential (M > 11) bCGs identified from catalogue: %s'%np.sum(num_BCG),'.\nBCGs identified by cluster: %s'%num_BCG)
+if summary_flag_7 == 1 or adams_flag == 1:
+    ## Summarize bCG stats in table
+    BCG_names = Column(['Total (>12)','Avg. delz_phot','SF_total','SF_spec','SF_phot','SF_sum','Q_total','Q_spec','Q_phot','Q_sum','SF+Q_sum'],name='Property')
+    col_names = ['macs0416','macs1149','macs0717','abell370','abell1063','abell2744']
+    BCG0 = Column([np.sum(num_BCG),np.round(np.mean(BCG_delz_means),decimals=3),np.sum(BCG_SF),np.sum(BCG_spec[0]),np.sum(BCG_phot[0]),np.sum([BCG_spec[0],BCG_phot[0]]),np.sum(BCG_Q),np.sum(BCG_spec[1]),np.sum(BCG_phot[1]),np.sum([BCG_spec[1],BCG_phot[1]]),np.sum([BCG_spec[0],BCG_phot[0],BCG_spec[1],BCG_phot[1]])],name='Total')  # total column
+    BCG_stats = Table([BCG_names,BCG0])
+    for ii in range(len(num_BCG)):
+        BCG_col = Column([num_BCG[ii],BCG_delz_means[ii],BCG_SF[ii],BCG_spec[0][ii],BCG_phot[0][ii], np.sum([BCG_spec[0][ii],BCG_phot[0][ii]]),BCG_Q[ii],BCG_spec[1][ii],BCG_phot[1][ii], np.sum([BCG_spec[1][ii],BCG_phot[1][ii]]),np.sum([BCG_spec[0][ii],BCG_phot[0][ii],BCG_spec[1][ii],BCG_phot[1][ii]])],name=col_names[ii])               # cluster columns
+        BCG_stats.add_column(BCG_col) 
+    #
+    #
+    #
+    print('\nSummary Table 7: bCG stats\n%s'%BCG_stats)
+    #
+    ## print summary of operation
+    print('Total potential (M > 11) bCGs identified from catalogue: %s'%np.sum(num_BCG),'.\nBCGs identified by cluster: %s'%num_BCG)
 #
 #
 ## TIME_FLAG_6 END
