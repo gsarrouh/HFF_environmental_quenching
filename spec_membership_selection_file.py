@@ -24,7 +24,7 @@ lost_due_to_buffer_spec = np.array([[0]*6]*2)
 for counter in range(len(master_cat)):
     if master_cat['sub'][counter] == 1:                   # sub=1 identifies subsample with both spec & phot
         if master_cat['type'][counter]==1:                # type=1 identifies SF sample
-            if abs(master_cat['z_clusterspec'][counter]) > 0.02 and abs(master_cat['z_clusterphot'][counter]) > 0.1: 
+            if abs(master_cat['z_clusterspec'][counter]) > z_cutoff_field[0] and abs(master_cat['z_clusterphot'][counter]) > z_cutoff_field[1]: 
                 master_cat['member'][counter] = 1         # member=1 for FIELD
                 for ii in range(len(field_spec[0])):
                     if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
@@ -49,7 +49,7 @@ for counter in range(len(master_cat)):
                     if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
                         lost_due_to_buffer_spec[0][ii]+=1
         elif master_cat['type'][counter]==2:                # type=2 identifies Q sample
-            if abs(master_cat['z_clusterspec'][counter]) > 0.02 and abs(master_cat['z_clusterphot'][counter]) > 0.1: 
+            if abs(master_cat['z_clusterspec'][counter]) > z_cutoff_field[0] and abs(master_cat['z_clusterphot'][counter]) > z_cutoff_field[1]: 
                 master_cat['member'][counter] = 1         # member=1 for FIELD
                 for ii in range(len(field_spec[1])):
                     if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
