@@ -39,7 +39,8 @@ for counter in range(len(master_cat)):
                 if master_cat['cluster'][counter] == (ii+1):
                     delz_spec[ii].append(master_cat['z_clusterspec'][counter])
 #########
-bins_phot = np.arange(0,0.95,0.05)
+bins_phot1 = np.arange(0.0,0.95,0.05)
+bins_phot2 = np.arange(0.0,0.11,0.01)
 #bins_phot = [-0.5,-0.3,-0.25,-0.2,-0.15,-0.1,-0.05,0.0,0.05,0.10,0.15,0.20,0.25,0.3,0.5,1.0]
 
 #
@@ -58,7 +59,7 @@ for ii in range(len(delz_phot)):
 #
 ## SPEC
 plt.figure()
-n, bins, patches = plt.hist(x=np.abs(delz_spec_plot),bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7,rwidth=0.95,log=True)
+n, bins, patches = plt.hist(x=np.abs(delz_spec_plot),bins=bins_phot1,color='deepskyblue',edgecolor='steelblue',alpha=0.7,rwidth=0.95,log=True)
 plt.grid(axis='y', alpha=0.75)
 plt.xlabel('$z_{spec}$ - $z_{cluster}$ / 1 + $z_{spec}$',fontsize=12)
 plt.ylabel('# count',fontsize=12)
@@ -67,12 +68,22 @@ plt.show()
 #
 ## PHOT
 plt.figure()
-n, bins, patches = plt.hist(x=np.abs(delz_phot_plot),bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7,rwidth=0.95,log=True)
+n, bins, patches = plt.hist(x=np.abs(delz_phot_plot),bins=bins_phot1,color='deepskyblue',edgecolor='steelblue',alpha=0.7,rwidth=0.95,log=True)
 plt.grid(axis='y', alpha=0.75)
 plt.xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=12)
 plt.ylabel('# count',fontsize=12)
 plt.title("|${\Delta}$z|$_{phot}$",fontsize=15)
 plt.show()
+#
+## PHOT zoomed in on - < del_z < 0.1
+plt.figure()
+n, bins, patches = plt.hist(x=np.abs(delz_phot_plot),bins=bins_phot2,color='deepskyblue',edgecolor='steelblue',alpha=0.7,rwidth=0.95,log=True)
+plt.grid(axis='y', alpha=0.75)
+plt.xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=12)
+plt.ylabel('# count',fontsize=12)
+plt.title("|${\Delta}$z|$_{phot}$",fontsize=15)
+plt.show()
+
 
 #
 print('# phot: %s'%len(delz_phot_plot),'\n# spec: %s'%len(delz_spec_plot),'\nTotal: %s'%(len(delz_phot_plot)+len(delz_spec_plot)))
@@ -94,9 +105,9 @@ for jj in range(nrows):
         #
             ax = axs[jj][kk]
             #
-            ax.hist(np.abs(delz_phot[counter]),bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7)
+            ax.hist(np.abs(delz_phot[counter]),bins=bins_phot1,color='deepskyblue',edgecolor='steelblue',alpha=0.7)
             ax.grid(axis='y', alpha=0.75)
-            ax.set_xlim([min(bins_phot),max(bins_phot)])
+            ax.set_xlim([min(bins_phot1),max(bins_phot1)])
             ax.text(0.05,700,cluster_names[counter],fontsize=9)
             counter+=1
             if jj == 1:      # put xlabels on 1st row
