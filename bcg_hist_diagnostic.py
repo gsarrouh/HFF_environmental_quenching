@@ -12,8 +12,8 @@ import matplotlib.gridspec as gridspec
 #
 ## function definitions
 #
-##
-BCG_threshold = [12]
+#
+BCG_threshold = 12
 ##
 num_small_BCG = np.array([0]*6)
 num_BCG = np.array([0]*6)
@@ -32,7 +32,7 @@ for counter in range(len(master_cat)):
         for BCG in range(len(num_BCG)):
             if master_cat['cluster'][counter] == (BCG+1):    # track massive galaxies by cluster
                 num_BCG[BCG]+=1
-                BCG_delz[BCG].append(np.abs(master_cat['z_clusterphot'][counter]))
+                BCG_delz[BCG].append(master_cat['z_clusterphot'][counter])
                 if master_cat['type'][counter] == 1:         # SF sample
                     BCG_SF[BCG]+=1    
                     if master_cat['sub'][counter] == 1:         # spec subsample
@@ -48,13 +48,14 @@ for counter in range(len(master_cat)):
     elif master_cat['lmass'][counter] >= 11 and master_cat['lmass'][counter] < BCG_threshold:      # track "small bCGs"
         for BCG in range(len(num_BCG)):
             if master_cat['cluster'][counter] == (BCG+1):    # track massive galaxies by cluster
-                small_BCG_delz[BCG].append(np.abs(master_cat['z_clusterphot'][counter]))
+                small_BCG_delz[BCG].append(master_cat['z_clusterphot'][counter])
                 num_small_BCG[BCG]+=1
     #############
 #####
 #
 #bins_phot = [-0.5,-0.3,-0.25,-0.2,-0.15,-0.1,-0.05,0.0,0.05,0.10,0.15,0.20,0.25,0.3,0.5,1.0]
-bins_phot = [0.0,0.05,0.10,0.15,0.20,0.25,0.3,0.5,1.0]
+#bins_phot = [0.0,0.05,0.10,0.15,0.20,0.25,0.3,0.5,1.0]
+bins_phot = np.arange(0.0,0.505,0.01)
 #
 ## collape for plotting purposes
 BCG_delz_plot = []
@@ -67,7 +68,7 @@ num_bad_BCG = 0
 good_BCG = []
 #
 for ii in range(len(BCG_delz_plot)):
-    if BCG_delz_plot[ii] == 99.0:
+    if np.abs(BCG_delz_plot[ii]) == 99.0:
         num_bad_BCG+=1
     else:
         good_BCG.append(BCG_delz_plot[ii])
@@ -75,16 +76,17 @@ for ii in range(len(BCG_delz_plot)):
 #
 total_BCG = len(BCG_delz_plot)
 #
-string = 'z=-99: %s'%num_bad_BCG+'/%s'%total_BCG
+string = 'z=-99.0: %s'%num_bad_BCG+'/%s'%total_BCG
+print('z=-99 (not in Parent sample): %s'%num_bad_BCG,'\nOther (in Parent sample)%s'%len(good_BCG))
 #
 ## Visualize del_z distribution
 # PHOT
 plt.figure()
-n, bins, patches = plt.hist(x=good_BCG,bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7, rwidth=1)
+n, bins, patches = plt.hist(x=np.abs(good_BCG),bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7, rwidth=1)
 plt.grid(axis='y', alpha=0.75)
 plt.xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=12)
 plt.ylabel('# count',fontsize=12)
-plt.title('abs(DEL_Z PHOT)',fontsize=15)
+plt.title('"|${\Delta}$z|$_{phot}$" bCG',fontsize=15)
 ax.text(0.2,3,string,fontsize=9)
 plt.show()
 # SPEC
@@ -96,8 +98,6 @@ plt.show()
 #plt.title('abs(DEL_Z SPEC)',fontsize=15)
 #plt.show()
 #
-print('z=-99 (not in Parent sample): %s'%num_bad_BCG,'\nOther (in Parent sample)%s'%len(good_BCG))
-
 #
 #print('# phot: %s'%len(delz_phot_plot),'\n# spec: %s'%len(delz_spec_plot),'\nTotal: %s'%(len(delz_phot_plot)+len(delz_spec_plot)))
 #
