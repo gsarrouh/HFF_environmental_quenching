@@ -25,7 +25,7 @@
 ## 2: photometry only 
 ## 3: spectroscopy only  (there's just 3 in macs0717) 
 ## 4: star
-#
+#PHOT 
 ## FILTER 3 - 'type': :   identifies type of data each object has
 ## 0: star
 ## 1: star-forming (SF)
@@ -108,10 +108,11 @@ import pandas as pd
 ## superior time_flag which supercedes all others and times the entire program
 time_flag = 1     # 0= all timers off;   1=on, time entire program;    2=off, allow individual sections to be timed
 #
-if time_flag == 1 or project_time_flag == 1:
-    time_flag = 1
-    start_time = time.time()
-#
+if time_flag == 1:
+    if project_time_flag == 1:
+        pass
+    else:
+        start_time = time.time()
 #
 ## FLAGS !!!
 ## MAY NEED TO EDIT
@@ -426,7 +427,7 @@ if summary_flag_2 == 1 or adams_flag == 1:
             UVJ_col = Column([np.sum([phot_only[ii],both[ii]]),good_objects[ii],skipped_UVJ[ii],objects_99[ii],np.sum([good_objects[ii],skipped_UVJ[ii],objects_99[ii]])],name=col_names[ii])  # add columns to table one cluster at a time
             UVJ_stats.add_column(UVJ_col)
         #####
-        print('\nUVJ and excesses calculation (identified w/ "use_phot==1": \n%s'%UVJ_stats,'\n\nNOTE: "objects w/o phot" are those w/ "use_flag" == 1 that have been classified as no good data/bad phot.\nNote: "use_phot" = 1: %s'%np.sum(use_phot[0]),'; "use_phot" = 0: %s'%np.sum(use_phot[1]))
+        print('\nUVJ and excesses calculation (identified w/ "use_phot==1"): \n%s'%UVJ_stats,'\n\nNOTE: "objects w/o phot" are those w/ "use_flag" == 1 that have been classified as no good data/bad phot.\nNote: "use_phot" = 1: %s'%np.sum(use_phot[0]),'; "use_phot" = 0: %s'%np.sum(use_phot[1]))
 #########
 #
 print('"master_data*.py" Section 1 complete.\n')
@@ -859,6 +860,7 @@ if time_flag_5 == 1 and time_flag == 2:
 print('\n"master_data*.py" Section 5: photometric cluster membership selection beginning...')          
 #
 ## Call the program that selects phot members based on criteria in Section (4)
+#
 exec(open('phot_membership_selection_file.py').read())            
 #
 #
@@ -877,7 +879,7 @@ if summary_flag_5 == 1 or adams_flag == 1:
         phot_member_stats.add_column(col)  # add columns to table one cluster at a time
     #
     #
-    print('\nSummary table 5 - PHOT-ONLY Subsample\nCatalogue by MEMBER - Star-forming:')
+    print('\nSummary Table 5 - PHOT-ONLY Subsample\nCatalogue by MEMBER - Star-forming:')
     print(phot_member_stats)
     print('\nNOTE: LDTB = Lost Due To Buffer b/w member & field.\nTotal Field Outliers (z>0.6 or z<0.25): %s' % np.sum(field_outliers))
 #####
@@ -894,7 +896,7 @@ if summary_flag_5 == 1 or adams_flag == 1:
     print('\nField outliers (z>0.6 or z<0.3): %s' % np.sum(field_outliers))
     print('Lost due to buffer b/w definition of cluster member/field: %s'%np.sum(lost_due_to_buffer_phot))
     print('Stars & outliers: %s' % stars_outliers)
-    print('Sum of the above: %s'%np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])]))
+    print('\nSum of the above: %s'%np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])]))
     print('Difference between # in PHOT-ONLY subsample & sum above: %s'%(n_phot_only - np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])])))
     print('Other (not in phot only subsample): %s'%other_phot)
 #####                      
@@ -925,7 +927,7 @@ if summary_flag_6 == 1 or adams_flag == 1:
     #
     print('\nSummary Table 6 - FULL Parent Sample\nCatalogue by MEMBER:')
     print(member_stats)
-    print('\nNOTE: Lost Due To Buffer b/w member & field: %s'%LDTB_total,'.\nTotal galaxies considered: Members + Buffer + Outliers(spec) = %s'%np.sum([mem_phot,mem_spec,field_phot,field_outliers,field_spec,pos_spec,neg_spec]),' + %s'%LDTB_total,' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_phot),np.sum(mem_spec),np.sum(field_phot),np.sum(field_outliers),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(LDTB_total),np.sum(outliers)]),'\nNOTE: Total (phot) Field Outliers (z>0.6 or z<0.3): %s'%np.sum(field_outliers))
+    print('\nNOTE: Lost Due To Buffer b/w member & field: %s'%LDTB_total,'\nTotal galaxies considered: Members + Buffer + Outliers(spec) = %s'%np.sum([mem_phot,mem_spec,field_phot,field_outliers,field_spec,pos_spec,neg_spec]),' + %s'%LDTB_total,' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_phot),np.sum(mem_spec),np.sum(field_phot),np.sum(field_outliers),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(LDTB_total),np.sum(outliers)]),'\nNOTE: Total (phot) Field Outliers (z>0.6 or z<0.3): %s'%np.sum(field_outliers))
     print('\nTOTAL MEMBERS SELECTED: phot + spec = %s'%(np.sum([mem_phot[0],mem_phot[1]])),' + %s'%(np.sum([mem_spec[0],mem_spec[1]])),' = %s'%np.sum([mem_phot,mem_spec]))
     #
 #
@@ -957,7 +959,7 @@ for BCG in range(len(num_BCG)):
 if summary_flag_7 == 1 or adams_flag == 1:
     ## Summarize bCG stats in table
     BCG_names = Column(['Total (>12)','Avg. delz_phot','SF_total','SF_spec','SF_phot','SF_sum','Q_total','Q_spec','Q_phot','Q_sum','SF+Q_sum'],name='Property')
-    col_names = ['macs0416','macs1149','macs0717','abell370','abell1063','abell2744']
+    col_names = cluster_names
     BCG0 = Column([np.sum(num_BCG),np.round(np.mean(BCG_delz_means),decimals=3),np.sum(BCG_SF),np.sum(BCG_spec[0]),np.sum(BCG_phot[0]),np.sum([BCG_spec[0],BCG_phot[0]]),np.sum(BCG_Q),np.sum(BCG_spec[1]),np.sum(BCG_phot[1]),np.sum([BCG_spec[1],BCG_phot[1]]),np.sum([BCG_spec[0],BCG_phot[0],BCG_spec[1],BCG_phot[1]])],name='Total')  # total column
     BCG_stats = Table([BCG_names,BCG0])
     for ii in range(len(num_BCG)):
@@ -969,7 +971,7 @@ if summary_flag_7 == 1 or adams_flag == 1:
     print('\nSummary Table 7: bCG stats\n%s'%BCG_stats)
     #
     ## print summary of operation
-    print('Total potential (M > 11) bCGs identified from catalogue: %s'%np.sum(num_BCG),'.\nBCGs identified by cluster: %s'%num_BCG)
+    print('Total potential (M > %s'%BCG_threshold,') bCGs identified from catalogue: %s'%np.sum(num_BCG),'.\nTotal in Parent sample: %s'%len(good_BCG),'\nBCGs identified by cluster: %s'%num_BCG)
 #
 #
 ## TIME_FLAG_6 END
