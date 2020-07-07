@@ -90,7 +90,7 @@ project_master_variational_flag = 0        # 0=off, don't perform variational an
 #
 section_1_flag = 1                 # data prep
 section_2_flag = 0                 # z plots
-section_3_flag = 0                 # limiting mass
+section_3_flag = 1                 # limiting mass
 section_4_flag = 0                 # SMF
 #    
 ## Update the user on what this program will run
