@@ -59,6 +59,7 @@ project_time_flag = 1     # 0= off;   1=on, time program, not section-by-section
 #
 ## MODULES
 #
+import sys
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -66,8 +67,9 @@ import matplotlib.pyplot as plt
 ## DEFINITIONS
 #
 ## MAY NEED TO EDIT: hard code the cluster membership definition cuts if not running Variational Analysis
-z_cutoff = [0.01,0.06]
-z_cutoff_field = [0.08,0.15]
+z_cutoff = [0.01,0.03]     # [spec,phot] cutoffs for cluster membership
+z_cutoff_field = [0.08,0.15]    # same but for definition of "field" galaxies
+bin_width = 0.2  # of the SMF, in dex
 #
 #
 ## SECIONT (0.1): FLAGS
@@ -90,7 +92,7 @@ project_master_variational_flag = 0        # 0=off, don't perform variational an
 #
 section_1_flag = 1                 # data prep
 section_2_flag = 0                 # z plots
-section_3_flag = 1                 # limiting mass
+section_3_flag = 0                 # limiting mass
 section_4_flag = 0                 # SMF
 #    
 ## Update the user on what this program will run
@@ -121,6 +123,8 @@ if section_1_flag == 1:
     print('\nBeginning master_data*.py')
     exec(open('master_data_7_final.py').read())      #opens and executes the script 
 #
+if project_master_variational_flag == 1:
+    sys.exit()
 #
 #
 ## SECTION (2): 
