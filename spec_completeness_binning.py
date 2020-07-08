@@ -1,6 +1,6 @@
 # Created on Fri Jun 26 13:17:46 2020
 #
-################## spec_mass_binning.py ##################
+################## spec_completeness_binning.py ##################
 #
 #
 ### WHAT THIS PROGRAM DOES:
@@ -25,6 +25,7 @@
 ### EVALUATE DIFFERENT BIN #s & BINNING TECHNIQUES:
 ### (0)    modules & definitions
 ### (1)    sort data into false pos/neg lists for SF/Q;
+### (1.1)   add Summary Table comparing to false pos/neg found in "master_data*.py"
 ### (2)    Method 1: SYMMETRIC bins; 
 ### (3)    Method 2: ASYMMERTIC bins, EQUAL NUMBER distribution among bins;
 ### (4)    Method 3: ASYMMERTIC bins, EQUAL MASS distribution among bins;
@@ -78,6 +79,9 @@ if time_flag == 1:
 ## MASTER DIAGNOSTIC FLAG: this will enable (1=on) or suppress (0=off) the diagnostic output of this file, for de-bugging purposes
 diag_flag = 0
 #
+## Section summary table flags
+summary_flag_1 = 1                   # initial loop to pick up all the false pos/neg
+#
 #
 ## SECTION (1): setup LISTS, i.e. compile lists of SF/Q false pos/neg populations; define "midbins" function
 # 
@@ -89,15 +93,14 @@ np.seterr(divide='ignore')
 if 'limiting_mass' in locals():
     pass
 else:
-    limiting_mass = [6.6,7.3,7.83,7.37,6.57,6.64]        #NOTE: limiting masses are z_cutoff dependent
+    limiting_mass = [6.6,7.63,8.2,7.5,6.75,6.64]        #NOTE: limiting masses are z_cutoff dependent
 ##### OLD LIMITING MASSES   limiting_mass = [7.5,7.8,8.0,7.5,7.4,7.3] # clusters 1,2,3,4,5,6, see IDs below
 range2 = [min(limiting_mass),12.3]
 cluster_names = ['M0416','M1149','M0717','A370','A1063','A2744']   # in the order corresponding to limiting mags above
 ## now setup of the bin midpoints for the SMF. no need to actually create the SMF, just define an array with the same bin midpoints
 #
-## MAY NEED TO EDIT!!!
+## MAY NEED TO EDIT!!! -- UPDATE: bin_width now set in main_project_file.py
 ## if you change the bin width in the "master_smf*.py" code, YOU MUST ALSO CHANGE IT HERE. just search search "MAY NEED TO EDIT" in that file.
-bin_width = 0.2  # in dex
 num_points = int((round((range2[1]-range2[0])/bin_width))+1)       # compute # of data points
 num_bins = np.linspace(range2[0],range2[1],num_points)
 #
@@ -109,7 +112,7 @@ Q_pos = []
 Q_neg = []
 pos_by_cluster = np.array([[0]*6]*2)    #for tracking false pos/neg by cluster; row_1=SF, row_2=Q
 neg_by_cluster = np.array([[0]*6]*2)
-objects_below_lim_mass = np.array([0]*6)    # for tracking objects below the limiting mass of each cluster
+objects_below_lim_mass = np.array([[0]*6]*2)    # for tracking objects below the limiting mass of each cluster
 #
 for counter in range(len(master_cat)):
     for ii in range(len(limiting_mass)):
@@ -119,27 +122,51 @@ for counter in range(len(master_cat)):
                     if master_cat['member'][counter] == 2:     # member=2 for false pos
                         SF_pos.append(master_cat['lmass'][counter])
                         for ii in range(len(pos_by_cluster[0])):
-                            if master_cat['cluster'][ii] == (ii+1):
-                                pos_by_cluster[0]+=1           # track false pos for SF
+                            if master_cat['cluster'][counter] == (ii+1):
+                                pos_by_cluster[0][ii]+=1           # track false pos for SF
                     elif master_cat['member'][counter] == 3:   # member=3 for false neg
                         SF_neg.append(master_cat['lmass'][counter])
                         for ii in range(len(pos_by_cluster[0])):
-                            if master_cat['cluster'][ii] == (ii+1):
-                                neg_by_cluster[0]+=1           # track false neg for SF
+                            if master_cat['cluster'][counter] == (ii+1):
+                                neg_by_cluster[0][ii]+=1           # track false neg for SF
                 elif master_cat['type'][counter] == 2:     # type=2 for Q
                     if master_cat['member'][counter] == 2:     # member=2 for false pos
                         Q_pos.append(master_cat['lmass'][counter])
                         for ii in range(len(pos_by_cluster[1])):
-                            if master_cat['cluster'][ii] == (ii+1):
-                                pos_by_cluster[1]+=1           # track false pos for Q
+                            if master_cat['cluster'][counter] == (ii+1):
+                                pos_by_cluster[1][ii]+=1           # track false pos for Q
                     elif master_cat['member'][counter] == 3:   # member=3 for false neg
                         Q_neg.append(master_cat['lmass'][counter])
                         for ii in range(len(neg_by_cluster[1])):
-                            if master_cat['cluster'][ii] == (ii+1):
-                                neg_by_cluster[1]+=1           # track false neg for Q
+                            if master_cat['cluster'][counter] == (ii+1):
+                                neg_by_cluster[1][ii]+=1           # track false neg for Q
             else: 
-                objects_below_lim_mass[ii]+=1
+                if master_cat['member'][counter] == 2 or master_cat['member'][counter] == 3:
+                    if master_cat['type'][counter] == 1:           # SF  false pos/neg below limiting mass
+                        for ii in range(len(objects_below_lim_mass[0])):
+                            if master_cat['cluster'][counter] == (ii+1):
+                                objects_below_lim_mass[0][ii]+=1
+                    elif master_cat['type'][counter] == 2:         # Q  false pos/neg below limiting mass
+                        for ii in range(len(objects_below_lim_mass[1])):
+                            if master_cat['cluster'][counter] == (ii+1):
+                                objects_below_lim_mass[1][ii]+=1
 #
+#
+## SECTION (1.1) - Summary Table 1: Did we pick up all the false pos/neg as reported in "master_data*.py"?
+#
+if summary_flag_1 == 1 or adams_flag == 1:
+    ## Summarize initial data stats in table
+    pos_neg_names = Column(['TOTAL False Pos.','TOTAL False Neg.','SF - False Pos.','SF - False Neg.','SF - LBLM','Q - False Pos.','Q - False Neg.','Q - LBLM','SUM'],name='Property')
+    col_names = cluster_names
+    # SF table
+    pos_neg0 = Column([np.sum(pos_spec),np.sum(neg_spec),np.sum(pos_by_cluster[0]),np.sum(neg_by_cluster[0]),np.sum(objects_below_lim_mass[0]),np.sum(pos_by_cluster[1]),np.sum(neg_by_cluster[1]),np.sum(objects_below_lim_mass[1]),np.sum([pos_by_cluster,neg_by_cluster,objects_below_lim_mass])],name='Total')  # total column
+    pos_neg_stats = Table([pos_neg_names,pos_neg0])
+    for ii in range(len(mem_spec[0])):
+        col = Column([np.sum([pos_spec[0][ii],pos_spec[1][ii]]),np.sum([neg_spec[0][ii],neg_spec[1][ii]]),pos_by_cluster[0][ii],neg_by_cluster[0][ii],objects_below_lim_mass[0][ii],pos_by_cluster[1][ii],neg_by_cluster[1][ii],objects_below_lim_mass[1][ii],np.sum([pos_by_cluster[0][ii],neg_by_cluster[0][ii],objects_below_lim_mass[0][ii],pos_by_cluster[1][ii],neg_by_cluster[1][ii],objects_below_lim_mass[1][ii]])],name=col_names[ii])
+        pos_neg_stats.add_column(col)  # add columns to table one cluster at a time
+    #
+    print('\nSummary Table: False Pos./Neg.\n%s'%pos_neg_stats)
+    print('NOTE: TOTALs reported in first two rows are from Summary Table 4 in "master_data*.py".\nNOTE: LBLM = galaxies Lost Below Limiting Mass for their cluster.\n')
 #
 #
 ## sort false pos/neg lists in ascending order
@@ -168,7 +195,7 @@ f.write(header1)
 ### METHOD 1: bin SF & Q in SYMMETRIC BINS, then compute false pos/neg fractions by mass bin for correction factors. 
 #
 ## number of histogram mass bins to try for spec. completeness correction
-num_bins_to_try = np.arange(2,8,1)   # np.arange([...]) = [array_start,array_end_plus_increment,increment]
+num_bins_to_try = np.arange(2,7,1)   # np.arange([...]) = [array_start,array_end_plus_increment,increment]
 # write a loop that interatively uses a different number of bins in the histrogram, to isolate the largest number for which all bins have at least one entry; NOTE: the lines that stop the loop have been commented out, to investigate the relative fraction of false pos/neg for each different # of bins
 #
 # 
@@ -222,8 +249,8 @@ for number in range(len(num_bins_to_try)):
     #
     #
     ## SECIONT (6): prepare what to WRITE to file - (this is copied&pasted from below for formatting consistency)
-    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%s'%SF_var+delim+str(np.sum(mem[0]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
-    bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%s'%Q_var+delim+str(np.sum(mem[1]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
+    bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
     writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
     f.write(writer)
     #
@@ -267,6 +294,14 @@ for m in range(len(method_designations)):
             num_bins_Q[0].append(Q_pos[-1])
             num_bins_Q[1].append(Q_neg[-1])
             #
+            ## check that the number of bins is correct and that you didn't add an extra element at the end of the array in this last step (could happen if the length of the SF_pos list is exactly divisible by SF_pos_index, for example)
+            #
+            for ii in range(2):
+                while len(num_bins_SF[ii]) > (num_bins_to_try[number]+1):
+                    del num_bins_SF[ii][-2]
+                while len(num_bins_Q[ii]) > (num_bins_to_try[number]+1):
+                    del num_bins_Q[ii][-2]
+            #
             num_bins_SF = np.array(num_bins_SF)
             num_bins_Q = np.array(num_bins_Q)
             #print('# bins: %s'%(num_bins_to_try[number]))
@@ -299,8 +334,8 @@ for m in range(len(method_designations)):
             #
             #
             ## SECIONT (6): prepare what to WRITE to file
-            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%s'%SF_var+delim+str(np.sum(mem[0]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
-            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+' Q'+delim+str(limiting_mass)+delim+'%s'%Q_var+delim+str(np.sum(mem[1]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
+            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
+            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+' Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
             writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
             f.write(writer)
             #
@@ -455,8 +490,8 @@ for m in range(len(method_designations)):
             #
             #
             ## SECIONT (6): prepare what to WRITE to file
-            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%s'%SF_var+delim+str(np.sum(mem[0]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
-            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%s'%Q_var+delim+str(np.sum(mem[1]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
+            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%s'%SF_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
+            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%s'%Q_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
             writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
             f.write(writer)
             #
