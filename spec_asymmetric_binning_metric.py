@@ -38,11 +38,12 @@ else:
     #
     for ii in range(len(bin_edge_means_SF)):
         #
-        if ii != (len(bin_edge_means_SF)-1):
-            if bin_edge_means_SF[ii] > bin_edge_means_SF[(ii+1)]:
+        if ii != (len(bin_edge_means_SF)-1):                    # if not the last bin edge (i.e. upper limit of mass range for study)...
+            if bin_edge_means_SF[ii] > bin_edge_means_SF[(ii+1)]:   # if the next bin edge is lower than the current bin edge (in mass)...
+              #  FIX THIS HERE: s/b looking at bin edges in num_bins_*, not bin_edge_means*
                 #
                 ## enable diagnostic output
-                if diag_flag == 1 or project_diagnostic_flag == 1:
+                if (diag_flag == 1 and project_diagnostic_flag ==2) or project_diagnostic_flag == 1:
                     if project_diagnostic_flag == 0:
                         pass
                     else:
@@ -54,25 +55,34 @@ else:
                 #
                 SF_var_list = []
                 if num_bins_SF[0][ii] < num_bins_SF[1][ii]:    # this if statement won't apply to the first/last bin, since they have been set to equal "range2", the mass range for the study
-                    bin_edge_SF_start = num_bins_SF[0][ii]     # store the lower bound of the ii'th bin edge b/w the false pos/neg bin edges
+                    if ii == 0:
+                        bin_edge_SF_start = num_bins_SF[0][ii]     # store the lower bound of the ii'th bin edge b/w the false pos/neg bin edges
+                    else:
+                        bin_edge_SF_start = max(num_bins_SF[0][ii],bin_edge_means_SF[(ii-1)])
                     bin_edge_SF_end = num_bins_SF[1][ii]
-                    equal_flag = 0
                 elif num_bins_SF[0][ii] > num_bins_SF[1][ii]:
-                    bin_edge_SF_start = num_bins_SF[1][ii]
+                    if ii == 0:
+                        bin_edge_SF_start = num_bins_SF[1][ii]
+                    else:
+                        bin_edge_SF_start = max(num_bins_SF[1][ii],bin_edge_means_SF[(ii-1)])
                     bin_edge_SF_end = num_bins_SF[0][ii]
-                    equal_flag = 0
                 else:                                          # for when the i'th bin edge is the same for both false pos/neg lists
                     equal_flag = 1
                     bin_edge_SF_start = num_bins_SF[0][ii]
                     bin_edge_SF_end = num_bins_SF[0][ii]
                     mid_pt_to_use = num_bins_SF[0][ii]
                 #
+                if bin_edge_SF_start == bin_edge_SF_end:
+                    equal_flag = 1
+                else:
+                    equal_flag = 0
+                #
                 ## enable diagnostic output
-                if diag_flag == 1 or project_diagnostic_flag == 1:
+                if (diag_flag == 1 and project_diagnostic_flag ==2) or project_diagnostic_flag == 1:
                     if project_diagnostic_flag == 0:
                         pass
                     else:
-                        print('Start of : %.2f'%bin_edge_SF_start,' for SF method: %s'%method)
+                        print('Start of : %.2f'%bin_edge_SF_start,' for SF method: %s'%method,' for z_cutoff = %s'%z_cutoff)
                         #print(bin_edge_SF_start)
                         #print(bin_edge_SF_end)
                 #
@@ -108,9 +118,7 @@ else:
                     except:
                          #
                          ## enable diagnostic output
-                        if diag_flag == 1:
-                            print("ERROR 1: SF false pos/neg bins overlap s.t. bin edges don't increase\nmonotonically for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS\n"NaN" appended to list.')
-                        if diag_flag == 1 or project_diagnostic_flag == 1:
+                        if (diag_flag == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:
                             if project_diagnostic_flag == 0:
                                 pass
                             else:
@@ -122,7 +130,7 @@ else:
                     #print('error_flag=1 appended list for # of bins: %s'%num_bins_to_try[number])
                     #
                     #
-                    if diag_flag == 1 or project_diagnostic_flag == 1:
+                    if (diag_flag == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:
                         if project_diagnostic_flag == 0:
                             pass
                         else:
@@ -131,7 +139,7 @@ else:
                     #             
                     bin_edge_SF_start = np.round(bin_edge_SF_start+0.01,decimals=2)
                     #
-                if equal_flag == 0:
+                if equal_flag == 0:     # i.e. if the corresponding bin edges b/w pos/neg lists aren't equal...
                         #
                     SF_var_list.sort(key=lambda x: x[0])
                     mid_pt_to_use = SF_var_list[0][1]        # assign best midpoint to bin_edge* array 
@@ -139,11 +147,12 @@ else:
                         pass
                     else:
                         bin_edge_means_SF[ii] = mid_pt_to_use 
-                    #print('bin_edge_means_SF[%s]'%ii,' = %s'%bin_edge_means_SF[ii])
+                    print('Bin edge to use: bin_edge_means_SF[%s]'%ii,' = %s'%bin_edge_means_SF[ii])
                     #        
                     #
                 elif equal_flag == 1:
                     bin_edge_means_SF[ii] = mid_pt_to_use
+                    print('Bin edge to use: bin_edge_means_SF[%s]'%ii,' = %s'%bin_edge_means_SF[ii])
                 #
         #########        
 #########                
@@ -180,7 +189,7 @@ else:                                  # call correction factors file and comput
     SF_var = SF_metric        
 #
 #       
-## Q          <-- NEXT TIME PUT THIS IN A FUNCTION!!!!
+## Q
 #
 ## add a loop to ignore the case where the number of bins exceeds the population of false pos/neg.
 pop_Q_pos = len(Q_pos)
@@ -198,11 +207,12 @@ else:
     #
     for ii in range(len(bin_edge_means_Q)):
         #
-        if ii != (len(bin_edge_means_Q)-1):
-            if bin_edge_means_Q[ii] > bin_edge_means_Q[(ii+1)]:
+        if ii != (len(bin_edge_means_Q)-1):                    # if not the last bin edge (i.e. upper limit of mass range for study)...
+            if bin_edge_means_Q[ii] > bin_edge_means_Q[(ii+1)]:   # if the next bin edge is lower than the current bin edge (in mass)...
+              #  FIX THIS HERE: s/b looking at bin edges in num_bins_*, not bin_edge_means*
                 #
                 ## enable diagnostic output
-                if diag_flag == 1 or project_diagnostic_flag == 1:
+                if (diag_flag == 1 and project_diagnostic_flag ==2) or project_diagnostic_flag == 1:
                     if project_diagnostic_flag == 0:
                         pass
                     else:
@@ -214,25 +224,34 @@ else:
                 #
                 Q_var_list = []
                 if num_bins_Q[0][ii] < num_bins_Q[1][ii]:    # this if statement won't apply to the first/last bin, since they have been set to equal "range2", the mass range for the study
-                    bin_edge_Q_start = num_bins_Q[0][ii]     # store the lower bound of the ii'th bin edge b/w the false pos/neg bin edges
+                    if ii == 0:
+                        bin_edge_Q_start = num_bins_Q[0][ii]     # store the lower bound of the ii'th bin edge b/w the false pos/neg bin edges
+                    else:
+                        bin_edge_Q_start = max(num_bins_Q[0][ii],bin_edge_means_Q[(ii-1)])
                     bin_edge_Q_end = num_bins_Q[1][ii]
-                    equal_flag = 0
                 elif num_bins_Q[0][ii] > num_bins_Q[1][ii]:
-                    bin_edge_Q_start = num_bins_Q[1][ii]
+                    if ii == 0:
+                        bin_edge_Q_start = num_bins_Q[1][ii]
+                    else:
+                        bin_edge_Q_start = max(num_bins_Q[1][ii],bin_edge_means_Q[(ii-1)])
                     bin_edge_Q_end = num_bins_Q[0][ii]
-                    equal_flag = 0
                 else:                                          # for when the i'th bin edge is the same for both false pos/neg lists
                     equal_flag = 1
                     bin_edge_Q_start = num_bins_Q[0][ii]
                     bin_edge_Q_end = num_bins_Q[0][ii]
                     mid_pt_to_use = num_bins_Q[0][ii]
                 #
+                if bin_edge_Q_start == bin_edge_Q_end:
+                    equal_flag = 1
+                else:
+                    equal_flag = 0
+                #
                 ## enable diagnostic output
-                if diag_flag == 1 or project_diagnostic_flag == 1:
+                if (diag_flag == 1 and project_diagnostic_flag ==2) or project_diagnostic_flag == 1:
                     if project_diagnostic_flag == 0:
                         pass
                     else:
-                        print('Start of : %.2f'%bin_edge_Q_start,' for Q method: %s'%method)
+                        print('Start of : %.2f'%bin_edge_Q_start,' for Q method: %s'%method,' for z_cutoff = %s'%z_cutoff)
                         #print(bin_edge_Q_start)
                         #print(bin_edge_Q_end)
                 #
@@ -268,9 +287,7 @@ else:
                     except:
                          #
                          ## enable diagnostic output
-                        if diag_flag == 1:
-                            print("ERROR 1: Q false pos/neg bins overlap s.t. bin edges don't increase\nmonotonically for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS\n"NaN" appended to list.')
-                        if diag_flag == 1 or project_diagnostic_flag == 1:
+                        if (diag_flag == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:
                             if project_diagnostic_flag == 0:
                                 pass
                             else:
@@ -282,7 +299,7 @@ else:
                     #print('error_flag=1 appended list for # of bins: %s'%num_bins_to_try[number])
                     #
                     #
-                    if diag_flag == 1 or project_diagnostic_flag == 1:
+                    if (diag_flag == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:
                         if project_diagnostic_flag == 0:
                             pass
                         else:
@@ -291,7 +308,7 @@ else:
                     #             
                     bin_edge_Q_start = np.round(bin_edge_Q_start+0.01,decimals=2)
                     #
-                if equal_flag == 0:
+                if equal_flag == 0:     # i.e. if the corresponding bin edges b/w pos/neg lists aren't equal...
                         #
                     Q_var_list.sort(key=lambda x: x[0])
                     mid_pt_to_use = Q_var_list[0][1]        # assign best midpoint to bin_edge* array 
@@ -299,27 +316,17 @@ else:
                         pass
                     else:
                         bin_edge_means_Q[ii] = mid_pt_to_use 
-                    #print('bin_edge_means_SF[%s]'%ii,' = %s'%bin_edge_means_Q[ii])
-                    if ii != (len(bin_edge_means_Q)-1):
-                        if bin_edge_means_Q[ii] > bin_edge_means_Q[(ii+1)]:
-                            #
-                            ## enable diagnostic output
-                            if diag_flag == 1:
-                                print("ERROR 2: the next bin value is lower than the current bin value for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS')
-                            if diag_flag == 1 or project_diagnostic_flag == 1:
-                                if project_diagnostic_flag == 0:
-                                    pass
-                                else:
-                                    print("ERROR 2: the next bin value is lower than the current bin value for cutoffs - spec: %s"%z_cutoff[0],";  phot: %s"%z_cutoff[1],";   for %s"%num_bins_to_try[number]," bins, method = %s"%method,'\nUSE FEWER BINS')
-                            bin_edge_means_Q[ii] = bin_edge_means_Q[(ii+1)]            
-                            #
+                    print('Bin edge to use: bin_edge_means_Q[%s]'%ii,' = %s'%bin_edge_means_Q[ii])
+                    #        
+                    #
                 elif equal_flag == 1:
                     bin_edge_means_Q[ii] = mid_pt_to_use
+                    print('Bin edge to use: bin_edge_means_Q[%s]'%ii,' = %s'%bin_edge_means_Q[ii])
                 #
         #########        
 #########                
 #
-## Q cont'd, after bins are set
+## Q cont'd, once bin edges set
 #
 # make histograms
 Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=bin_edge_means_Q, range=range2)
@@ -350,10 +357,10 @@ else:                                  # call correction factors file and comput
     ## compute variance of SF/Q ratios from 1
     Q_var = Q_metric        
 #
-#   
 #
 #
 #
+print('\n"spec_asymmetric_binning_metric.py" for z_cutoff = %s'%z_cutoff,' terminated successfully.\n')
 #
 #
 #
