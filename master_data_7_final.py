@@ -662,7 +662,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
     ## MAY NEED TO EDIT: "increment" & "*cutoff_range", for both SPEC (immediately below) and PHOT (after the first 'for' loop)
     ## SPEC cuts
     increment = np.array([0.01,0.01])   # [spec,phot]
-    z_cutoff_spec_range = np.array([0.010,(0.050+increment[0])])
+    z_cutoff_spec_range = np.array([0.010,(0.040+increment[0])])
     # define cut-offs for SF & Q
     z_cutoff_spec = np.round(np.arange(z_cutoff_spec_range[0],z_cutoff_spec_range[1],increment[0]),decimals=3)       # create array from [0.01,0.05] in steps of "increment"
     #
