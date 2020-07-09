@@ -84,6 +84,7 @@ for counter in range(len(master_cat)):
 #    return master_cat, mem_spec, field_spec, pos_spec, neg_spec, lost_due_to_buffer_spec
 #
 #
+print('\n\n"spec_membership_selection_file.py"  terminated successfully.\n')
 #
 #
 ###################     PROGRAM END     ###################
