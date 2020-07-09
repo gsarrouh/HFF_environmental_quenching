@@ -49,34 +49,46 @@
 #
 ###################     PROGRAM START     ###################
 #
-## PROJECT TIME_FLAG: START
-## MAY NEED TO EDIT
-## Superior time_flag which measures execution time of the entire project
-project_time_flag = 1     # 0= off;   1=on, time program, not section-by-section by in its entirety. to time individual sections within programs, go to that file and turn on individual time flags by searching "time_flag";
-#
 #
 ## SECTION (0): modules & definitions
 #
 ## MODULES
 #
 import sys
+import time
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 #
+## PROJECT TIME_FLAG: START
+## MAY NEED TO EDIT
+## Superior time_flag which measures execution time of the entire project
+project_time_flag = 1     # 0= off;   1=on, time program, not section-by-section by in its entirety. to time individual sections within programs, go to that file and turn on individual time flags by searching "time_flag";
+#
+## PROJECT TIME_FLAG START
+#
+if project_time_flag == 1:
+    start_time = time.time()
+#
+#
 ## DEFINITIONS
 #
 ## MAY NEED TO EDIT: hard code the cluster membership definition cuts if not running Variational Analysis
-z_cutoff = [0.01,0.03]     # [spec,phot] cutoffs for cluster membership
+z_cutoff = [0.02,0.05]     # [spec,phot] cutoffs for cluster membership
 z_cutoff_field = [0.08,0.15]    # same but for definition of "field" galaxies
 bin_width = 0.2  # of the SMF, in dex
+num_bins_SF_pos_neg = [7.07,9.96,12.3]  # bin edges of the false pos/neg SF histogram
+num_bins_Q_pos_neg = [7.07,10.04,12.3]  # bin edges of the false pos/neg Q histogram
+#
+## MAY NEED TO EDIT: choose the filter in which to determine limiting mass
+limiting_mass_flag = 2             #   1 = F160W;   2 = F814W
 #
 #
-## SECIONT (0.1): FLAGS
+## SECTION (0.1): FLAGS
 ## MAY NEED TO EDIT: the following flags allow you to choose which sections (i.e. which progams) to execute (e.g. for testing purposes, you may want to run "master_data*.py" once to load the data, but not again on subsequent executions of the program for debugging)
 #
 ## ADAM's flag
-adams_flag = 1                     # diagnostic summary table to account for every object given a redshift cut
+adams_flag = 1                     # diagnostic summary table to account for every object, after EACH calculation, given a redshift cut
 #                                  #  0=off;  1=on
 #
 ## PROJECT DIAGNOSTIC FLAG
@@ -84,7 +96,8 @@ project_diagnostic_flag = 2        # 0=off, turn OFF ALL diagnostic flags in all
 #
 #
 ## PROJECT DIAGNOSTIC FLAG
-project_master_variational_flag = 0        # 0=off, don't perform variational analaysis;  1=on, do it. the analysis may also be turned on/off within "master_data*.py"
+project_master_variational_flag = 1        # 0=off, don't perform variational analaysis;  1=on, do it. the analysis may also be turned on/off within "master_data*.py"
+diagnostic_round_flag = 2                  # variational analysis performed in 2 rounds: 1st round (flag==1), try all possible cuts; 2nd round (flag==2), compare the top 6 (3 best SF/Q)
 #
 #
 ##       0=off, skip section;     1=on, execute section
@@ -120,7 +133,9 @@ if section_4_flag == 1:
 #
 #
 if section_1_flag == 1:
-    print('\nBeginning master_data*.py')
+    print('\nBeginning "master_data*.py"')
+    if project_master_variational_flag == 1:
+        print('"master_data*.py" will perform the Variational Analysis, then Exit.')
     exec(open('master_data_7_final.py').read())      #opens and executes the script 
 #
 if project_master_variational_flag == 1:
@@ -132,7 +147,7 @@ if project_master_variational_flag == 1:
 ## Call and execute the "master_zplots*.py" file, to create plots assessing the quality of the data and visualizes galaxy classification (i.e. SF/Q).  Fig. 1: z_phot v z_spec;  Fig. 2: cluster members/field/false pos/false neg;  Fig. 3: UVJ diagram
 #
 if section_2_flag == 1:
-    print('\nBeginning master_zplots*.py')
+    print('\nBeginning "master_zplots*.py"')
     exec(open('master_zplots_2_final.py').read())      #opens and executes the script 
 #
 #
@@ -143,8 +158,12 @@ if section_2_flag == 1:
 #
 #
 if section_3_flag == 1:
-    print('\nBeginning data_mass_completeness*.py')
-    exec(open('data_mass_completeness_5.py').read())      #opens and executes the script 
+    print('\nBeginning "data_mass_completeness*.py"')
+    #
+    if limiting_mass_flag == 1:
+        exec(open('data_mass_completeness_F160W.py').read())      #opens and executes the script 
+    elif limiting_mass_flag == 2:
+        exec(open('data_mass_completeness_F814W.py').read())      #opens and executes the script
 #
 #
 #
@@ -153,7 +172,7 @@ if section_3_flag == 1:
 #
 #
 if section_4_flag == 1:
-    print('\nBeginning master_smfz*.py')
+    print('\nBeginning "master_smfz*.py"')
     exec(open('master_smfz_8_final.py').read())      #opens and executes the script 
 #
 #
