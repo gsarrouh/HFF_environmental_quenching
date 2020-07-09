@@ -23,7 +23,7 @@
 ## 0: no data (no photometry or spectroscopy)
 ## 1: spectroscopy & photometry
 ## 2: photometry only 
-## 3: spectroscopy only  (there's just 3 in macs0717) 
+## 3: spectroscopy only  
 ## 4: star
 #PHOT 
 ## FILTER 3 - 'type': :   identifies type of data each object has
@@ -108,6 +108,12 @@ import pandas as pd
 ## superior time_flag which supercedes all others and times the entire program
 time_flag = 1     # 0= all timers off;   1=on, time entire program;    2=off, allow individual sections to be timed
 #
+#
+if 'project_time_flag' in locals():
+    pass
+else:
+    project_time_flag = 0
+#
 if time_flag == 1:
     if project_time_flag == 1:
         pass
@@ -140,12 +146,22 @@ minor_diag_flag_4 = 1
 diag_flag_5 = 1             
 diag_flag_6 = 1             
 diag_flag_7 = 1             
+## time flags
+time_flag_1 = 1              # S1: import data
+time_flag_2 = 1              # S2: del_z's & outliers
+time_flag_3 = 1              # S3: classify TYPE (SF/Q)
+time_flag_4 = 1              # S4: Spec. membership selection
+time_flag_5 = 1              # S5: Phot. membership selection
+time_flag_6 = 1              # S6: bCGs
 #
 if 'project_diagnostic_flag' in locals():
     pass
 else:
     project_diagnostic_flag = 2
     project_master_variational_flag = 0
+    z_cutoff = [0.01,0.03]     # [spec,phot] cutoffs for cluster membership
+    z_cutoff_field = [0.08,0.15] 
+    limiting_mass_flag = 2
 #
 if 'adams_flag' in locals():
     pass
@@ -158,10 +174,12 @@ else:
 #
 print('"master_data*.py" Section 1: import data beginning...')
 ## TIME_FLAG_1 START
-time_flag_1 = 1     # track & print time to execute current section
 #
 if time_flag_1 == 1 and time_flag == 2:
-    start_time = time.time()
+    if project_time_flag == 1:
+        pass
+    else:
+        start_time = time.time()
 #  
 ## import catalogues into single table "master_cat"; separate objects for which there is no redshift data (both photo & spec) as "nodata"
 #
@@ -226,12 +244,12 @@ F2744_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_
 F2744_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell2744clu_catalogs/abell2744clu_v3.9.155.rf',format='ascii')
 F2744_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell2744clu_catalogs/abell2744clu_v3.9.161.rf',format='ascii')
 ##aggregate into a single table
-macs0416 = Table([z_macs0416['id'],z_macs0416['z_peak'],z_macs0416['z_spec'],F0416_u['L153'],F0416_v['L155'],F0416_j['L161'],F0416_u['DM'],f_macs0416['lmass'],f_macs0416['lsfr'],f_macs0416['lssfr'],cat_macs0416['flux_radius'],cat_macs0416['star_flag'],cat_macs0416['use_phot'],cat_macs0416['f_F160W'],cat_macs0416['e_F160W'],cat_macs0416['flag_F160W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W'))
-macs1149 = Table([z_macs1149['id'],z_macs1149['z_peak'],z_macs1149['z_spec'],F1149_u['L153'],F1149_v['L155'],F1149_j['L161'],F1149_u['DM'],f_macs1149['lmass'],f_macs1149['lsfr'],f_macs1149['lssfr'],cat_macs1149['flux_radius'],cat_macs1149['star_flag'],cat_macs1149['use_phot'],cat_macs1149['f_F160W'],cat_macs1149['e_F160W'],cat_macs1149['flag_F160W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W'))
-macs0717 = Table([z_macs0717['id'],z_macs0717['z_peak'],z_macs0717['z_spec'],F0717_u['L153'],F0717_v['L155'],F0717_j['L161'],F0717_u['DM'],f_macs0717['lmass'],f_macs0717['lsfr'],f_macs0717['lssfr'],cat_macs0717['flux_radius'],cat_macs0717['star_flag'],cat_macs0717['use_phot'],cat_macs0717['f_F160W'],cat_macs0717['e_F160W'],cat_macs0717['flag_F160W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W'))
-abell370 = Table([z_abell370['id'],z_abell370['z_peak'],z_abell370['z_spec'],F370_u['L153'],F370_v['L155'],F370_j['L161'],F370_u['DM'],f_abell370['lmass'],f_abell370['lsfr'],f_abell370['lssfr'],cat_abell370['flux_radius'],cat_abell370['star_flag'],cat_abell370['use_phot'],cat_abell370['f_F160W'],cat_abell370['e_F160W'],cat_abell370['flag_F160W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W'))
-abell1063 = Table([z_abell1063['id'],z_abell1063['z_peak'],z_abell1063['z_spec'],F1063_u['L153'],F1063_v['L155'],F1063_j['L161'],F1063_u['DM'],f_abell1063['lmass'],f_abell1063['lsfr'],f_abell1063['lssfr'],cat_abell1063['flux_radius'],cat_abell1063['star_flag'],cat_abell1063['use_phot'],cat_abell1063['f_F160W'],cat_abell1063['e_F160W'],cat_abell1063['flag_F160W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W'))
-abell2744 = Table([z_abell2744['id'],z_abell2744['z_peak'],z_abell2744['z_spec'],F2744_u['L153'],F2744_v['L155'],F2744_j['L161'],F2744_u['DM'],f_abell2744['lmass'],f_abell2744['lsfr'],f_abell2744['lssfr'],cat_abell2744['flux_radius'],cat_abell2744['star_flag'],cat_abell2744['use_phot'],cat_abell2744['f_F160W'],cat_abell2744['e_F160W'],cat_abell2744['flag_F160W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W'))
+macs0416 = Table([z_macs0416['id'],z_macs0416['z_peak'],z_macs0416['z_spec'],F0416_u['L153'],F0416_v['L155'],F0416_j['L161'],F0416_u['DM'],f_macs0416['lmass'],f_macs0416['lsfr'],f_macs0416['lssfr'],cat_macs0416['flux_radius'],cat_macs0416['star_flag'],cat_macs0416['use_phot'],cat_macs0416['f_F160W'],cat_macs0416['e_F160W'],cat_macs0416['flag_F160W'],cat_macs0416['f_F814W'],cat_macs0416['flag_F814W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W'))
+macs1149 = Table([z_macs1149['id'],z_macs1149['z_peak'],z_macs1149['z_spec'],F1149_u['L153'],F1149_v['L155'],F1149_j['L161'],F1149_u['DM'],f_macs1149['lmass'],f_macs1149['lsfr'],f_macs1149['lssfr'],cat_macs1149['flux_radius'],cat_macs1149['star_flag'],cat_macs1149['use_phot'],cat_macs1149['f_F160W'],cat_macs1149['e_F160W'],cat_macs1149['flag_F160W'],cat_macs1149['f_F814W'],cat_macs1149['flag_F814W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W'))
+macs0717 = Table([z_macs0717['id'],z_macs0717['z_peak'],z_macs0717['z_spec'],F0717_u['L153'],F0717_v['L155'],F0717_j['L161'],F0717_u['DM'],f_macs0717['lmass'],f_macs0717['lsfr'],f_macs0717['lssfr'],cat_macs0717['flux_radius'],cat_macs0717['star_flag'],cat_macs0717['use_phot'],cat_macs0717['f_F160W'],cat_macs0717['e_F160W'],cat_macs0717['flag_F160W'],cat_macs0717['f_F814W'],cat_macs0717['flag_F814W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W'))
+abell370 = Table([z_abell370['id'],z_abell370['z_peak'],z_abell370['z_spec'],F370_u['L153'],F370_v['L155'],F370_j['L161'],F370_u['DM'],f_abell370['lmass'],f_abell370['lsfr'],f_abell370['lssfr'],cat_abell370['flux_radius'],cat_abell370['star_flag'],cat_abell370['use_phot'],cat_abell370['f_F160W'],cat_abell370['e_F160W'],cat_abell370['flag_F160W'],cat_abell370['f_F814W'],cat_abell370['flag_F814W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W'))
+abell1063 = Table([z_abell1063['id'],z_abell1063['z_peak'],z_abell1063['z_spec'],F1063_u['L153'],F1063_v['L155'],F1063_j['L161'],F1063_u['DM'],f_abell1063['lmass'],f_abell1063['lsfr'],f_abell1063['lssfr'],cat_abell1063['flux_radius'],cat_abell1063['star_flag'],cat_abell1063['use_phot'],cat_abell1063['f_F160W'],cat_abell1063['e_F160W'],cat_abell1063['flag_F160W'],cat_abell1063['f_F814W'],cat_abell1063['flag_F814W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W'))
+abell2744 = Table([z_abell2744['id'],z_abell2744['z_peak'],z_abell2744['z_spec'],F2744_u['L153'],F2744_v['L155'],F2744_j['L161'],F2744_u['DM'],f_abell2744['lmass'],f_abell2744['lsfr'],f_abell2744['lssfr'],cat_abell2744['flux_radius'],cat_abell2744['star_flag'],cat_abell2744['use_phot'],cat_abell2744['f_F160W'],cat_abell2744['e_F160W'],cat_abell2744['flag_F160W'],cat_abell2744['f_F814W'],cat_abell2744['flag_F814W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W'))
 #
 #
 ## NOTE: cat_*['flag_F160W'] identifies BCGs IN EACH FILTER. ***** CONFIRM w/ AM ***** that I'm using the right filter; BCGs are identified as ['flag_F160W']==4, see Shipley et al 2018. Section 3.9
@@ -435,7 +453,10 @@ print('"master_data*.py" Section 1 complete.\n')
 ## TIME_FLAG_1 END
 #
 if time_flag_1 == 1 and time_flag == 2:
-    print("'master_data*.py' Section 1 took: %s seconds.\n\n" % (time.time() - start_time))
+    if project_time_flag == 1:
+        pass
+    else:
+        print("'master_data*.py' Section 1 took: %s seconds.\n\n" % (time.time() - start_time))
 #
 #
 #
@@ -446,10 +467,13 @@ if time_flag_1 == 1 and time_flag == 2:
 print("\n'master_data*.py' Section 2: calculating del_z's and identifying outliers...\n")
 #
 ## TIME_FLAG_2 START
-time_flag_2 = 1     # track & print time to execute current section
+#
 #
 if time_flag_2 == 1 and time_flag == 2:
-    start_time = time.time()
+    if project_time_flag == 1:
+        pass
+    else:
+        start_time = time.time()
 #  
 #####Note: the photometric redshift used is 'z_peak' column from data
 #
@@ -544,7 +568,10 @@ if summary_flag_2 == 1 or adams_flag == 1:
 ## TIME_FLAG_2 END
 #
 if time_flag_2 == 1 and time_flag == 2:
-    print('"master_data*.py"Section 2 took: %s seconds.\n\n' % (time.time() - start_time))
+    if project_time_flag == 1:
+        pass
+    else:
+        print('"master_data*.py"Section 2 took: %s seconds.\n\n' % (time.time() - start_time))
 else:
     print('"master_data*.py" Section 2 complete.')
 #  
@@ -559,10 +586,12 @@ else:
 print('\n"master_data*.py" Section 3: classifying galaxy TYPE as star-forming or quiescent...')
 #
 ## TIME_FLAG_3 START
-time_flag_3 = 1     # track & print time to execute current section
 #
 if time_flag_3 == 1 and time_flag == 2:
-    start_time = time.time()
+    if project_time_flag == 1:
+        pass
+    else:
+        start_time = time.time()
 #  
 SF_type = np.array([[0]*6]*2)                         # initialize arrays;  row1=spec;  row2=phot
 Q_type = np.array([[0]*6]*2)
@@ -612,16 +641,18 @@ if summary_flag_3 == 1 or adams_flag == 1:
         type_col = Column([np.sum([phot_only[ii],both[ii]]),(SF_type[1][ii]+SF_type[0][ii]),SF_type[1][ii],SF_type[0][ii],(Q_type[1][ii]+Q_type[0][ii]),Q_type[1][ii],Q_type[0][ii],outliers[ii],np.sum([SF_type[1][ii],SF_type[0][ii],Q_type[1][ii],Q_type[0][ii],outliers[ii]])],name=col_names[ii])
         type_stats.add_column(type_col)  # add columns to table one cluster at a time
     #
-    print('Summary Table 3 - Catalogue by TYPE:')
-    print(type_stats)
-    print('\nNOTE: "Other" is comprised of objects without photometry (i.e. stars, and objects with either bad photometry or both bad photometry and bad spectroscopy).\n')
+    print('\nSummary Table 3 - Catalogue by TYPE: %s'%type_stats)
+    #
 #
 ## TIME_FLAG_3 END
 #
 if time_flag_3 == 1 and time_flag == 2:
-    print('"master_data*.py" Section 3 took: %s seconds.\n\n' % (time.time() - start_time))
+    if project_time_flag == 1:
+        pass
+    else:
+        print('\n"master_data*.py" Section 3 took: %s seconds.\n\n' % (time.time() - start_time))
 else:
-    print('"master_data*.py" Section 3 complete.')
+    print('\n"master_data*.py" Section 3 complete.')
 #
 #
 #
@@ -644,10 +675,12 @@ print('\n"master_data*.py" Section 4: spectroscopic membership cuts and classify
 #
 #
 ## TIME_FLAG_4 START
-time_flag_4 = 1     # 0=off;   1=on;   track & print time to execute current section
 #
 if time_flag_4 == 1 and time_flag == 2:
-    start_time = time.time()
+    if project_time_flag == 1:
+        pass
+    else:
+        start_time = time.time()
 #
 #
 ##  test different redshift cutoffs and print result to output document
@@ -656,13 +689,20 @@ if time_flag_4 == 1 and time_flag == 2:
 space = ' '
 if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1:
     #
+    if limiting_mass_flag == 1:
+        F_filter_W = 'F160W'
+    elif limiting_mass_flag == 2:
+        F_filter_W = 'F814W'
+    #
     print('\n\nDIAG_4: ENTERING redshift cutoff VARIATIONAL DIAGNOSTIC...\n\n')
     ## the following code is part of a diagnostic to test the # of false pos/neg produced by altering the photometric/spectroscopic redshift cutoff. upon completion it will be commented out permenantly.
     #
     ## MAY NEED TO EDIT: "increment" & "*cutoff_range", for both SPEC (immediately below) and PHOT (after the first 'for' loop)
     ## SPEC cuts
     increment = np.array([0.01,0.01])   # [spec,phot]
-    z_cutoff_spec_range = np.array([0.010,(0.040+increment[0])])
+    z_cutoff_spec_range = np.array([0.010,(0.050+increment[0])])
+    #z_cutoff_spec_range = np.array([    ])
+    #
     # define cut-offs for SF & Q
     z_cutoff_spec = np.round(np.arange(z_cutoff_spec_range[0],z_cutoff_spec_range[1],increment[0]),decimals=3)       # create array from [0.01,0.05] in steps of "increment"
     #
@@ -690,15 +730,15 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
     ## create file looping through different values for spec/phot membeship cutoff
     for cutoff_spec in range(len(z_cutoff_spec)):
         #
-        if cutoff_spec == 10:
-            break
         ## print diagnostic progress
-        if ii%5 == 0:
+        if cutoff_spec%1 == 0:
             progress = (cutoff_spec / len(z_cutoff_spec)*100)    # calculate progress through z_cutoff_spec_range
-            print('%s'%ii,'th cut of %s'%len(z_cutoff_spec),' being investigated.\nz_spec cut: %.3f'%z_cutoff_spec[cutoff_spec],'; in range %.3f'%z_cutoff_spec[0],' to %.3f'%z_cutoff_spec[-1],'\nCurrent progress: %.3f'%progress,'%')
+            print('%s'%(cutoff_spec+1),'th cut of %s'%len(z_cutoff_spec),' being investigated.\nz_spec cut: %.3f'%z_cutoff_spec[cutoff_spec],'; in range %.3f'%z_cutoff_spec[0],' to %.3f'%z_cutoff_spec[-1],'\nCurrent progress: %.3f'%progress,'%')
         ## PHOT cuts
         z_cutoff_phot_range = [max(z_cutoff_spec[cutoff_spec],0.03),(0.09+(increment[1]))]  ## MAY NEED TO EDIT phot range
         z_cutoff_phot = np.round(np.arange(z_cutoff_phot_range[0],z_cutoff_phot_range[1],increment[1]),decimals=3) # create array from [0.01,0.05] in steps of increment_phot; replace in loop below with z_cutoff once cutoffs are determined
+        #z_cutoff_phot = np.array([])
+        #
         for cutoff_phot in range(len(z_cutoff_phot)):
             #
             ## define spec & phot cutoffs
@@ -716,7 +756,10 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
             else:
                 pass#print(output_dir, "\nfolder already exists.")
             #
-            #
+            ## PREP: remove old 'member' filter column and add a new one
+            master_cat.remove_column('member')
+            E3 = Column([-99]*len(master_cat), name='member', dtype=np.int8)
+            master_cat.add_columns([E3],[-1]) 
             #
             ########################
             ########################
@@ -742,7 +785,10 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
             #
             ## Call "data_mass_completeness*.py", to determine the limiting mass of each cluster for the redshift cuts you just adopted     #
             #
-            exec(open('data_mass_completeness_5.py').read()) 
+            if limiting_mass_flag == 1:
+                exec(open('data_mass_completeness_F160W.py').read())      #opens and executes the script 
+            elif limiting_mass_flag == 2:
+                exec(open('data_mass_completeness_F814W.py').read())      #opens and executes the script
             #
             #
             ## Now call the "binning" program, "spec_completeness_binning.py", which takes z_cutoff[spec,phot] & limiting_mass as arguments. this file will evaluate different binning options for false pos/neg (above limiting mass of their respective cluster) in order to find the combination of z_cutoff[spec,phot] which yields correction factors clostest to 1 overall
@@ -753,34 +799,103 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
             #
             ## now open the file just created, aggregate all such files into a single table, and sorts them according to metric of merit
             #
-            filename = '/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/z_spec_%.3f'%z_cutoff[0]+'/binning_%.3f'%z_cutoff[0]+'_spec_cutoff_%.3f'%z_cutoff[1]+'_phot_cutoff.txt'
-            df = pd.read_csv(filename, delimiter=',',index_col=None, header=0)
-            df_list.append(df)
-    ## save the list when ordered by z_cutoff
-    df_result = pd.concat(df_list, axis=0, ignore_index=True)
-    df_result = df_result.sort_values(by=['z_spec_cutoff','z_phot_cutoff','M.o.M.'])       
+            if diagnostic_round_flag == 1:
+                filename = '/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/z_spec_%.3f'%z_cutoff[0]+'/binning_%.3f'%z_cutoff[0]+'_spec_cutoff_%.3f'%z_cutoff[1]+'_phot_cutoff.txt'
+                df = pd.read_csv(filename, delimiter=',',index_col=None, header=0)
+                df_list.append(df)
+            elif diagnostic_round_flag == 2:
+                filename = '/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/z_spec_%.3f'%z_cutoff[0]+'/binning_%.3f'%z_cutoff[0]+'_spec_cutoff_%.3f'%z_cutoff[1]+'_phot_cutoff.txt'
+                df = pd.read_csv(filename, delimiter=',',index_col=None, header=0)
+                df = df.sort_values(by=['type','MoM'])
+                df.reset_index(drop=True, inplace=True)
+                ## Now that the binning list is sorted by type, then ranked by Metric of Merit, the lines 1-15 are for Q and 16-30 are for SF (3 binning techniques * 5 different numbers of bins * 2 types (SF/Q). To keep the best binning option for each of (SF/Q), keep the 1st and 16th lines. Save them to a list. 
+                df=df.drop(df.index[16:])        # drop the 17th row through the last
+                df=df.drop(df.index[1:15])       # drop the 2nd row through the 15th
+                df.reset_index(drop=True, inplace=True)
+                df['TOTAL_MoM'][0] = df['MoM'][0] + df['MoM'][1]
+                df['TOTAL_MoM'][1] = df['MoM'][0] + df['MoM'][1]
+                df_list.append(df)
     #
-    ## print the results to a file 
-    filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_results_%s'%increment[0]+'_sorted_by_ZCUT.txt'
-    df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)  
-    #
-    ## save the list when ordered by z_cutoff
-    df_result = pd.concat(df_list, axis=0, ignore_index=True)
-    df_result = df_result.sort_values(by=['M.o.M.'])       
-    #
-    ## print the results to a file 
-    filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_results_%s'%increment[0]+'_sorted_by_VAR.txt'
-    df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
-    #
-    #
-    ## TIME_FLAG END
-    #
-    if time_flag_4 == 1 or time_flag == 2:
-        print('\n"master_data*.py" Section 4 diagnostic complete.\n\nSection 4 took: %s seconds to run variational analysis on spec/phot membership cutoffs.\n\n' % (time.time() - start_time))
-    #
-    print('PROGRAM SHOULD EXIT AFTER PRINTING THIS STATEMENT')
-    sys.exit()
-    print('PROGRAM SHOULD HAVE EXITED BEFORE PRINTING THIS STATEMENT')           
+    ## 
+    if diagnostic_round_flag == 1:
+        print('Successfully completed Variational loop. Sorting data and saving...')
+        ## save the list when ordered by z_cutoff
+        df_result = pd.concat(df_list, axis=0, ignore_index=True)
+        df_result = df_result.sort_values(by=['z_spec_cutoff','z_phot_cutoff','MoM'])       
+        #
+        ## print the results to a file 
+        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_results_%s'%increment[0]+'_sorted_by_ZCUT_%s'%F_filter_W+'.txt'
+        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)  
+        #
+        ## save the list when ordered by Metric of Merit
+        df_result = pd.concat(df_list, axis=0, ignore_index=True)
+        df_result = df_result.sort_values(by=['MoM'])       
+        #
+        ## print the results to a file 
+        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_results_%s'%increment[0]+'_sorted_by_MoM_%s'%F_filter_W+'.txt'
+        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
+        #
+        #
+        ## save the list when ordered by Type, MoM
+        df_result = pd.concat(df_list, axis=0, ignore_index=True)
+        df_result = df_result.sort_values(by=['type','MoM'])       
+        #
+        ## print the results to a file 
+        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_results_%s'%increment[0]+'_sorted_by_TYPE_%s'%F_filter_W+'.txt'
+        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
+        #
+        #
+        #
+        ## TIME_FLAG END
+        #
+        if time_flag_4 == 1 or time_flag == 2:
+            if project_time_flag == 1:
+                pass
+            else:
+                print('\n"master_data*.py" Section 4 diagnostic ROUND 1 complete.\n\nSection 4 took: %s seconds to run variational analysis on spec/phot membership cutoffs.\n\n' % (time.time() - start_time))
+                #
+        print('\n"master_data*.py" Section 4 diagnostic ROUND 1 complete.\n\nPROGRAM SHOULD EXIT AFTER PRINTING THIS STATEMENT')
+        sys.exit()
+        print('PROGRAM SHOULD HAVE EXITED BEFORE PRINTING THIS STATEMENT') 
+        #
+    elif diagnostic_round_flag == 2:
+        ## save the list when ordered by TOTAL MoM
+        df_result = pd.concat(df_list, axis=0, ignore_index=True)
+        df_result = df_result.sort_values(by=['TOTAL_MoM'])       
+        #
+        ## print the results to a file 
+        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_2_%s'%increment[0]+'_sorted_by_TOTAL_MoM_%s'%F_filter_W+'.txt'
+        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
+        #
+        ## save the list when ordered by type, TOTAL MoM
+        df_result = pd.concat(df_list, axis=0, ignore_index=True)
+        df_result = df_result.sort_values(by=['type','TOTAL_MoM'])       
+        #
+        ## print the results to a file 
+        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_2_%s'%increment[0]+'_sorted_by_TYPE_%s'%F_filter_W+'.txt'
+        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
+        #
+        #
+        ## save the list when ordered by z_cutoff
+        df_result = pd.concat(df_list, axis=0, ignore_index=True)
+        df_result = df_result.sort_values(by=['z_spec_cutoff','z_phot_cutoff','TOTAL_MoM'])       
+        #
+        ## print the results to a file 
+        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_2_%s'%increment[0]+'_sorted_by_ZCUT_%s'%F_filter_W+'.txt'
+        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
+        #
+        #
+        ## TIME_FLAG END
+        #
+        if time_flag_4 == 1 or time_flag == 2:
+            if project_time_flag == 1:
+                pass
+            else:
+                print('\n"master_data*.py" Section 4 diagnostic ROUND 2 complete.\n\nSection 4 took: %s seconds to run variational analysis on spec/phot membership cutoffs.\n\n' % (time.time() - start_time))
+                #
+        print('\n"master_data*.py" Section 4 diagnostic ROUND 2 complete.\n\nPROGRAM SHOULD EXIT AFTER PRINTING THIS STATEMENT')
+        sys.exit()
+        print('PROGRAM SHOULD HAVE EXITED BEFORE PRINTING THIS STATEMENT')           
 #
 #
 #
@@ -826,8 +941,8 @@ if summary_flag_4 == 1 or adams_flag == 1:
     #
     print('\nSummary Table 4 - SPEC Subsample\nCatalogue by MEMBER:')
     print(spec_member_stats)
-    print("\nNOTE: LDTB = Lost Due To Buffer b/w member & field (recall: the def'n of 'field' doesn't start where the def'n of 'member' stops. There's a buffer in between them.\n")
-    print('SF total: %s'%np.sum([mem_spec[0],field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0]]),'\nQ total: %s'%np.sum([mem_spec[1],field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1]]),'\nSF total + Q total + Outliers = %s'%np.sum([mem_spec[0],field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0]]),' + %s'%np.sum([mem_spec[1],field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1]]),' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_spec),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(lost_due_to_buffer_spec),np.sum(outliers)]))
+    print("\nNOTE: LDTB = Lost Due To Buffer b/w member & field (recall: the def'n of 'field' doesn't start where the def'n of 'member' stops. There's a buffer in between them).\n")
+    print('SF spec. total: %s'%np.sum([mem_spec[0],field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0]]),'\nQ spec. total: %s'%np.sum([mem_spec[1],field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1]]),'\nSF total + Q total + Outliers = %s'%np.sum([mem_spec[0],field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0]]),' + %s'%np.sum([mem_spec[1],field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1]]),' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_spec),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(lost_due_to_buffer_spec),np.sum(outliers)]))
     #####
 #
 #                       
@@ -835,7 +950,10 @@ if summary_flag_4 == 1 or adams_flag == 1:
 ## TIME_FLAG_4 END
 #
 if time_flag_4 == 1 and time_flag == 2:
-    print('"master_data*.py" Section 4 took: %s seconds.\n\n' % (time.time() - start_time))
+    if project_time_flag == 1:
+        pass
+    else:
+        print('"master_data*.py" Section 4 took: %s seconds.\n\n' % (time.time() - start_time))
 else:
     print('"master_data*.py" Section 4 complete.')
 #
@@ -852,10 +970,12 @@ else:
 #
 #
 ## TIME_FLAG_5 START
-time_flag_5 = 1     # track & print time to execute current section
 #
 if time_flag_5 == 1 and time_flag == 2:
-    start_time = time.time()
+    if project_time_flag == 1:
+        pass
+    else:
+        start_time = time.time()
 #
 print('\n"master_data*.py" Section 5: photometric cluster membership selection beginning...')          
 #
@@ -869,7 +989,7 @@ exec(open('phot_membership_selection_file.py').read())
 #
 if summary_flag_5 == 1 or adams_flag == 1:
     ## Summarize initial data stats in table
-    phot_member_names = Column(['PHOT subsample total','SF - Total','SF - member','SF - field','SF - outlier','SF - LDTB','Q - Total','Q - member','Q - field','Q - outlier','Q - LDTB','SUM (less totals)'],name='Property')
+    phot_member_names = Column(['PHOT subsample total','SF - Total','SF - member','SF - field','SF - FAR field','SF - LDTB','Q - Total','Q - member','Q - field','Q - FAR field','Q - LDTB','SUM (less totals)'],name='Property')
     col_names = cluster_names
     # SF table
     phot_member0 = Column([np.sum(phot_only),np.sum([np.sum(mem_phot[0]),np.sum(field_phot[0]),np.sum(lost_due_to_buffer_phot[0]),np.sum(field_outliers[0])]),np.sum(mem_phot[0]),np.sum(field_phot[0]),np.sum(field_outliers[0]),np.sum(lost_due_to_buffer_phot[0]),np.sum([np.sum(mem_phot[1]),np.sum(field_phot[1]),np.sum(lost_due_to_buffer_phot[1]),np.sum(field_outliers[1])]),np.sum(mem_phot[1]),np.sum(field_phot[1]),np.sum(field_outliers[1]),np.sum(lost_due_to_buffer_phot[1]),np.sum([np.sum(mem_phot),np.sum(field_phot),np.sum(field_outliers),np.sum(lost_due_to_buffer_phot)])],name='Total')  # total column
@@ -881,7 +1001,7 @@ if summary_flag_5 == 1 or adams_flag == 1:
     #
     print('\nSummary Table 5 - PHOT-ONLY Subsample\nCatalogue by MEMBER - Star-forming:')
     print(phot_member_stats)
-    print('\nNOTE: LDTB = Lost Due To Buffer b/w member & field.\nTotal Field Outliers (z>0.6 or z<0.25): %s' % np.sum(field_outliers))
+    print('\nNOTE: LDTB = Lost Due To Buffer b/w member & field.\nTotal FAR Field (z>0.6 or z<0.25): %s' % np.sum(field_outliers))
 #####
 #
     mem_phot_fraction = np.array([0]*2,dtype='float32')     # to keep track of membership acceptance fraction
@@ -893,20 +1013,23 @@ if summary_flag_5 == 1 or adams_flag == 1:
     print('PHOT ONLY sub-sample: %s' %n_phot_only)
     print('SF (members + field): %s' % np.sum([mem_phot[0],field_phot[0]]))
     print('Q (members + field): %s' % np.sum([mem_phot[1],field_phot[1]]))
-    print('\nField outliers (z>0.6 or z<0.3): %s' % np.sum(field_outliers))
+    print('Field outliers (z>0.6 or z<0.3): %s' % np.sum(field_outliers))
     print('Lost due to buffer b/w definition of cluster member/field: %s'%np.sum(lost_due_to_buffer_phot))
     print('Stars & outliers: %s' % stars_outliers)
     print('\nSum of the above: %s'%np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])]))
-    print('Difference between # in PHOT-ONLY subsample & sum above: %s'%(n_phot_only - np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])])))
-    print('Other (not in phot only subsample): %s'%other_phot)
+    print('\nDifference between # in PHOT-ONLY subsample & sum above: %s'%(n_phot_only - np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])])))
+    print('Other (not in phot only subsample): %s'%other_phot,'\nSum of above + Other: %s'%(np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]]),other_phot])))
 #####                      
 #
 ## TIME_FLAG_5 END
 #
 if time_flag_5 == 1 and time_flag == 2:
-    print('"master_data*.py" Section 5 took: %s seconds.\n\n' % (time.time() - start_time))
+    if project_time_flag == 1:
+        pass
+    else:
+        print('\n"master_data*.py" Section 5 took: %s seconds.\n\n' % (time.time() - start_time))
 else:
-    print('"master_data*.py" Section 5 complete.')
+    print('\n"master_data*.py" Section 5 complete.')
 #
 ## SECTION (5.2): Overall MEMBERSHIP summary table (spec + phot subsamples)
 #
@@ -927,8 +1050,8 @@ if summary_flag_6 == 1 or adams_flag == 1:
     #
     print('\nSummary Table 6 - FULL Parent Sample\nCatalogue by MEMBER:')
     print(member_stats)
-    print('\nNOTE: Lost Due To Buffer b/w member & field: %s'%LDTB_total,'\nTotal galaxies considered: Members + Buffer + Outliers(spec) = %s'%np.sum([mem_phot,mem_spec,field_phot,field_outliers,field_spec,pos_spec,neg_spec]),' + %s'%LDTB_total,' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_phot),np.sum(mem_spec),np.sum(field_phot),np.sum(field_outliers),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(LDTB_total),np.sum(outliers)]),'\nNOTE: Total (phot) Field Outliers (z>0.6 or z<0.3): %s'%np.sum(field_outliers))
-    print('\nTOTAL MEMBERS SELECTED: phot + spec = %s'%(np.sum([mem_phot[0],mem_phot[1]])),' + %s'%(np.sum([mem_spec[0],mem_spec[1]])),' = %s'%np.sum([mem_phot,mem_spec]))
+    print('\nNOTE: Lost Due To Buffer b/w member & field: %s'%LDTB_total,'\nTotal galaxies considered: Members + Buffer + Outliers(spec) = %s'%np.sum([mem_phot,mem_spec,field_phot,field_outliers,field_spec,pos_spec,neg_spec]),' + %s'%LDTB_total,' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_phot),np.sum(mem_spec),np.sum(field_phot),np.sum(field_outliers),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(LDTB_total),np.sum(outliers)]),'\nNOTE: Total (phot) FAR Field (z>0.6 or z<0.3): %s'%np.sum(field_outliers))
+    print('\nTOTAL MEMBERS SELECTED: phot + spec = %s'%(np.sum([mem_phot[0],mem_phot[1]])),' + %s'%(np.sum([mem_spec[0],mem_spec[1]])),' = %s'%np.sum([mem_phot,mem_spec]),'\nFor redshift cutoffs [spec,phot] = %s'%z_cutoff)
     #
 #
 #
@@ -942,28 +1065,31 @@ print('\n"master_data*.py" Section 6: removing BCGs beginning...')
 time_flag_6 = 0     # track & print time to execute current section
 #
 if time_flag_6 == 1 and time_flag == 2:
-    start_time = time.time()
+    if project_time_flag == 1:
+        pass
+    else:
+        start_time = time.time()
 #
-## BCGs are identified in the "flag_{band}" column, flag_{ban} = 4 for BCGs. I will use band=F160W to identify BCGs
+## BCGs are identified in the "flag_{band}" column, flag_{ban} = 4 for BCGs. I will use band=F160W to identify BCGs. UPDATE: This yielded no results
 #
-
+#
 exec(open('bcg_hist_diagnostic.py').read())            
 #
-BCG_delz_means = np.array([0]*6,dtype='float32')
-small_BCG_delz_means = np.array([0]*6,dtype='float32')
-#
-for BCG in range(len(num_BCG)):
-    BCG_delz_means[BCG] = np.round(np.median(BCG_delz[BCG]),decimals=3)
-    small_BCG_delz_means[BCG] = np.round(np.median(small_BCG_delz[BCG]),decimals=3)             
+#BCG_delz_means = np.array([0]*6,dtype='float32')
+#small_BCG_delz_means = np.array([0]*6,dtype='float32')
+##
+#for BCG in range(len(BCG_delz)):
+#    BCG_delz_means[BCG] = np.round(np.median(BCG_delz[BCG]),decimals=3)
+#    small_BCG_delz_means[BCG] = np.round(np.median(small_BCG_delz[BCG]),decimals=3)             
 #
 if summary_flag_7 == 1 or adams_flag == 1:
     ## Summarize bCG stats in table
-    BCG_names = Column(['Total (>12)','Avg. delz_phot','SF_total','SF_spec','SF_phot','SF_sum','Q_total','Q_spec','Q_phot','Q_sum','SF+Q_sum'],name='Property')
+    BCG_names = Column(['Total (>12)','SF_total','SF_spec','SF_phot','Q_total','Q_spec','Q_phot','SF+Q_sum','Spec Outliers','Bad z_phot','Good z_spec','Other TYPE'],name='Property')
     col_names = cluster_names
-    BCG0 = Column([np.sum(num_BCG),np.round(np.mean(BCG_delz_means),decimals=3),np.sum(BCG_SF),np.sum(BCG_spec[0]),np.sum(BCG_phot[0]),np.sum([BCG_spec[0],BCG_phot[0]]),np.sum(BCG_Q),np.sum(BCG_spec[1]),np.sum(BCG_phot[1]),np.sum([BCG_spec[1],BCG_phot[1]]),np.sum([BCG_spec[0],BCG_phot[0],BCG_spec[1],BCG_phot[1]])],name='Total')  # total column
+    BCG0 = Column([np.sum(num_BCG),np.sum(BCG_SF),np.sum(BCG_spec[0]),np.sum(BCG_phot[0]),np.sum(BCG_Q),np.sum(BCG_spec[1]),np.sum(BCG_phot[1]),np.sum([BCG_spec[0],BCG_phot[0],BCG_spec[1],BCG_phot[1]]),np.sum(BCG_outliers),np.sum(num_bad_z_phot),len(BCG_delz_spec_plot),np.sum(num_other_type_bcg)],name='Total')  # total column
     BCG_stats = Table([BCG_names,BCG0])
     for ii in range(len(num_BCG)):
-        BCG_col = Column([num_BCG[ii],BCG_delz_means[ii],BCG_SF[ii],BCG_spec[0][ii],BCG_phot[0][ii], np.sum([BCG_spec[0][ii],BCG_phot[0][ii]]),BCG_Q[ii],BCG_spec[1][ii],BCG_phot[1][ii], np.sum([BCG_spec[1][ii],BCG_phot[1][ii]]),np.sum([BCG_spec[0][ii],BCG_phot[0][ii],BCG_spec[1][ii],BCG_phot[1][ii]])],name=col_names[ii])               # cluster columns
+        BCG_col = Column([num_BCG[ii],BCG_SF[ii],BCG_spec[0][ii],BCG_phot[0][ii],BCG_Q[ii],BCG_spec[1][ii],BCG_phot[1][ii],np.sum([BCG_spec[0][ii],BCG_phot[0][ii],BCG_spec[1][ii],BCG_phot[1][ii]]),BCG_outliers[ii],num_bad_z_phot[ii],len(BCG_delz_spec[ii]),num_other_type_bcg[ii]],name=col_names[ii])               # cluster columns
         BCG_stats.add_column(BCG_col) 
     #
     #
@@ -971,14 +1097,17 @@ if summary_flag_7 == 1 or adams_flag == 1:
     print('\nSummary Table 7: bCG stats\n%s'%BCG_stats)
     #
     ## print summary of operation
-    print('Total potential (M > %s'%BCG_threshold,') bCGs identified from catalogue: %s'%np.sum(num_BCG),'.\nTotal in Parent sample: %s'%len(good_BCG),'\nBCGs identified by cluster: %s'%num_BCG)
+    print('Total potential (M > %s'%BCG_threshold,') bCGs identified from catalogue: %s'%np.sum(num_BCG),'.\nTotal in Parent sample: %s'%len(good_BCG_phot),'\nBCGs identified by cluster: %s'%num_BCG)
 #
 #
 ## TIME_FLAG_6 END
-time_flag_6 = 1     # track & print time to execute current section
+#
 #
 if time_flag_6 == 1 and time_flag == 2:
-    print('"master_data*.py" Section 6 took: %s seconds.\n\n' % (time.time() - start_time))
+    if project_time_flag == 1:
+        pass
+    else:
+        print('"master_data*.py" Section 6 took: %s seconds.\n\n' % (time.time() - start_time))
 else:
     print('"master_data*.py" Section 6 complete.')
 #
@@ -988,8 +1117,11 @@ else:
 #
 ## TIME_FLAG END
 #
-if time_flag == 1 or project_time_flag == 1:
-    print('Program "master_data*.py" took: %s seconds to run.\n\n' % (time.time() - start_time))
+if time_flag == 1:
+    if project_time_flag == 1:
+        pass
+    else:
+        print('Program "master_data*.py" took: %s seconds to run.\n\n' % (time.time() - start_time))
 #
 #
 #
