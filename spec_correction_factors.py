@@ -43,7 +43,10 @@ def metric(correction_factors):
             metric_of_merit = float('NaN')
             return metric_of_merit
         else:
-            sum_of_sq_deviations = sum_of_sq_deviations + (1 - correction_factors[ii])**2
+            if correction_factors[ii] < 1:
+                sum_of_sq_deviations = sum_of_sq_deviations + (1 - (1/correction_factors[ii]))**2
+            else:
+                sum_of_sq_deviations = sum_of_sq_deviations + (1 - correction_factors[ii])**2
     metric_of_merit = np.round(sum_of_sq_deviations / len(correction_factors),decimals=5)
     return metric_of_merit
 #
