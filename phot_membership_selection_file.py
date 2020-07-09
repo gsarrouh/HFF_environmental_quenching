@@ -81,6 +81,7 @@ for counter in range(len(master_cat)):
 #
 #
 #
+print('\n\n"phot_membership_selection_file.py"  terminated successfully.\n')
 #
 #
 ###################     PROGRAM END     ###################
