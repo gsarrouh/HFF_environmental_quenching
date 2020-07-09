@@ -72,7 +72,10 @@ def midbins(bins):
 time_flag = 1     # track & print time to execute current section
 #
 if time_flag == 1:
-    start_time = time.time()
+    if project_time_flag == 1:
+        pass
+    else:
+        start_time = time.time()
 #
 #
 #
@@ -184,7 +187,7 @@ f = open('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnos
 ## to be used in building strings throughout program
 delim = ','   
 ## write a header for the file, start with hashtag to identify comment
-header1 = 'z_spec_cutoff'+delim+'z_phot_cutoff'+delim+'type'+delim+'[limiting_mass]'+delim+'M.o.M.'+delim+'cluster_members'+delim+'false pos.'+delim+'false neg.'+delim+'binning_method'+delim+'#_of_bins'+delim+'[bin_edges]\n'
+header1 = 'z_spec_cutoff'+delim+'z_phot_cutoff'+delim+'type'+delim+'[limiting_mass]'+delim+'MoM'+delim+'TOTAL_MoM'+delim+'cluster_members'+delim+'false pos.'+delim+'false neg.'+delim+'binning_method'+delim+'#_of_bins'+delim+'[bin_edges]\n'
 #
 f.write(header1)
 #
@@ -239,6 +242,11 @@ for number in range(len(num_bins_to_try)):
         Q_var = float('NaN')
     else:
         Q_var = Q_metric
+    if np.sum([np.isnan(SF_var),np.isnan(Q_var)]) == 0:
+        tot_var = SF_var + Q_var
+    else:
+        tot_var = float('NaN')
+    #
     if diag_flag == 1:
         print('#bins: %s'%num_bins_to_try[number],'; method: %s'%method,'; spec cut: %s'%z_cutoff[0],'; phot cut: %s'%z_cutoff[1])
         print('SF metric: %s'%SF_var,';  Q metric: %s'%Q_var)
@@ -249,8 +257,8 @@ for number in range(len(num_bins_to_try)):
     #
     #
     ## SECIONT (6): prepare what to WRITE to file - (this is copied&pasted from below for formatting consistency)
-    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
-    bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
+    bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
     writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
     f.write(writer)
     #
@@ -329,13 +337,15 @@ for m in range(len(method_designations)):
             exec(open('spec_asymmetric_binning_metric.py').read())
             #
             #
-            #
-            #
+            if np.sum([np.isnan(SF_var),np.isnan(Q_var)]) == 0:
+                tot_var = SF_var + Q_var
+            else:
+                tot_var = float('NaN')
             #
             #
             ## SECIONT (6): prepare what to WRITE to file
-            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
-            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+' Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
+            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
+            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+' Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
             writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
             f.write(writer)
             #
@@ -485,13 +495,15 @@ for m in range(len(method_designations)):
             exec(open('spec_asymmetric_binning_metric.py').read())
             #
             #
-            #
-            #
+            if np.sum([np.isnan(SF_var),np.isnan(Q_var)]) == 0:
+                tot_var = SF_var + Q_var
+            else:
+                tot_var = float('NaN')
             #
             #
             ## SECIONT (6): prepare what to WRITE to file
-            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%s'%SF_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
-            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%s'%Q_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
+            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
+            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
             writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
             f.write(writer)
             #
@@ -539,7 +551,10 @@ f.close()
 ## TIME_FLAG END
 #
 if time_flag == 1:
-    print('Program "spec_completeness_binning.py" for z_spec < %.3f'%z_cutoff[0],' and z_phot < %.3f'%z_cutoff[1],' took: %s seconds to run.\n\n' % (time.time() - start_time))
+    if project_time_flag == 1:
+        pass
+    else:
+        print('Program "spec_completeness_binning.py" for z_spec < %.3f'%z_cutoff[0],' and z_phot < %.3f'%z_cutoff[1],' took: %s seconds to run.\n\n' % (time.time() - start_time))
 #
 #
 #
@@ -549,7 +564,7 @@ if diag_flag == 1 or project_diagnostic_flag == 1:
     if project_diagnostic_flag == 0:
         pass
     else:    
-        print('\n\n"spec_completeness_binning.py" terminated successfully.')
+        print('\n\n"spec_completeness_binning.py" terminated successfully.\n')
 #
 #                      
 ###### PROGRAM END ######
