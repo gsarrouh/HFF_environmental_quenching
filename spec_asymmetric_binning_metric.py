@@ -109,7 +109,13 @@ else:
                                 SF_ratio[jj] = float('NaN') 
                         #
                         ## compute variance of SF/Q ratios from 1
-                        SF_var = np.sum((1 - SF_ratio)**2) / len(SF_ratio)      # i.e. divide by num_bins_to_try[number]
+                        SF_var_sum = 0
+                        for ii in range(len(SF_ratio)):
+                            if SF_ratio[ii] < 1:
+                                SF_var_sum = SF_var_sum + (1 - (1/SF_ratio[ii]))**2
+                            else:
+                                SF_var_sum = SF_var_sum + (1 - SF_ratio[ii])**2     
+                        SF_var = SF_var_sum / num_bins_to_try[number] # i.e. divide by num_bins_to_try[number]
                         #
                         ## store variance in array for comparison of different values of bin edges
                         SF_var_list.append([SF_var,bin_edge_means_SF[ii],num_bins_to_try[number]])
@@ -278,7 +284,13 @@ else:
                                 Q_ratio[jj] = float('NaN') 
                         #
                         ## compute variance of SF/Q ratios from 1
-                        Q_var = np.sum((1 - Q_ratio)**2) / len(Q_ratio)      # i.e. divide by num_bins_to_try[number]
+                        Q_var_sum = 0
+                        for ii in range(len(Q_ratio)):
+                            if Q_ratio[ii] < 1:
+                                Q_var_sum = Q_var_sum + (1 - (1/Q_ratio[ii]))**2
+                            else:
+                                Q_var_sum = Q_var_sum + (1 - Q_ratio[ii])**2     
+                        Q_var = Q_var_sum / num_bins_to_try[number] # i.e. divide by num_bins_to_try[number]
                         #
                         ## store variance in array for comparison of different values of bin edges
                         Q_var_list.append([Q_var,bin_edge_means_Q[ii],num_bins_to_try[number]])
