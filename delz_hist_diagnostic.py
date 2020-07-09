@@ -10,6 +10,9 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 #
+## PLOT FLAG: 0=off, supresses output of figure;  1=on, enables plotting of figure
+plot_flag = 0
+#
 ## function definitions
 #
 ## define a function to compute the mid-points of the bins from a histogram
@@ -75,50 +78,53 @@ plt.ylabel('# count',fontsize=12)
 plt.title("|${\Delta}$z|$_{phot}$",fontsize=15)
 plt.show()
 #
-## PHOT zoomed in on - < del_z < 0.1
-plt.figure()
-n, bins, patches = plt.hist(x=np.abs(delz_phot_plot),bins=bins_phot2,color='deepskyblue',edgecolor='steelblue',alpha=0.7,rwidth=0.95,log=True)
-plt.grid(axis='y', alpha=0.75)
-plt.xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=12)
-plt.ylabel('# count',fontsize=12)
-plt.title("|${\Delta}$z|$_{phot}$",fontsize=15)
-plt.show()
+#
+if plot_flag == 1:
+    ## PHOT zoomed in on - < del_z < 0.1
+    plt.figure()
+    n, bins, patches = plt.hist(x=np.abs(delz_phot_plot),bins=bins_phot2,color='deepskyblue',edgecolor='steelblue',alpha=0.7,rwidth=0.95,log=False)
+    plt.grid(axis='y', alpha=0.75)
+    plt.xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=12)
+    plt.ylabel('# count',fontsize=12)
+    plt.title("|${\Delta}$z|$_{phot}$",fontsize=15)
+    plt.show()
 
 
 #
 print('# phot: %s'%len(delz_phot_plot),'\n# spec: %s'%len(delz_spec_plot),'\nTotal: %s'%(len(delz_phot_plot)+len(delz_spec_plot)))
 #
-## Visualize by cluster
-#
-nrows=2
-ncols=3
-#
-fig, axs = plt.subplots(nrows,ncols,sharex=True,sharey=True,tight_layout=True)
-fig.subplots_adjust(wspace=0,hspace=0)
-#fig.suptitle('abs(DEL_Z PHOT)',fontsize=12)
-#
-counter = 0
-#
-for jj in range(nrows):
-    for kk in range(ncols):
-        if counter < len(delz_phot):
-        #
-            ax = axs[jj][kk]
+if plot_flag == 1:
+    ## Visualize by cluster
+    #
+    nrows=2
+    ncols=3
+    #
+    fig, axs = plt.subplots(nrows,ncols,sharex=True,sharey=True,tight_layout=True)
+    fig.subplots_adjust(wspace=0,hspace=0)
+    #fig.suptitle('abs(DEL_Z PHOT)',fontsize=12)
+    #
+    counter = 0
+    #
+    for jj in range(nrows):
+        for kk in range(ncols):
+            if counter < len(delz_phot):
             #
-            ax.hist(np.abs(delz_phot[counter]),bins=bins_phot1,color='deepskyblue',edgecolor='steelblue',alpha=0.7)
-            ax.grid(axis='y', alpha=0.75)
-            ax.set_xlim([min(bins_phot1),max(bins_phot1)])
-            ax.text(0.05,700,cluster_names[counter],fontsize=9)
-            counter+=1
-            if jj == 1:      # put xlabels on 1st row
-                ax.set_xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=10)
-            if kk == 0:
-                ax.set_ylabel('# count',fontsize=10)
-#####            
-#            
-#            
-plt.show()
-#
+                ax = axs[jj][kk]
+                #
+                ax.hist(np.abs(delz_phot[counter]),bins=bins_phot1,color='deepskyblue',edgecolor='steelblue',alpha=0.7)
+                ax.grid(axis='y', alpha=0.75)
+                ax.set_xlim([min(bins_phot1),max(bins_phot1)])
+                ax.text(0.05,700,cluster_names[counter],fontsize=9)
+                counter+=1
+                if jj == 1:      # put xlabels on 1st row
+                    ax.set_xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=10)
+                if kk == 0:
+                    ax.set_ylabel('# count',fontsize=10)
+    #####            
+    #            
+    #            
+    plt.show()
+    #
 #
 #
 #
