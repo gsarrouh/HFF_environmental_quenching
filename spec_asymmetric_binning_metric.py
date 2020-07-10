@@ -95,11 +95,12 @@ else:
                     else:
                         bin_edge_means_SF[ii] = bin_edge_SF_start
                     try:     # try making histograms. if it doesn't work because the bin_edge* array isn't monotonically increasing, raise an error and record a variance of 'NaN'
+                        SF_hist, bins_SF = np.histogram(SF_mem, bins=bin_edge_means_SF, range=range2)
                         SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=bin_edge_means_SF, range=range2)
                         SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=bin_edge_means_SF, range=range2)
                         bins_SF = np.round(bins_SF,decimals=3)
                         ## find ratios, set ratio==1 for bins with no false pos or false neg
-                        SF_ratio = np.round((SF_pos_hist/SF_neg_hist),decimals=3)
+                        SF_ratio = np.round(((SF_hist+SF_pos_hist)/(SF_hist+SF_neg_hist)),decimals=3)
                         for jj in range(len(SF_pos_hist)):      # go through each bin 
                             if np.isnan(bins_SF[jj]) == 1:
                                 SF_ratio[jj] = float('NaN')
@@ -166,15 +167,14 @@ else:
 ## SF cont'd, once bin edges set
 #
 # make histograms
+SF_hist, bins_SF = np.histogram(SF_mem, bins=bin_edge_means_SF, range=range2)
 SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=bin_edge_means_SF, range=range2)
 SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=bin_edge_means_SF, range=range2)
 #
 bins_SF = np.round(bins_SF,decimals=3)
 #
-SF_ratio = np.round((SF_pos_hist/SF_neg_hist),decimals=3)
-for jj in range(len(SF_pos_hist)):
-    if SF_pos_hist[jj] == 0 and SF_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
-        SF_ratio[jj] = float('NaN')
+SF_ratio = np.round(((SF_hist + SF_pos_hist)/(SF_hist + SF_neg_hist)),decimals=3)
+#
 #
 ## compute midbins for spec. mass completeness plot (i.e. plot of false pos/false neg ratios)
 SF_ratio_midbins = np.round(midbins(bins_SF),decimals=3)
@@ -270,11 +270,12 @@ else:
                     else:
                         bin_edge_means_Q[ii] = bin_edge_Q_start
                     try:     # try making histograms. if it doesn't work because the bin_edge* array isn't monotonically increasing, raise an error and record a variance of 'NaN'
+                        Q_hist, bins_Q = np.histogram(Q_mem, bins=bin_edge_means_Q, range=range2)
                         Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=bin_edge_means_Q, range=range2)
                         Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=bin_edge_means_Q, range=range2)
                         bins_Q = np.round(bins_Q,decimals=3)
                         ## find ratios, set ratio==1 for bins with no false pos or false neg
-                        Q_ratio = np.round((Q_pos_hist/Q_neg_hist),decimals=3)
+                        Q_ratio = np.round(((Q_hist+Q_pos_hist)/(Q_hist+Q_neg_hist)),decimals=3)
                         for jj in range(len(Q_pos_hist)):      # go through each bin 
                             if np.isnan(bins_Q[jj]) == 1:
                                 Q_ratio[jj] = float('NaN')
@@ -341,15 +342,14 @@ else:
 ## Q cont'd, once bin edges set
 #
 # make histograms
+Q_hist, bins_Q = np.histogram(Q_mem, bins=bin_edge_means_Q, range=range2)
 Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=bin_edge_means_Q, range=range2)
 Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=bin_edge_means_Q, range=range2)
 #
 bins_Q = np.round(bins_Q,decimals=3)
 #
-Q_ratio = np.round((Q_pos_hist/Q_neg_hist),decimals=3)
-for jj in range(len(Q_pos_hist)):
-    if Q_pos_hist[jj] == 0 and Q_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
-        Q_ratio[jj] = float('NaN')
+Q_ratio = np.round(((Q_hist + Q_pos_hist)/(Q_hist + Q_neg_hist)),decimals=3)
+#
 #
 ## compute midbins for spec. mass completeness plot (i.e. plot of false pos/false neg ratios)
 Q_ratio_midbins = np.round(midbins(bins_Q),decimals=3)
