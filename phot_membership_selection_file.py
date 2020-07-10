@@ -12,6 +12,7 @@
 # initialize arrays, format is row_1=SF, row_2=Q
 mem_phot = np.array([[0]*6]*2)    # for tracking phot members/field galaxies, by cluster
 field_phot = np.array([[0]*6]*2)
+far_field_phot = np.array([[0]*6]*2)
 other_phot = 0      # objects not in sub=2 phot only subsample
 n_phot_only = 0     # number of objects in sub=2 subsample
 stars_outliers = 0  # number of objects in sub=0 or sub=3 subsamples
@@ -29,19 +30,18 @@ for counter in range(len(master_cat)):
         elif master_cat[counter]['type'] ==1:       # type=1 identifies SF
             n_SF+=1
             if abs(master_cat[counter]['z_clusterphot']) > z_cutoff_field[1]:     # identify field galaxies
-                if master_cat[counter]['z_peak'] >0.7 or master_cat[counter]['z_peak'] <0.2:
-                    #
-                    #pass            ### EDIT HERE if you want to analyze the field same as well
-                    #
-                    #master_cat[counter]['member'] = 4       # memfield outlier
-                    for ii in range(len(field_outliers[0])):
-                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field outlier galaxies by cluster
-                            field_outliers[0][ii]+=1
-                else:
-                    master_cat[counter]['member'] = 1               #phot SF field sample
+                if master_cat['z_peak'][counter] > z_field_bounds[0] and master_cat['z_peak'][counter] < z_field_bounds[1]:
+                    master_cat['member'][counter] = 1         # member=1 for FIELD SAMPLE
                     for ii in range(len(field_phot[0])):
-                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
                             field_phot[0][ii]+=1
+                else:
+                    master_cat['member'][counter] = 4         # member=4 for FAR FIELD
+                    for ii in range(len(far_field_phot[0])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                            far_field_phot[0][ii]+=1
+                            #
+                #
             elif abs(master_cat[counter]['z_clusterphot']) < z_cutoff[1]:
                 master_cat[counter]['member'] = 0           # member=0 is secure cluster member
                 for ii in range(len(mem_phot[0])):
@@ -54,19 +54,18 @@ for counter in range(len(master_cat)):
         elif master_cat[counter]['type'] ==2:       #Q
             n_Q+=1
             if abs(master_cat[counter]['z_clusterphot']) > z_cutoff_field[1]:     # identify field galaxies
-                if master_cat[counter]['z_peak'] >0.7 or master_cat[counter]['z_peak'] <0.2:
-                   #
-                   #pass   ##   EDIT HERE TO ANALYZE FIELD SAMPLE
-                   #
-                   #master_cat[counter]['member'] = 4       # memfield outlier
-                    for ii in range(len(field_outliers[1])):
-                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field outlier galaxies by cluster
-                            field_outliers[1][ii]+=1
-                else:
-                    master_cat[counter]['member'] = 1               #phot SF field sample
+                if master_cat['z_peak'][counter] > z_field_bounds[0] and master_cat['z_peak'][counter] < z_field_bounds[1]:
+                    master_cat['member'][counter] = 1         # member=1 for FIELD SAMPLE
                     for ii in range(len(field_phot[1])):
-                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
                             field_phot[1][ii]+=1
+                else:
+                    master_cat['member'][counter] = 4         # member=4 for FAR FIELD
+                    for ii in range(len(far_field_phot[1])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                            far_field_phot[1][ii]+=1
+                            #
+                #
             elif abs(master_cat[counter]['z_clusterphot']) < z_cutoff[1]:
                 master_cat[counter]['member'] = 0           # member=0 is secure cluster member
                 for ii in range(len(mem_phot[1])):
