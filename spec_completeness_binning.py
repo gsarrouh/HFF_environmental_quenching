@@ -109,12 +109,16 @@ num_bins = np.linspace(range2[0],range2[1],num_points)
 #
 SF_midbins = midbins(num_bins)                                # define 
 #
+SF_mem = []
 SF_pos = []
 SF_neg = []
+Q_mem = []
 Q_pos = []
 Q_neg = []
+mem_by_cluster = np.array([[0]*6]*2)
 pos_by_cluster = np.array([[0]*6]*2)    #for tracking false pos/neg by cluster; row_1=SF, row_2=Q
 neg_by_cluster = np.array([[0]*6]*2)
+mem_below_lim_mass = np.array([[0]*6]*2)
 objects_below_lim_mass = np.array([[0]*6]*2)    # for tracking objects below the limiting mass of each cluster
 #
 for counter in range(len(master_cat)):
@@ -122,7 +126,12 @@ for counter in range(len(master_cat)):
         if master_cat['cluster'][counter] == (ii+1):           # only look at objects above the limiting mass for each cluster
             if master_cat['lmass'][counter] > limiting_mass[ii]:      
                 if master_cat['type'][counter] == 1:      # type=1 for SF
-                    if master_cat['member'][counter] == 2:     # member=2 for false pos
+                    if master_cat['member'][counter] == 0:     # member=0 for cluster member
+                        SF_mem.append(master_cat['lmass'][counter])
+                        for ii in range(len(mem_by_cluster[0])):
+                            if master_cat['cluster'][counter] == (ii+1):
+                                mem_by_cluster[0][ii]+=1
+                    elif master_cat['member'][counter] == 2:     # member=2 for false pos
                         SF_pos.append(master_cat['lmass'][counter])
                         for ii in range(len(pos_by_cluster[0])):
                             if master_cat['cluster'][counter] == (ii+1):
@@ -133,7 +142,12 @@ for counter in range(len(master_cat)):
                             if master_cat['cluster'][counter] == (ii+1):
                                 neg_by_cluster[0][ii]+=1           # track false neg for SF
                 elif master_cat['type'][counter] == 2:     # type=2 for Q
-                    if master_cat['member'][counter] == 2:     # member=2 for false pos
+                    if master_cat['member'][counter] == 0:     # member=0 for cluster member
+                        Q_mem.append(master_cat['lmass'][counter])
+                        for ii in range(len(mem_by_cluster[1])):
+                            if master_cat['cluster'][counter] == (ii+1):
+                                mem_by_cluster[1][ii]+=1
+                    elif master_cat['member'][counter] == 2:     # member=2 for false pos
                         Q_pos.append(master_cat['lmass'][counter])
                         for ii in range(len(pos_by_cluster[1])):
                             if master_cat['cluster'][counter] == (ii+1):
@@ -144,7 +158,16 @@ for counter in range(len(master_cat)):
                             if master_cat['cluster'][counter] == (ii+1):
                                 neg_by_cluster[1][ii]+=1           # track false neg for Q
             else: 
-                if master_cat['member'][counter] == 2 or master_cat['member'][counter] == 3:
+                if master_cat['member'][counter] == 0:
+                    if master_cat['type'][counter] == 1:           # SF  false pos/neg below limiting mass
+                        for ii in range(len(mem_below_lim_mass[0])):
+                            if master_cat['cluster'][counter] == (ii+1):
+                                mem_below_lim_mass[0][ii]+=1
+                    elif master_cat['type'][counter] == 2:         # Q  false pos/neg below limiting mass
+                        for ii in range(len(mem_below_lim_mass[1])):
+                            if master_cat['cluster'][counter] == (ii+1):
+                                mem_below_lim_mass[1][ii]+=1
+                elif master_cat['member'][counter] == 2 or master_cat['member'][counter] == 3:
                     if master_cat['type'][counter] == 1:           # SF  false pos/neg below limiting mass
                         for ii in range(len(objects_below_lim_mass[0])):
                             if master_cat['cluster'][counter] == (ii+1):
@@ -159,17 +182,17 @@ for counter in range(len(master_cat)):
 #
 if summary_flag_1 == 1 or adams_flag == 1:
     ## Summarize initial data stats in table
-    pos_neg_names = Column(['TOTAL False Pos.','TOTAL False Neg.','SF - False Pos.','SF - False Neg.','SF - LBLM','Q - False Pos.','Q - False Neg.','Q - LBLM','SUM'],name='Property')
+    pos_neg_names = Column(['TOTAL Members','TOTAL False Pos.','TOTAL False Neg.','SF - Members','SF - False Pos.','SF - False Neg.','SF (mem)- LBLM','SF (pos/neg)- LBLM','Q - Members','Q - False Pos.','Q - False Neg.','Q (mem) - LBLM','Q (pos/neg) - LBLM','SUM Member','SUM False Pos./Neg.'],name='Property')
     col_names = cluster_names
     # SF table
-    pos_neg0 = Column([np.sum(pos_spec),np.sum(neg_spec),np.sum(pos_by_cluster[0]),np.sum(neg_by_cluster[0]),np.sum(objects_below_lim_mass[0]),np.sum(pos_by_cluster[1]),np.sum(neg_by_cluster[1]),np.sum(objects_below_lim_mass[1]),np.sum([pos_by_cluster,neg_by_cluster,objects_below_lim_mass])],name='Total')  # total column
+    pos_neg0 = Column([np.sum([mem_phot,mem_spec]),np.sum(pos_spec),np.sum(neg_spec),np.sum(mem_by_cluster[0]),np.sum(pos_by_cluster[0]),np.sum(neg_by_cluster[0]),np.sum(mem_below_lim_mass[0]),np.sum(objects_below_lim_mass[0]),np.sum(mem_by_cluster[1]),np.sum(pos_by_cluster[1]),np.sum(neg_by_cluster[1]),np.sum(mem_below_lim_mass[1]),np.sum(objects_below_lim_mass[1]),np.sum([mem_by_cluster,mem_below_lim_mass]),np.sum([pos_by_cluster,neg_by_cluster,objects_below_lim_mass])],name='Total')  # total column
     pos_neg_stats = Table([pos_neg_names,pos_neg0])
     for ii in range(len(mem_spec[0])):
-        col = Column([np.sum([pos_spec[0][ii],pos_spec[1][ii]]),np.sum([neg_spec[0][ii],neg_spec[1][ii]]),pos_by_cluster[0][ii],neg_by_cluster[0][ii],objects_below_lim_mass[0][ii],pos_by_cluster[1][ii],neg_by_cluster[1][ii],objects_below_lim_mass[1][ii],np.sum([pos_by_cluster[0][ii],neg_by_cluster[0][ii],objects_below_lim_mass[0][ii],pos_by_cluster[1][ii],neg_by_cluster[1][ii],objects_below_lim_mass[1][ii]])],name=col_names[ii])
+        col = Column([np.sum([mem_phot[0][ii],mem_spec[0][ii],mem_phot[1][ii],mem_spec[1][ii]]),np.sum([pos_spec[0][ii],pos_spec[1][ii]]),np.sum([neg_spec[0][ii],neg_spec[1][ii]]),mem_by_cluster[0][ii],pos_by_cluster[0][ii],neg_by_cluster[0][ii],mem_below_lim_mass[0][ii],objects_below_lim_mass[0][ii],mem_by_cluster[1][ii],pos_by_cluster[1][ii],neg_by_cluster[1][ii],mem_below_lim_mass[1][ii],objects_below_lim_mass[1][ii],np.sum([mem_by_cluster[0][ii],mem_by_cluster[1][ii],mem_below_lim_mass[0][ii],mem_below_lim_mass[1][ii]]),np.sum([pos_by_cluster[0][ii],neg_by_cluster[0][ii],objects_below_lim_mass[0][ii],pos_by_cluster[1][ii],neg_by_cluster[1][ii],objects_below_lim_mass[1][ii]])],name=col_names[ii])
         pos_neg_stats.add_column(col)  # add columns to table one cluster at a time
     #
     print('\nSummary Table: False Pos./Neg.\n%s'%pos_neg_stats)
-    print('NOTE: TOTALs reported in first two rows are from Summary Table 4 in "master_data*.py".\nNOTE: LBLM = galaxies Lost Below Limiting Mass for their cluster.\n')
+    print('NOTE: TOTALs reported in first three rows are from Summary Tables 4/6 in "master_data*.py".\nNOTE: LBLM = galaxies Lost Below Limiting Mass for their cluster.\n')
 #
 #
 ## sort false pos/neg lists in ascending order
@@ -198,7 +221,7 @@ f.write(header1)
 ### METHOD 1: bin SF & Q in SYMMETRIC BINS, then compute false pos/neg fractions by mass bin for correction factors. 
 #
 ## number of histogram mass bins to try for spec. completeness correction
-num_bins_to_try = np.arange(2,7,1)   # np.arange([...]) = [array_start,array_end_plus_increment,increment]
+num_bins_to_try = np.arange(3,6,1)   # np.arange([...]) = [array_start,array_end_plus_increment,increment]
 # write a loop that interatively uses a different number of bins in the histrogram, to isolate the largest number for which all bins have at least one entry; NOTE: the lines that stop the loop have been commented out, to investigate the relative fraction of false pos/neg for each different # of bins
 #
 # 
@@ -206,22 +229,20 @@ method = 1
 for number in range(len(num_bins_to_try)):
     #
     # make histograms
+    SF_hist, bins_SF = np.histogram(SF_mem, bins=num_bins_to_try[number], range=range2)
     SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=num_bins_to_try[number], range=range2)
     SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_bins_to_try[number], range=range2)
+    Q_hist, bins_Q = np.histogram(Q_mem, bins=num_bins_to_try[number], range=range2)
     Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=num_bins_to_try[number], range=range2)
     Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_bins_to_try[number], range=range2)
     #
     bins_SF = np.round(bins_SF,decimals=3)
     bins_Q = np.round(bins_Q,decimals=3)
     #
-    SF_ratio = np.round((SF_pos_hist/SF_neg_hist),decimals=3)
-    Q_ratio = np.round((Q_pos_hist/Q_neg_hist),decimals=3)
-    for jj in range(len(SF_pos_hist)):
-        if SF_pos_hist[jj] == 0 and SF_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
-            SF_ratio[jj] = float('NaN')
-    for jj in range(len(Q_pos_hist)):
-        if Q_pos_hist[jj] == 0 and Q_neg_hist[jj] == 0:      # if both lists = 0 for the same bin, that's fine!
-            Q_ratio[jj] = float('NaN')
+    ## compute (member + false pos) / (member + false neg) RATIO
+    SF_ratio = np.round(((SF_hist + SF_pos_hist)/(SF_hist + SF_neg_hist)),decimals=3)
+    Q_ratio = np.round(((Q_hist + Q_pos_hist)/(Q_hist + Q_neg_hist)),decimals=3)
+    #
     # compute midbins for spec. mass completeness plot (i.e. plot of false pos/false neg ratios)
     SF_ratio_midbins = midbins(bins_SF)
     Q_ratio_midbins = midbins(bins_Q)
@@ -266,7 +287,7 @@ for number in range(len(num_bins_to_try)):
 #
 ## ASYMMETRIC BINNING START
 #
-method_designations = [2,3]
+method_designations = [3]
 #
 ##
 for m in range(len(method_designations)):
