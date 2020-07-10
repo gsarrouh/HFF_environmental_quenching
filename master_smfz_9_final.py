@@ -107,6 +107,18 @@ def nested_list_max(list0):
                 max_0 = list0[ii][jj]
     return max_0
 #
+#
+#
+## compute multiplicative limiting mass corrections by mass bin
+## cluster "field"
+def mass_completeness_correction_function(mass_bin_edges,limiting_masses):
+    mass_completeness_correction_factors = np.zeros([(len(mass_bin_edges)-1),1],dtype='float64')
+    for ii in range(len(mass_completeness_correction_factors)):
+        for jj in range(len(limiting_masses)):
+            if limiting_masses[jj] <= mass_bin_edges[ii]:    # count # of clusters complete at each mass bin
+                mass_completeness_correction_factors[ii]+=1
+    mass_completeness_correction_factors = np.transpose(6/mass_completeness_correction_factors) # take recipricol for multiplicative factors
+    return mass_completeness_correction_factors
 # this line is specific to jupyter notebook, and allows for Figure editting in a GUI, instead of inline
 #%matplotlib qt  
 #
@@ -302,13 +314,17 @@ if summary_flag_1 == 1 or adams_flag == 1:
 #
 #
 ## SECTION (1.2): Field sample
-## 
+# 
+## utilize lists for field samples created in "master_data*.py" and "master_parallel*.py"
 #
+##### RECALL THE NAMES OF KEY LISTS:
 #
 ##### use "SF_field_par_list/Q_field_par_list" from "master_parallel*.py"
 #
-##### setup same list for "master_data*.py"
+##### use "SF_field_list/Q_field_list" from "master_data*.py"
 #
+#
+## Procedure:
 ##### correct for limiting mass completeness separately for all 12 frames (6 cluster, 6 parallel)
 #
 ##### normalize all 12 frames by mass to 1, take average
@@ -335,27 +351,53 @@ num_points = int((round((range2[1]-range2[0])/bin_width))+1)       # compute # o
 num_bins = np.linspace(range2[0],range2[1],num_points)
 #
 ## smf histograms for individual clusters
-#
+## cluster
 SF_raw_smf = [[],[],[],[],[],[]]       # initialize list of lists to store histograms of SMFs
 Q_raw_smf = [[],[],[],[],[],[]]
+## field
+SF_field_raw_smf = [[],[],[],[],[],[]]       
+SF_field_par_raw_smf = [[],[],[],[],[],[]]       
+Q_field_raw_smf = [[],[],[],[],[],[]]
+Q_field_par_raw_smf = [[],[],[],[],[],[]]
 #
 for ii in range(len(SF_list)):
+    SF_field_raw, mass_bins = np.histogram(SF_field_list[ii], bins=num_bins,range=range2)
+    SF_field_par_raw, mass_bins = np.histogram(SF_field_par_list[ii], bins=num_bins,range=range2)
+    Q_field_raw, mass_bins = np.histogram(Q_field_list[ii], bins=num_bins,range=range2)
+    Q_field_par_raw, mass_bins = np.histogram(Q_field_par_list[ii], bins=num_bins,range=range2)
     SF_raw, mass_bins = np.histogram(SF_list[ii], bins=num_bins,range=range2)
     Q_raw, mass_bins = np.histogram(Q_list[ii], bins=num_bins,range=range2)
+    ## cluster
     SF_raw_smf[ii].append(SF_raw)
     Q_raw_smf[ii].append(Q_raw)
+    ## field
+    SF_field_raw_smf[ii].append(SF_field_raw)
+    SF_field_par_raw_smf[ii].append(SF_field_par_raw)
+    Q_field_raw_smf[ii].append(Q_field_raw)
+    Q_field_par_raw_smf[ii].append(Q_field_par_raw)
 #
 ## convert lists to arrays so we can do math operations on them
+## cluster
 SF_raw_smf = np.array(SF_raw_smf)
 Q_raw_smf = np.array(Q_raw_smf)
-#
+## field
+SF_field_raw_smf = np.array(SF_field_raw_smf)
+SF_field_par_raw_smf = np.array(SF_field_par_raw_smf)
+Q_field_raw_smf = np.array(Q_field_raw_smf)
+Q_field_par_raw_smf = np.array(Q_field_par_raw_smf)
+## totals
 total_raw_smf = SF_raw_smf + Q_raw_smf
+total_field_raw_smf = SF_field_raw_smf + Q_field_raw_smf
+total_field_par_raw_smf = SF_field_par_raw_smf + Q_field_par_raw_smf
 #
 # Display some data for total, SF, Q: 
-print('\nSection 2: RAW totals')
+print('\nSection 2: RAW totals - Members')
 print('SF: ',str(np.sum(SF_raw_smf)))
 print('Q: ',str(np.sum(Q_raw_smf)))
 print('Total: ',str(np.sum(total_raw_smf)),'\n')
+print('\nRAW totals - Field\nSF field (clu): %s'%np.sum(SF_field_raw_smf),'\nSF field (par): %s'%np.sum(SF_field_par_raw_smf))
+print('Q field (clu): %s'%np.sum(Q_field_raw_smf),'\nQ field (par): %s'%np.sum(Q_field_par_raw_smf))
+print('Total (clu): %s'%np.sum(total_field_raw_smf),'\nTotal (par): %s'%np.sum(total_field_par_raw_smf))
 #
 #
 ## section (2.1): compute MIDBINS
@@ -424,14 +466,32 @@ if (diag_flag_2 == 1 and diag_flag_master == 2) or diag_flag_master == 1:
 ## if we assume all clusters have the same general composition of SF to Q galaxies, i.e. the same relative fraction in each cluster, then if only one cluster is complete, we "scale it up" by a factor of 6 (# of clusters total / # of clusters complete at that mass). if 4 clusters are complete, we scale it up by (6/4) = 1.5. In this way, it's as if each cluster were complete down to the limiting mass of 7.3
 #
 ## the following loop automates the above explanation, making the code adaptable should i decide to change the number of bins in future
+## cluster
+#mass_completeness_correction = np.zeros_like(SF_midbins)
+#for ii in range(len(mass_completeness_correction)):
+#    for jj in range(len(limiting_mass)):
+#        if limiting_mass[jj] <= mass_bins[ii]:    # count # of clusters complete at each mass bin
+#            mass_completeness_correction[ii]+=1
+#mass_completeness_correction = np.transpose(6/mass_completeness_correction)  # the correction factor is: (total # of clusters) / (# of clusters complete at that mass bin); return as a row vector
 #
-mass_completeness_correction = np.zeros_like(SF_midbins)
-for ii in range(len(mass_completeness_correction)):
-    for jj in range(len(limiting_mass)):
-        if limiting_mass[jj] <= mass_bins[ii]:    # count # of clusters complete at each mass bin
-            mass_completeness_correction[ii]+=1
-mass_completeness_correction = np.transpose(6/mass_completeness_correction)  # the correction factor is: (total # of clusters) / (# of clusters complete at that mass bin); return as a row vector
+## field
+## cluster & "cluster field sample" limiting mass corrections (b/c they are from the same fields, have the same completeness limits, so get the same completeness correction factors
+mass_completeness_correction = mass_completeness_correction_function(mass_bins,limiting_mass)   # function is the same as steps taken above, but now in function form
 #
+## Parallel "field sample"
+mass_completeness_correction_par = mass_completeness_correction_function(mass_bins,limiting_mass_par)
+
+
+
+#
+#
+##          I'M HERE!!!
+#
+#
+
+
+
+
 #
 # compute how many objects are added to each mass bin as a result of applying the mass_completeness_correction to the *_raw_smf lists. confirm that (# added to SF) + (# added to Q) = (# added to total)
 SF_mass_completeness_diff = correction_difference(SF_raw_smf,mass_completeness_correction)
@@ -442,7 +502,7 @@ total_mass_completeness_diff = correction_difference(total_raw_smf,mass_complete
 #
 if (diag_flag_3 == 1 and diag_flag_master == 2) or diag_flag_master == 1:
 # Display correction factors
-    print('/nSection 3.1: Mass completeness correction factors by bin: ',str(mass_completeness_correction),'\n')
+    print('/nSection 3.1: Mass completeness correction factors by bin\nCluster: ',str(mass_completeness_correction),'\nParallel field: %s'%mass_completeness_correction_par)
     #
     # Display some data for total, SF, Q: 
     print('Section 3.1: Galaxies added due to MASS COMPLETENESS correction')
