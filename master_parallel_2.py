@@ -145,7 +145,7 @@ else:
 #
 ##SECTION 1: import all data from HFF team, convert flux to luminosity & gather full 
 #
-print('"master_data*.py" Section 1: import data beginning...')
+print('"master_parallel*.py" Section 1: import data beginning...')
 #
 #  
 ## import catalogues into single table "master_cat"; separate objects for which there is no redshift data (both photo & spec) as "nodata"
@@ -197,14 +197,14 @@ F1149_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_
 #macs0717
 F0717_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0717par_catalogs/macs0717par_v3.9.153.rf',format='ascii')
 F0717_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0717par_catalogs/macs0717par_v3.9.155.rf',format='ascii')   
-F0717_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0717paru_catalogs/macs0717par_v3.9.161.rf',format='ascii')
+F0717_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0717par_catalogs/macs0717par_v3.9.161.rf',format='ascii')
 #abell370
 F370_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell370par_catalogs/abell370par_v3.9.153.rf',format='ascii')
 F370_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell370par_catalogs/abell370par_v3.9.155.rf',format='ascii')
 F370_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell370par_catalogs/abell370par_v3.9.161.rf',format='ascii')
 #abell1063
 F1063_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell1063par_catalogs/abell1063par_v3.9.153.rf',format='ascii')
-F1063_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell1063cpar_catalogs/abell1063par_v3.9.155.rf',format='ascii')
+F1063_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell1063par_catalogs/abell1063par_v3.9.155.rf',format='ascii')
 F1063_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell1063par_catalogs/abell1063par_v3.9.161.rf',format='ascii')
 #abell2744
 F2744_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell2744par_catalogs/abell2744par_v3.9.153.rf',format='ascii')
@@ -244,13 +244,13 @@ abell2744.add_column(D6)
 #
 global master_cat
 master_cat_par = Table(np.concatenate((macs0416,macs1149,macs0717,abell370,abell1063,abell2744), axis=0))  #create a master catalogue of all clusters
-cluster_names_par = ['M0416par','M1149par','M0717par','A370par','A1063par','A2744par']
+cluster_names_par = ['M0416','M1149','M0717','A370','A1063','A2744']
 #
 ## add "empty" columns (with value set = 99) for the remaining sieves: sub, type, member for [phot or spec],[SF or Q],[cluster member, field, false pos/neg] respectively
-E1 = Column([-99]*len(master_cat), name='sub', dtype=np.int8)    # create columns
-E2 = Column([-99]*len(master_cat), name='type', dtype=np.int8)
-E3 = Column([-99]*len(master_cat), name='member', dtype=np.int8)
-master_cat.add_columns([E1,E2,E3],[-1,-1,-1])                   # add columns to the end of table
+E1 = Column([-99]*len(master_cat_par), name='sub', dtype=np.int8)    # create columns
+E2 = Column([-99]*len(master_cat_par), name='type', dtype=np.int8)
+E3 = Column([-99]*len(master_cat_par), name='member', dtype=np.int8)
+master_cat_par.add_columns([E1,E2,E3],[-1,-1,-1])                   # add columns to the end of table
 #
 #
 ##
@@ -324,8 +324,8 @@ for counter in range(len(master_cat_par)):
                     else:
                         phot_only_par[(jj)]+=1
                         master_cat_par['sub'][counter] = 2          # APPLY FILTER: sub=2 for objects w/ PHOT ONLY
-    elif master_cat_par['z_spec'][counter] < 0 and master_cat['z_peak'][counter] < 0:  #entries w/ no z estimates at all
-        for jj in range(len(both)):
+    elif master_cat_par['z_spec'][counter] < 0 and master_cat_par['z_peak'][counter] < 0:  #entries w/ no z estimates at all
+        for jj in range(len(both_par)):
             if master_cat_par['cluster'][counter] == (jj+1):      # identify # of NO DATA objects by cluster
                 if master_cat_par['star_flag'][counter] == 1:
                     master_cat_par['sub'][counter] = 4          # APPLY FILTER: sub=4 for STARS
@@ -334,11 +334,11 @@ for counter in range(len(master_cat_par)):
                     no_data_par[(jj)]+=1
                     master_cat_par['sub'][counter] = 0          # APPLY FILTER: sub=0 for objects w/ NEITHER SPEC NOR PHOT
     if master_cat_par['use_phot'][counter] == 1:
-        for jj in range(len(both)):
+        for jj in range(len(both_par)):
             if master_cat_par['cluster'][counter] == (jj+1):
                 use_phot_par[0][jj]+=1
     else: 
-        for jj in range(len(both)):
+        for jj in range(len(both_par)):
             if master_cat_par['cluster'][counter] == (jj+1):
                 use_phot_par[1][jj]+=1
 #
@@ -351,12 +351,12 @@ if summary_flag_1 == 1 or adams_flag == 1:
         col_names = cluster_names_par
         sub_par0 = Column([np.sum([phot_only_par,both_par]),np.sum([np.sum(both_par),np.sum(phot_only_par),np.sum(spec_only_par),np.sum(no_data_par),np.sum(stars_sub_par)]),np.sum(both_par),np.sum(phot_only_par),np.sum(spec_only_par),np.sum(no_data_par),np.sum(stars_sub_par),np.sum([both_par,phot_only_par,spec_only_par,no_data_par,stars_sub_par])],name='Total')  # total column
         sub_par_stats = Table([sub_par_names,sub_par0])
-        for ii in range(len(spec_only)):
+        for ii in range(len(spec_only_par)):
             sub_par_col = Column([np.sum([phot_only_par[ii],both_par[ii]]),np.sum([both_par[ii],phot_only_par[ii],spec_only_par[ii],no_data_par[ii],stars_sub_par[ii]]),both_par[ii],phot_only_par[ii],spec_only_par[ii],no_data_par[ii],stars_sub_par[ii],np.sum([both_par[ii],phot_only_par[ii],spec_only_par[ii],no_data_par[ii],stars_sub_par[ii]])],name=col_names[ii])  # add columns to table one cluster at a time
             sub_par_stats.add_column(sub_par_col)
         #
         print('\nSummary Table 1 - Catalogue by SUB-type (PAR):')
-        print(sub_stats)
+        print(sub_par_stats)
         print('\nOther skipped objects: %s'%other_par,'\nNOTE: "use_phot==1": %s'%np.sum(use_phot_par[0]),';  "use_phot==0": %s'%np.sum(use_phot_par[1]))
         print('NOTE: phot only + (spec+phot) samples are the FULL PHOT (Parent) sample w/: %s'%np.sum(phot_only_par+both_par),'\nNOTE: Difference b/w Parent sample & "use_phot==1": %s'%np.abs((np.sum(phot_only_par+both_par)-np.sum(use_phot_par[0]))))
 #
@@ -369,7 +369,7 @@ empty_v = Column([99]*len(master_cat_par), name='L_v', dtype=np.float64)
 empty_j = Column([99]*len(master_cat_par), name='L_j', dtype=np.float64)
 empty_uv = Column([99]*len(master_cat_par), name='uv', dtype=np.float64)
 empty_vj = Column([99]*len(master_cat_par), name='vj', dtype=np.float64)
-master_cat.add_columns([empty_u,empty_v,empty_j,empty_uv,empty_vj])
+master_cat_par.add_columns([empty_u,empty_v,empty_j,empty_uv,empty_vj])
 #
 ## convert flux to magnitude (erroneously labelled as luminosity, e.g. L_u for magnitude in UV), get color indices U-V, V-J, add to table.
 ## the number of objects this calculation is performed on should be equal to the number of (phot_only + (phot+spec)) objects identified above
@@ -413,7 +413,7 @@ if summary_flag_2 == 1 or adams_flag == 1:
             UVJ_par_col = Column([np.sum([phot_only_par[ii],both_par[ii]]),good_objects_par[ii],skipped_UVJ_par[ii],objects_99_par[ii],np.sum([good_objects_par[ii],skipped_UVJ_par[ii],objects_99_par[ii]])],name=col_names[ii])  # add columns to table one cluster at a time
             UVJ_par_stats.add_column(UVJ_par_col)
         #####
-        print('\nUVJ and excesses calculation (identified w/ "use_phot==1"): \n%s'%UVJ_stats,'\n\nNOTE: "objects w/o phot" are those w/ "use_flag" == 1 that have been classified as no good data/bad phot.\nNote: "use_phot" = 1: %s'%np.sum(use_phot[0]),'; "use_phot" = 0: %s'%np.sum(use_phot[1]))
+        print('\nUVJ and excesses calculation (identified w/ "use_phot==1"): \n%s'%UVJ_par_stats,'\n\nNOTE: "objects w/o phot" are those w/ "use_flag" == 1 that have been classified as no good data/bad phot.\nNote: "use_phot" = 1: %s'%np.sum(use_phot_par[0]),'; "use_phot" = 0: %s'%np.sum(use_phot_par[1]))
 #########
 #
 print('"master_parallel*.py" Section 1 complete.\n')
@@ -435,19 +435,19 @@ master_cat_par.add_column(Column([-99]*len(master_cat_par),name='z_clusterspec',
 master_cat_par.add_column(Column([-99]*len(master_cat_par),name='z_clusterphot', dtype=np.float64))   # del_z = (z_phot - z_cl) / (1 + z_phot)
 #
 # store cluster redshifts; obtained from https://archive.stsci.edu/prepds/frontier/
-#z_cluster = [0.396,0.543,0.545,0.375,0.348,0.308]
+z_cluster = [0.396,0.543,0.545,0.375,0.348,0.308]
 # cluster_names = ['M0416','M1149','M0717','A370','A1063','A2744']
 #
 ## calucalte del_z, z_clusterspec, z_clusterphot for outlier cut (defined above); these will be used to make cuts (member, field, false pos/neg) to spec sample, from which we will use relative fractions by mass to correct the photometric sample for completeness.
 #
 #
-spec_subsample = np.array([0]*6)   # to track objects w/ BOTH (spec + phot), by cluster
-phot_subsample = np.array([0]*6)   # to track objects w/ ONLY PHOT
-skipped_delz = np.array([0]*6)     # to track all other objects
+spec_subsample_par = np.array([0]*6)   # to track objects w/ BOTH (spec + phot), by cluster
+phot_subsample_par = np.array([0]*6)   # to track objects w/ ONLY PHOT
+skipped_delz_par = np.array([0]*6)     # to track all other objects
 #
-for counter in range(len(master_cat)):
-    if master_cat['sub'][counter] == 1:   # sub=1 identifies spec&phot subsample
-        master_cat['del_z'][counter] = ((master_cat['z_peak'][counter] - master_cat['z_spec'][counter]) / (1 + master_cat['z_spec'][counter]))
+for counter in range(len(master_cat_par)):
+    if master_cat_par['sub'][counter] == 1:   # sub=1 identifies spec&phot subsample
+        master_cat_par['del_z'][counter] = ((master_cat_par['z_peak'][counter] - master_cat_par['z_spec'][counter]) / (1 + master_cat_par['z_spec'][counter]))
         #for ii in range(len(z_cluster)):
         #    if master_cat['cluster'][counter] == (ii+1):
         #        spec_subsample[ii]+=1
@@ -461,7 +461,7 @@ for counter in range(len(master_cat)):
     else:
         for ii in range(len(z_cluster)):
             if master_cat_par['cluster'][counter] == (ii+1):
-                skipped_delz[ii]+=1
+                skipped_delz_par[ii]+=1
                 #
             #####
         #####
@@ -496,11 +496,11 @@ if summary_flag_2 == 1 or adams_flag == 1:
     #
     #####
     print('\nSummary Table 2: delz calculation (PAR): \n')
-    print('\nNOTE: Total good object: %s'%len(sum_delz_par))
+    print('\nNOTE: Total good objects: %s'%len(sum_delz_par))
     ###
     delz_median_par = np.median(sum_delz_par)
     delz_scatter_par = np.std(sum_delz_par)
-    print('\nOUTLIERS total (in spec subsample): %s' % np.sum(outliers_par),'\nOutlier fraction: %s' % (np.sum(outliers)/np.sum(both)))
+    print('\nOUTLIERS total (in spec subsample): %s' % np.sum(outliers_par),'\nOutlier fraction: %s' % (np.sum(outliers_par)/np.sum(both_par)))
     print('|del_z| median: %s'%delz_median_par)
     print('|del_z| scatter: %s\n'%delz_scatter_par)
     print('NOTE: the new "use-able" number for the spec subsample is: %s'%(np.sum(both_par)-np.sum(outliers_par)))
@@ -549,7 +549,7 @@ for counter in range(len(master_cat_par)):
                         else:
                             SF_type_par[1][ii]+=1    
     else:
-        for ii in range(len(lost_type)):
+        for ii in range(len(lost_type_par)):
             if master_cat_par['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
                 lost_type_par[ii]+=1      # objects lost due to spec only (sub=3),no data (sub=0), and possibly outliers (type=3) 
 #        
@@ -578,19 +578,41 @@ print('\n"master_parallel*.py" Section 3 complete.')
 #
 ## SECTION (4) : apply MEMBER FILTER: 'member=0' identifies our field sample for the SMF
 #
-## isolate all galaxies (SF & Q) in the redshift range 0.3 < z < 0.55, for the field sample of the SMF
-for counter in range(len(master_cat_par)):
-    if master_cat_par['z_peak'][counter] < 0.55 and master_cat_par['z_peak'][counter] > 0.3:
-        master_cat_par['member'][counter] = 0
-    elif master_cat_par['z_peak'][counter] > 0.55 or master_cat_par['z_peak'][counter] < 0.3:
-        master_cat_par['member'][counter] = 1
+## compute redshift range of galaxies in cluster sample
+lower_bound = (min(z_cluster) - z_cutoff[1]) / (1 + z_cutoff[1])
+upper_bound = (max(z_cluster) + z_cutoff[1]) / (1 - z_cutoff[1])
+z_field_bounds = [lower_bound, upper_bound]
+#
+count_field_sample = np.array([[0]*6]*2)      # row1=SF;  row2=Q, by cluster
+count_not_in_field_sample = np.array([[0]*6])
+other_type_par = np.array([0]*6)
+#
+SF_field_par_list = [ [], [], [], [], [], [] ]                   # THESE LISTS WILL STORE THE SMF FIELD SAMPLE MASSES
+Q_field_par_list = [ [], [], [], [], [], [] ]
 #
 ## isolate all galaxies (SF & Q) in the redshift range 0.3 < z < 0.55, for the field sample of the SMF
 for counter in range(len(master_cat_par)):
-    if master_cat_par['z_peak'][counter] < 0.55 and master_cat_par['z_peak'][counter] > 0.3:
-        master_cat_par['member'][counter] = 0
-    elif master_cat_par['z_peak'][counter] > 0.55 or master_cat_par['z_peak'][counter] < 0.3:
-        master_cat_par['member'][counter] = 1
+    if master_cat_par['z_peak'][counter] < z_field_bounds[1] and master_cat_par['z_peak'][counter] > z_field_bounds[0]:
+        master_cat_par['member'][counter] = 0                                   # member=0: preliminary member of FIELD SAMPLE
+        for cluster in range(len(count_field_sample[0])):
+            if master_cat_par['cluster'][counter] == (cluster+1):                    # by cluster
+                if master_cat_par['type'][counter] == 1:                        # SF
+                    SF_field_par_list[cluster].append(master_cat_par['lmass'][counter])
+                    count_field_sample[0][cluster]+=1
+                elif master_cat_par['type'][counter] == 2:                      # Q
+                    Q_field_par_list[cluster].append(master_cat_par['lmass'][counter])
+                    count_field_sample[1][cluster]+=1
+                else:
+                    other_type_par[cluster]+=1
+                #####
+        ########
+    ####
+#####
+    elif master_cat_par['z_peak'][counter] > z_field_bounds[1] or master_cat_par['z_peak'][counter] < z_field_bounds[0]:
+        master_cat_par['member'][counter] = 1                                   # member=1: redshift outside of field sample
+        for cluster in range(len(count_not_in_field_sample)):
+            if master_cat_par['cluster'][counter] == (ii+1):                    # by cluster
+                count_not_in_field_sample[cluster]+=1
 #
 #
 #
