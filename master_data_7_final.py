@@ -25,7 +25,7 @@
 ## 2: photometry only 
 ## 3: spectroscopy only  
 ## 4: star
-#PHOT 
+## 
 ## FILTER 3 - 'type': :   identifies type of data each object has
 ## 0: star
 ## 1: star-forming (SF)
@@ -48,7 +48,7 @@
 #
 ### PROGRAM START
 #
-### (0)    import modules, define functions; in future aggregate FLAGS to Section (0) as well
+### (0)    import modules, define functions;
 ### (1)    import data into single table, creating KEY TABLE: "master_cat" 
 ### (1.1)  add filter ("sieves") columns, apply SUB-TYPE FILTER in each 
 ###        cluster ["nodata", "phot_only","spec_only","both"], 
@@ -159,9 +159,11 @@ if 'project_diagnostic_flag' in locals():
 else:
     project_diagnostic_flag = 2
     project_master_variational_flag = 0
-    z_cutoff = [0.01,0.03]     # [spec,phot] cutoffs for cluster membership
+    z_cutoff = [0.02,0.06]     # [spec,phot] cutoffs for cluster membership
     z_cutoff_field = [0.08,0.15] 
-    limiting_mass_flag = 2
+    limiting_mass_flag = 1
+    bin_width = 0.4
+    diagnostic_round_flag = 2
 #
 if 'adams_flag' in locals():
     pass
@@ -533,7 +535,7 @@ for counter in range(len(master_cat)):
             for ii in range(len(outliers)):
                 if master_cat['cluster'][counter] == (ii+1):   # keep track of outliers by cluster
                     outliers[ii]+=1
-            sum_delz.append(np.abs(master_cat['del_z'][counter]))    # keep track of all |del_z| measurements for stats computation
+            #sum_delz.append(np.abs(master_cat['del_z'][counter]))    # keep track of all |del_z| measurements for stats computation
         else:
             sum_delz.append(np.abs(master_cat['del_z'][counter]))
         if master_cat['type'][counter] == 3 and master_cat['star_flag'][counter] == 1:                  # overwrite designation for stars
@@ -557,10 +559,10 @@ if summary_flag_2 == 1 or adams_flag == 1:
     print('\nSummary Table 2: delz calculation: \n%s'%delz_stats)
     print('\nNOTE: SUM + skipped objects: %s'%np.sum([spec_subsample,phot_subsample]),' + %s'%np.sum(skipped_delz),' = %s'%np.sum([spec_subsample,phot_subsample,skipped_delz]))
     ###
-    delz_mean = np.mean(sum_delz)
+    delz_median = np.median(sum_delz)
     delz_scatter = np.std(sum_delz)
     print('\nOUTLIERS total (in spec subsample): %s' % np.sum(outliers),'\nOutlier fraction: %s' % (np.sum(outliers)/np.sum(both)))
-    print('|del_z| mean: %s'%delz_mean)
+    print('|del_z| median: %s'%delz_median)
     print('|del_z| scatter: %s\n'%delz_scatter)
     print('NOTE: the new "use-able" number for the spec subsample is: %s'%(np.sum(both)-np.sum(outliers)))
 #
@@ -700,7 +702,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
     ## MAY NEED TO EDIT: "increment" & "*cutoff_range", for both SPEC (immediately below) and PHOT (after the first 'for' loop)
     ## SPEC cuts
     increment = np.array([0.01,0.01])   # [spec,phot]
-    z_cutoff_spec_range = np.array([0.010,(0.050+increment[0])])
+    z_cutoff_spec_range = np.array([0.010,(0.040+increment[0])])
     #z_cutoff_spec_range = np.array([    ])
     #
     # define cut-offs for SF & Q
@@ -808,9 +810,13 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
                 df = pd.read_csv(filename, delimiter=',',index_col=None, header=0)
                 df = df.sort_values(by=['type','MoM'])
                 df.reset_index(drop=True, inplace=True)
-                ## Now that the binning list is sorted by type, then ranked by Metric of Merit, the lines 1-15 are for Q and 16-30 are for SF (3 binning techniques * 5 different numbers of bins * 2 types (SF/Q). To keep the best binning option for each of (SF/Q), keep the 1st and 16th lines. Save them to a list. 
-                df=df.drop(df.index[16:])        # drop the 17th row through the last
-                df=df.drop(df.index[1:15])       # drop the 2nd row through the 15th
+                #
+                ##
+                ## MAY NEED TO EDIT: if you change the (# of bins to try) or (# of binning methods to try), you must adjust the indices to drop below. The list is ranked alphabetically (Q,SF), the 1st half for Q, the 2nf half for SF. Drop all rows except the 1st row for each of SF/Q, and update the comment below to record the settings which you just hard-coded.
+                ##
+                ## Now that the binning list is sorted by type, then ranked by Metric of Merit, the lines 1-6 are for Q and 7-12 are for SF (2 binning techniques * 3 different numbers of bins * 2 types (SF/Q). To keep the best binning option for each of (SF/Q), keep the 1st and 16th lines. Save them to a list. 
+                df=df.drop(df.index[7:])        # drop the 17th row through the last
+                df=df.drop(df.index[1:6])       # drop the 2nd row through the 15th
                 df.reset_index(drop=True, inplace=True)
                 df['TOTAL_MoM'][0] = df['MoM'][0] + df['MoM'][1]
                 df['TOTAL_MoM'][1] = df['MoM'][0] + df['MoM'][1]
@@ -864,7 +870,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
         df_result = df_result.sort_values(by=['TOTAL_MoM'])       
         #
         ## print the results to a file 
-        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_2_%s'%increment[0]+'_sorted_by_TOTAL_MoM_%s'%F_filter_W+'.txt'
+        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_3_%s'%increment[0]+'_sorted_by_TOTAL_MoM_%s'%F_filter_W+'.txt'
         df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
         #
         ## save the list when ordered by type, TOTAL MoM
@@ -872,7 +878,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
         df_result = df_result.sort_values(by=['type','TOTAL_MoM'])       
         #
         ## print the results to a file 
-        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_2_%s'%increment[0]+'_sorted_by_TYPE_%s'%F_filter_W+'.txt'
+        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_3_%s'%increment[0]+'_sorted_by_TYPE_%s'%F_filter_W+'.txt'
         df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
         #
         #
@@ -1001,7 +1007,7 @@ if summary_flag_5 == 1 or adams_flag == 1:
     #
     print('\nSummary Table 5 - PHOT-ONLY Subsample\nCatalogue by MEMBER - Star-forming:')
     print(phot_member_stats)
-    print('\nNOTE: LDTB = Lost Due To Buffer b/w member & field.\nTotal FAR Field (z>0.6 or z<0.25): %s' % np.sum(field_outliers))
+    print('\nNOTE: LDTB = Lost Due To Buffer b/w member & field.\nTotal FAR Field (z>0.7 or z<0.2): %s' % np.sum(field_outliers))
 #####
 #
     mem_phot_fraction = np.array([0]*2,dtype='float32')     # to keep track of membership acceptance fraction
