@@ -1,9 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
 #Created on Fri Jun 26 05:20:20 2020
 #
-#@author: gsarrouh
 #
 ### WHAT THIS PROGRAM DOES:
 ### This script reads in all data for the Hubble Frontier Fields images and prepares data for plotting and analysis. Key information is summarized in the tables: 
@@ -18,10 +14,10 @@
 #
 ### PROGRAM START
 #
-### (0) FLAG: preliminary section to set which plots get created
-### (1) add PLOT_FLAG_1: create plot comparing photometric v specroscopic redshift (Fig. 1)
-### (2) add PLOT_FLAG_2: create "delta-z" plot, scatterplot of member/field/false pos/false neg by type (SF/Q - Fig. 2)
-### (3) add PLOT_FLAG_3: create UVJ diagram per VDB et al. 2013 to segregate between type (SF/Q - i.e. a "colour-colour" plot)
+### Section (0) FLAG: preliminary section to set which plots get created
+### Section (1) add PLOT_FLAG_1: create plot comparing photometric v specroscopic redshift (Fig. 1)
+### Section (2) add PLOT_FLAG_2: create "delta-z" plot, scatterplot of member/field/false pos/false neg by type (SF/Q - Fig. 2)
+### Section (3) add PLOT_FLAG_3: create UVJ diagram per VDB et al. 2013 to segregate between type (SF/Q - i.e. a "colour-colour" plot)
 #
 ### PROGRAM END
 #
@@ -48,8 +44,13 @@ from astropy.table import Table
 from astropy.table import Column
 import time
 #
-#import master_data_7_final.py
-#master_data_7_final.init()
+## definitions
+#
+## define a function to compute the Y-arrays for the bounds defining spectroscopic outliers
+def delz_bound(x):
+    y_upper_bound = 0.15*(1+x) + x
+    y_lower_bound = -0.15*(1+x) + x
+    return y_upper_bound, y_lower_bound
 #
 #
 #
@@ -62,11 +63,11 @@ plot_flag_3 = 1           # Fig.3 - UVJ diagram
 #
 time_flag_1 = 0
 time_flag_2 = 0
-time_flag_3 = 1     # 0=off;   1=on;   track & print time to execute current section
+time_flag_3 = 0     # 0=off;   1=on;   track & print time to execute current section
 #
-diag_flag_1 = 0           #
+diag_flag_1 = 0           # Section 1: z_spec v z_phot - compare spec. subsample to "master_data*.py"
 diag_flag_2 = 0           #
-diag_flag_3 = 1           # Section 3: UVJ diagram
+diag_flag_3 = 0           # Section 3: UVJ diagram
 #
 ## SECTION (1): create plot comparing photometric ('z_peak') v specroscopic redshift ('z_spec') (Fig. 1)
 #
@@ -75,14 +76,14 @@ if plot_flag_1 == 1:
     ## PLOT 1: make z_spec vs z_phot plot
     #
     ## Make figure
-    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig, ax1 = plt.subplots(1,1)
     #fig.suptitle('Horizontally stacked subplots')
     ## SF plot
     ## scatter the points
-    ax1.scatter(SF_members[0],SF_members[1],s=(SF_members[2])*10,c='g', marker='o',alpha=0.4, linewidths = 0, label='Member')
-    ax1.scatter(SF_fields[0],SF_fields[1],s=(SF_fields[2])*10,c='b', marker='o',alpha=0.4, linewidths = 0, label='Field')
+    #ax1.scatter(SF_members[0],SF_members[1],s=(SF_members[2])*10,c='g', marker='o',alpha=0.4, linewidths = 0, label='Member')
+    #ax1.scatter(SF_fields[0],SF_fields[1],s=(SF_fields[2])*10,c='b', marker='o',alpha=0.4, linewidths = 0, label='Field')
     #
-    
+    #
     ## plot spec subsample using [ 'sub'==1 (phot+spec subsample) & 'sub'!=4 (stars) ] as identifier for loop
     mem_scatter = []               # list del_z values for caluclating stats later
     outlier_scatter = []
@@ -90,14 +91,16 @@ if plot_flag_1 == 1:
     Q_scatter = []
     stars = 0             # count total # of outliers
     count_mem = 0               # count the rest
+    count_outlier = 0 
     for counter in range(len(master_cat)):
         if master_cat['sub'][counter] == 1:    # sub=1 for (spec+phot) subsample
             if master_cat['type'][counter] == 3:    # type=3 for outliers
-                outz = zvz.scatter(master_cat['z_spec'][counter],master_cat['z_peak'][counter],c='r', marker='v', linewidths = 0)
+                outz = ax1.scatter(master_cat['z_spec'][counter],master_cat['z_peak'][counter],c='r',marker='v',alpha=0.8,linewidths = 0)
                 outlier_scatter.append(np.abs(master_cat['del_z'][counter]))
+                count_outlier+=1
                 #print('Outlier: %s'%master_cat['type'][counter])
             elif master_cat['type'][counter] !=0 :
-                memz = zvz.scatter(master_cat['z_spec'][counter],master_cat['z_peak'][counter],c='b', marker='^', linewidths = 0)
+                memz = ax1.scatter(master_cat['z_spec'][counter],master_cat['z_peak'][counter],c='b', marker='^',alpha=0.5,linewidths = 0)
                 count_mem+=1
                 if master_cat['type'][counter] == 1:         # type=1 for SF
                     SF_scatter.append(np.abs(master_cat['del_z'][counter]))
@@ -114,10 +117,10 @@ if plot_flag_1 == 1:
     Q_scatter = np.array(Q_scatter)
     mem_scatter = np.array(mem_scatter)
     outlier_scatter = np.array(outlier_scatter)             # convert to array for math operations
-    abs_scatter = np.concatenate([mem_scatter,outlier_scatter])    # aggregate into a single array
-    mean_abs_delz = np.array([np.mean(mem_scatter),np.mean(outlier_scatter),np.mean(abs_scatter)])   # compute mean of |del_z|; [SF, Q, total]
-    std_abs_delz = np.array([np.std(mem_scatter),np.std(outlier_scatter),np.std(abs_scatter)])   # compute std dev of |del_z|; [SF, Q, total]
-    outlier_fraction = len(outlier_scatter) / (len(outlier_scatter)+len(mem_scatter))
+    abs_scatter = mem_scatter
+    mean_abs_delz = np.round(np.array([np.median(mem_scatter),np.mean(outlier_scatter),np.mean(abs_scatter)]),decimals=2)   # compute mean of |del_z|; [SF, Q, total]
+    std_abs_delz = np.round(np.array([np.std(mem_scatter),np.std(outlier_scatter),np.std(abs_scatter)]),decimals=2)   # compute std dev of |del_z|; [SF, Q, total]
+    outlier_fraction = np.round((len(outlier_scatter) / (len(outlier_scatter)+len(mem_scatter)))*100,decimals=2)
     #
     #
     ### MAY NEED TO EDIT ### diag_flag_1
@@ -125,31 +128,36 @@ if plot_flag_1 == 1:
     diag_flag_1 = 1             # 0=off (don't display diagnostic); 1=on (display diagnostic table)
     #
     if diag_flag_1 == 1:
-        print('Data preparation file finds the following\nOUTLIERS total: %s' % np.sum(outliers),'\nOutlier fraction: %s' % (np.sum(outliers)/np.sum(both)),'\n|del_z| mean: %s'%delz_mean,'\n|del_z| scatter: %s\n'%delz_scatter)
-        print('This plotting program found the following\nOUTLIERS total: %s' %len(outlier_scatter),'\nOutlier fraction: %s' %outlier_fraction,'\n|del_z| mean: %s'%mean_abs_delz[2],'\n|del_z| scatter: %s\n'%std_abs_delz[2])
+        print('Data preparation file finds the following\nOUTLIERS total: %s' % np.sum(outliers),'\nOutlier fraction: %s' % (np.sum(outliers)/np.sum(both)),'\n|del_z| median: %s'%delz_median,'\n|del_z| scatter: %s\n'%delz_scatter)
+        print('This plotting program found the following\nOUTLIERS total: %s' %len(outlier_scatter),'\nOutlier fraction: %s' %outlier_fraction,'\n|del_z| median: %s'%mean_abs_delz[0],'\n|del_z| scatter (excluding outliers): %s\n'%std_abs_delz[0])
         #print('FULL MEAN: %s'%np.mean(full_scatter),'\nFULL SCATTER: %s'%np.std(full_scatter))
-        print('DIFFERENCES\nOutlier total: %s'%(np.sum(outliers)-count_outlier),'\nOutlier fraction: %s'%((np.sum(outliers)/np.sum(both))-outlier_fraction),'\n|del_z| mean: %s'%(delz_mean-mean_abs_delz[2]),'\n|del_z| scatter: %s\n'%(delz_scatter-std_abs_delz[2]))
-        print('# of stars: %s'%stars,'\nNon-outlier count: %s'%len(outlier_scatter),'\nNon-outlier count: %s'%count_mem)
+        print('DIFFERENCES\nOutlier total: %s'%(np.sum(outliers)-count_outlier),'\nOutlier fraction: %s'%((np.sum(outliers)/np.sum(both))-outlier_fraction))#,'\n|del_z| mean: %s'%(delz_mean-mean_abs_delz[0]),'\n|del_z| scatter: %s\n'%(delz_scatter-std_abs_delz[0]))
+        print('# of stars: %s'%stars,'\nNon-outlier count: %s'%count_outlier,'\nNon-outlier count: %s'%count_mem)
         print('SF scatter: %s'%np.std(SF_scatter),'\nQ scatter: %s'%np.std(Q_scatter))
-
-              
-              
+    #
+    ## derive the bound which separate outliers in terms of plotting arrays for X and Y
+    x_bound = np.arange(0.0,1.601,0.001)
+    #
+    y_upper_bound, y_lower_bound = delz_bound(x_bound)
+    #
     ## construct a string to plot the outlier fraction & std dev ('scatter')
-    string = 'Mean |$\Delta$z|: %.3f'%mean_abs_delz[2]+'\n$\sigma_{z}$ = %.3f'%std_abs_delz[2]+'\nOutliers: ~%.3f'%outlier_fraction
+    string = 'Median |$\Delta$z|: %.3f'%mean_abs_delz[0]+'\n$\sigma_{z}$ = %.3f'%std_abs_delz[0]+'\nOutliers: ~%.2f'%outlier_fraction+'%'
     ## add text to plot
-    plt.text(0.05,0.7,string)
-    plt.plot([0,2],[0,2],':k', linewidth=1)
-    plt.xlabel("$z_{spec}$")
-    plt.xscale('linear')
-    plt.xlim(0,1)
-    plt.ylabel("$z_{phot}$")
-    plt.yscale('linear')
-    plt.ylim(0,1)
-    plt.title("$z_{spec} vs. z_{phot}$")
-    plt.legend((memz,outz),('spec population','outliers'),scatterpoints=1,loc='upper left', frameon=False)
+    ax1.text(0.15,1.085,string)
+    ax1.plot([0,2],[0,2],'--k', linewidth=1)
+    ax1.plot(x_bound,y_upper_bound,':k', linewidth=1)
+    ax1.plot(x_bound,y_lower_bound,':k', linewidth=1)
+    ax1.set_xlabel("$z_{spec}$")
+    ax1.set_xscale('linear')
+    ax1.set_xlim(0,1.5)
+    ax1.set_ylabel("$z_{phot}$")
+    ax1.set_yscale('linear')
+    ax1.set_ylim(0,1.5)
+    #ax1.set_title("$z_{spec} vs. z_{phot}$")
+    ax1.legend((memz,outz),('Spec. subsample: %i'%count_mem,'Outliers: %i'%count_outlier),scatterpoints=1,loc='upper left', frameon=False)
     #plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = ':')
-    plt.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='on')
-    plt.minorticks_on()
+    ax1.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='on')
+    ax1.minorticks_on()
     plt.show()
     #
 #
@@ -239,13 +247,13 @@ if plot_flag_2 == 1:
     #    
     ## Make figure
     fig, (ax1, ax2) = plt.subplots(1, 2)
-    #fig.suptitle('Horizontally stacked subplots')
+    fig.subplots_adjust(wspace=0,hspace=0)
     ## SF plot
     ## scatter the points
-    ax1.scatter(SF_members[0],SF_members[1],s=(SF_members[2])*10,c='g', marker='o',alpha=0.4, linewidths = 0, label='Member')
-    ax1.scatter(SF_fields[0],SF_fields[1],s=(SF_fields[2])*10,c='b', marker='o',alpha=0.4, linewidths = 0, label='Field')
-    ax1.scatter(SF_poss[0],SF_poss[1],s=(SF_poss[2])*10,c='firebrick', marker='d',alpha=0.4, linewidths = 0, label='False pos.')
-    ax1.scatter(SF_negs[0],SF_negs[1],s=(SF_negs[2])*10,c='darkviolet', marker='d',alpha=0.4, linewidths = 0, label='False neg.')
+    ax1.scatter(SF_members[0],SF_members[1],s=55,c='g', marker='P',alpha=0.4, linewidths = 0, label='Member')
+    ax1.scatter(SF_fields[0],SF_fields[1],s=55,c='b', marker='P',alpha=0.4, linewidths = 0, label='Field')
+    ax1.scatter(SF_poss[0],SF_poss[1],s=55,c='firebrick', marker='X',alpha=0.4, linewidths = 0, label='False pos.')
+    ax1.scatter(SF_negs[0],SF_negs[1],s=55,c='darkviolet', marker='X',alpha=0.4, linewidths = 0, label='False neg.')
     # add z_cutoff limits
     ax1.plot([-0.5,1],[z_cutoff[1],z_cutoff[1]],':k', linewidth=1)  # horizontal cuts (phot)
     ax1.plot([-0.5,1],[-z_cutoff[1],-z_cutoff[1]],':k', linewidth=1)
@@ -254,9 +262,9 @@ if plot_flag_2 == 1:
     # add details
     ax1.set_title('Star-forming')
     ax1.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$')
-    ax1.set_xlim(-0.15,0.15)
+    ax1.set_xlim(-0.25,0.25)
     ax1.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$')
-    ax1.set_ylim(-0.15,0.15)
+    ax1.set_ylim(-0.25,0.25)
     ax1.grid(b=False)
     ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True, labeltop=False,labelbottom=True)
     ax1.minorticks_on()
@@ -264,10 +272,10 @@ if plot_flag_2 == 1:
     #
     ## now do the Q plot
     ## scatter the points
-    ax2.scatter(Q_members[0],Q_members[1],s=(Q_members[2]*10),c='g', marker='+',alpha=0.4, linewidths = 0)
-    ax2.scatter(Q_fields[0],Q_fields[1],s=(Q_fields[2]*10),c='b', marker='+',alpha=0.4, linewidths = 0)
-    ax2.scatter(Q_poss[0],Q_poss[1],s=(Q_poss[2]*10),c='firebrick', marker='x',alpha=0.4, linewidths = 0)
-    ax2.scatter(Q_negs[0],Q_negs[1],s=(Q_negs[2]*10),c='darkviolet', marker='x',alpha=0.4, linewidths = 0)
+    ax2.scatter(Q_members[0],Q_members[1],s=55,c='g', marker='P',alpha=0.4, linewidths = 0)
+    ax2.scatter(Q_fields[0],Q_fields[1],s=55,c='b', marker='P',alpha=0.4, linewidths = 0)
+    ax2.scatter(Q_poss[0],Q_poss[1],s=55,c='firebrick', marker='X',alpha=0.4, linewidths = 0)
+    ax2.scatter(Q_negs[0],Q_negs[1],s=55,c='darkviolet', marker='X',alpha=0.4, linewidths = 0)
     # add z_cutoff limits
     ax2.plot([-0.5,1],[z_cutoff[1],z_cutoff[1]],':k', linewidth=1)  # horizontal cuts (phot)
     ax2.plot([-0.5,1],[-z_cutoff[1],-z_cutoff[1]],':k', linewidth=1)
@@ -276,19 +284,18 @@ if plot_flag_2 == 1:
     # add details
     ax2.set_title('Quiescent')
     ax2.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$')
-    ax2.set_xlim(-0.15,0.15)
+    ax2.set_xlim(-0.25,0.25)
     ax2.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$')
     ax2.yaxis.set_label_position('right')
-    ax2.set_ylim(-0.15,0.15)
+    ax2.set_ylim(-0.25,0.25)
     ax2.grid(b=False)
     ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True, labelleft=False, labeltop=False,labelbottom=True)
     ax2.minorticks_on()                        
     #
-    fig.tight_layout()
-    
-    
-
-    
+    #
+#####    
+#    
+#   
 #
 #
 #
@@ -306,15 +313,19 @@ if plot_flag_3 ==1:
         start_time = time.time()
     #
     #
-    counting_array = np.array([0]*4)         # counts number of galaxies at each condition; diagnostic check
+    counting_array = np.array([0]*5)         # counts number of galaxies at each condition; diagnostic check
     fig, ax = plt.subplots()
     SF_array = [ [], [], [] ]                # stores: [ [(V-J)], [(U-V)], [mass] ]
     Q_array = [ [], [], [] ]    
+    field_array = [ [], [], [] ]
     #
     for counter in range(len(master_cat)):
-        if master_cat['use_phot'][counter] == 1:
-            counting_array[0]+=1                             # objects w/ good phot
-        #if master_cat['member'][counter] == 0:              # only plot preliminary cluster members?
+        if master_cat['member'][counter] == 1:                   # field galaxies
+            counting_array[0]+=1
+            field_array[0].append(master_cat['vj'][counter])
+            field_array[1].append(master_cat['uv'][counter])
+            field_array[2].append(master_cat['lmass'][counter])
+        elif master_cat['member'][counter] == 0:                 # members
             if master_cat['type'][counter] == 1:
                 counting_array[1]+=1                         # count for SF
                 SF_array[0].append(master_cat['vj'][counter])
@@ -327,17 +338,21 @@ if plot_flag_3 ==1:
                 Q_array[2].append(master_cat['lmass'][counter])
             else:
                 counting_array[3] +=1
+        else:
+            counting_array[4] +=1
         #else:
     #
     ## convert lists to arrays
     SF_array = np.array(SF_array)
-    Q_array = np.array(Q_array)    
+    Q_array = np.array(Q_array)
+    field_array = np.array(field_array)
     #
     if diag_flag_3 == 1:                                 # print diagnostic information
-        print('use_phot: %s'%counting_array[0],'\nSF: %s'%counting_array[1],'\nQ: %s'%counting_array[2],'\nOther than SF/Q: %s'%counting_array[3])
+        print('Field: %s'%counting_array[0],'\nSF members: %s'%counting_array[1],'\nQ members: %s'%counting_array[2],'\nOther than SF/Q (members): %s'%counting_array[3],'\nOther than member/field: %s'%counting_array[4])
     #
-    ax.scatter(SF_array[0],SF_array[1],s=(SF_array[2]*1.5),c='b', marker='*', alpha=0.2, linewidths=0)
-    ax.scatter(Q_array[0],Q_array[1],s=(Q_array[2]*1.5),c='r', marker='.', alpha=0.2, linewidths=0)
+    ax.scatter(SF_array[0],SF_array[1],s=(SF_array[2]*1.5),c='b', marker='*', alpha=0.4, linewidths=0)
+    ax.scatter(Q_array[0],Q_array[1],s=(Q_array[2]*1.5),c='r', marker='.', alpha=0.4, linewidths=0)
+    ax.scatter(field_array[0],field_array[1],s=(field_array[2]*1.5),c='gainsboro', marker='s', alpha=0.1, linewidths=0)
     ax.plot([-2,0.8],[1.3,1.3],'-k',[0.8,1.6],[1.3,2],'-k',[1.6,1.6],[2,3],'-k', linewidth=1) #overlay boundary cutoff for SF/Passive
     ax.set_xlabel('$(V-J)_{rest}$',fontsize=20)
     ax.set_xlim(-2,2)
@@ -355,10 +370,10 @@ if plot_flag_3 ==1:
     plt.show()
     #
     #
-    ## TIME_FLAG END
-    #
-    if time_flag_3 == 1 or time_flag == 2:
-        print('\n"master_zplots*.py" Section 3 (UVJ diagram) complete.\n\nIt took: %s seconds produce this figure.\n\n' % (time.time() - start_time))
+## TIME_FLAG END
+#
+if time_flag_3 == 1 or time_flag == 2:
+    print('\n"master_zplots*.py" Section 3 (UVJ diagram) complete.\n\nIt took: %s seconds produce this figure.\n\n' % (time.time() - start_time))
     #
 #
 #
