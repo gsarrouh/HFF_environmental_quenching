@@ -102,8 +102,8 @@ diag_flag_3 = 0           # prints the indices of objects w/ "NaN" mass estimate
 diag_flag_4 = 0           # Count galaxies sorted through at each step of initial 'for' loop
 diag_flag_5 = 0           # AVAILABLE
 #
-plot_flag_1 = 0           # produce Fig.1: mass vs mag for 1 cluster at a time (plots 6 figures total);
-plot_flag_2 = 0           # produce Fig.2: tiled subplot of all 6 clusters zoomed in at limiting mass point (single figure);   
+plot_flag_1 = 1           # produce Fig.1: mass vs mag for 1 cluster at a time (plots 6 figures total);
+plot_flag_2 = 1           # produce Fig.2: tiled subplot of all 6 clusters zoomed in at limiting mass point (single figure);   
 #
 #
 #
@@ -402,7 +402,8 @@ if summary_flag == 1 or adams_flag == 1:
 ## SECTION (2) VISUALIZATION
 #
 ## define range of all histograms to come!
-range2=[(np.floor(min(limiting_mass)*10)/10),12.3]
+max_mass, max_mass_index = max_nested_list(mag_by_cluster_member,1)
+range2=[min(limiting_mass),max_mass[1]]
 #
 ## Now I have lists of corresponding magnitudes and masses for each cluster. make a single plot for the first cluster (as a clear example of the method), then a subplot (w/ 6 plots) all together. add lines to the plot for (A) the limiting magnitude (vertical); and (B) range of masses at that magnitude (horizontal), for clusters w/ many such objects, or circle/point to/identify in some way on the plot the galaxy closest to the limiting magnitude which was chosen as the standard for limiting mass
 #
@@ -514,20 +515,20 @@ if plot_flag_2 == 1:
         #plt.text(21.6,11.5,'$M/L_{max}$: %s'%limiting_mass[cluster],fontsize=10)
     ## label locations
     axs.flat[0].text(26.15,6.05,cluster_names[0],fontsize=12)
-    axs.flat[0].text(26.15,5.75,'$M/L_{max}$: %s'%limiting_mass[0],fontsize=12)
+    axs.flat[0].text(26.15,5.75,'$M/L_{max,F814W}$: %s'%limiting_mass[0],fontsize=12)
     axs.flat[1].text(26.15,6.05,cluster_names[1],fontsize=12)
-    axs.flat[1].text(26.15,5.75,'$M/L_{max}$: %s'%limiting_mass[1],fontsize=12)
+    axs.flat[1].text(26.15,5.75,'$M/L_{max,F814W}$: %s'%limiting_mass[1],fontsize=12)
     axs.flat[2].text(26.15,6.05,cluster_names[2],fontsize=12)
-    axs.flat[2].text(26.15,5.75,'$M/L_{max}$: %s'%limiting_mass[2],fontsize=12)
+    axs.flat[2].text(26.15,5.75,'$M/L_{max,F814W}$: %s'%limiting_mass[2],fontsize=12)
     axs.flat[3].text(26.15,6.05,cluster_names[3],fontsize=12)
-    axs.flat[3].text(26.15,5.75,'$M/L_{max}$: %s'%limiting_mass[3],fontsize=12)
+    axs.flat[3].text(26.15,5.75,'$M/L_{max,F814W}$: %s'%limiting_mass[3],fontsize=12)
     axs.flat[4].text(26.15,6.05,cluster_names[4],fontsize=12)
-    axs.flat[4].text(26.15,5.75,'$M/L_{max}$: %s'%limiting_mass[4],fontsize=12)
+    axs.flat[4].text(26.15,5.75,'$M/L_{max,F814W}$: %s'%limiting_mass[4],fontsize=12)
     axs.flat[5].text(26.15,6.05,cluster_names[5],fontsize=12)
-    axs.flat[5].text(26.15,5.75,'$M/L_{max}$: %s'%limiting_mass[5],fontsize=12)
+    axs.flat[5].text(26.15,5.75,'$M/L_{max,F814W}$: %s'%limiting_mass[5],fontsize=12)
     #axs.clim(0,z_cutoff[1])
     cbar = fig.colorbar(sm, ax=axs[:, 2],location='right')#, vmin=0.0, vmax=z_cutoff[1])
-    cbar.ax.set_title("|${\Delta}$z|$_{phot}$")
+    cbar.ax.set_title("|${\Delta}$z|$_{phot,F814W}$")
     #            
     #            
     plt.show()
