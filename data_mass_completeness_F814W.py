@@ -402,7 +402,15 @@ if summary_flag == 1 or adams_flag == 1:
 ## SECTION (2) VISUALIZATION
 #
 ## define range of all histograms to come!
-max_mass, max_mass_index = max_nested_list(mag_by_cluster_member,1)
+#
+max_mass__array = [ [], [], [], [], [], [] ]
+max_mass_index = np.array([0]*6)
+max_mass = np.array([0]*1)
+#
+for ii in range(len(z_cluster)):
+    max_mass_array[ii], max_mass_index[ii] = max_nested_list(mag_by_cluster_member[ii],1)
+max_mass, max_mass_index = max_nested_list(max_mass_array,1)
+#
 range2=[min(limiting_mass),max_mass[1]]
 #
 ## Now I have lists of corresponding magnitudes and masses for each cluster. make a single plot for the first cluster (as a clear example of the method), then a subplot (w/ 6 plots) all together. add lines to the plot for (A) the limiting magnitude (vertical); and (B) range of masses at that magnitude (horizontal), for clusters w/ many such objects, or circle/point to/identify in some way on the plot the galaxy closest to the limiting magnitude which was chosen as the standard for limiting mass
