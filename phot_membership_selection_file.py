@@ -29,7 +29,7 @@ for counter in range(len(master_cat)):
         elif master_cat[counter]['type'] ==1:       # type=1 identifies SF
             n_SF+=1
             if abs(master_cat[counter]['z_clusterphot']) > z_cutoff_field[1]:     # identify field galaxies
-                if master_cat[counter]['z_peak'] >0.6 or master_cat[counter]['z_peak'] <0.25:
+                if master_cat[counter]['z_peak'] >0.7 or master_cat[counter]['z_peak'] <0.2:
                     #
                     #pass            ### EDIT HERE if you want to analyze the field same as well
                     #
@@ -54,7 +54,7 @@ for counter in range(len(master_cat)):
         elif master_cat[counter]['type'] ==2:       #Q
             n_Q+=1
             if abs(master_cat[counter]['z_clusterphot']) > z_cutoff_field[1]:     # identify field galaxies
-                if master_cat[counter]['z_peak'] >0.6 or master_cat[counter]['z_peak'] <0.3:
+                if master_cat[counter]['z_peak'] >0.7 or master_cat[counter]['z_peak'] <0.2:
                    #
                    #pass   ##   EDIT HERE TO ANALYZE FIELD SAMPLE
                    #
