@@ -39,8 +39,9 @@
 ##                        compared with cluster, at similar redshifts
 ## 2: false positive
 ## 3: false negative
-## 4: field outlier   <-- objects well outside the redshift range of the clusters (e.g. z > 0.55)
+## 4: FAR field       <-- this comprises galaxies well outside the allowable redshift range of our study
 ## 5: BCGs            <-- identified in the last section of the program, over-writing MEMBER assignment from section 4
+## 6: 
 #
 #
 #
@@ -912,8 +913,14 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
 ## END of DIAGNOSTIC loop
 #
 else:
-    # define cut-offs for SF & Q
-    #z_cutoff = [0.02,0.06]#[0.05,0.05]         # NOTE: THIS IS NOW SET IN "main_project_file.py"
+    #
+    #
+    #
+    ## compute redshift range of galaxies in cluster sample
+    lower_bound = (min(z_cluster) - z_cutoff[1]) / (1 + z_cutoff[1])
+    upper_bound = (max(z_cluster) + z_cutoff[1]) / (1 - z_cutoff[1])
+    z_field_bounds = [lower_bound, upper_bound]
+    #
     #
     ## Call "spec_membership_selection.py" to determine spec. membership based on hard-coded cuts you just made
     #master_cat, mem_spec, field_spec, pos_spec, neg_spec, lost_due_to_buffer_spec = spec_membership_selection(master_cat,z_cutoff)
@@ -936,19 +943,19 @@ mem_fraction_spec[1] = np.round(np.sum(mem_spec[1])/np.sum([mem_spec[1],field_sp
 #
 if summary_flag_4 == 1 or adams_flag == 1:
     ## Summarize initial data stats in table
-    spec_member_names = Column(['SPEC subsample total','SF - member','SF - field','SF - fasle pos','SF - false neg','SF - LDTB','Q - member','Q - field','Q - false pos','Q - false neg','Q - LDTB','SUM'],name='Property')
+    spec_member_names = Column(['SPEC subsample total','SF - member','SF - field sample','SF - FAR field','SF - fasle pos','SF - false neg','SF - LDTB','Q - member','Q - field sample','Q - FAR field','Q - false pos','Q - false neg','Q - LDTB','SUM'],name='Property')
     col_names = cluster_names
     # SF table
-    spec_member0 = Column([(np.sum(both)-np.sum(outliers)),np.sum(mem_spec[0]),np.sum(field_spec[0]),np.sum(pos_spec[0]),np.sum(neg_spec[0]),np.sum(lost_due_to_buffer_spec[0]),np.sum(mem_spec[1]),np.sum(field_spec[1]),np.sum(pos_spec[1]),np.sum(neg_spec[1]),np.sum(lost_due_to_buffer_spec[1]),np.sum([np.sum(mem_spec),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(lost_due_to_buffer_spec)])],name='Total')  # total column
+    spec_member0 = Column([(np.sum(both)-np.sum(outliers)),np.sum(mem_spec[0]),np.sum(field_spec[0]),np.sum(far_field_spec[0]),np.sum(pos_spec[0]),np.sum(neg_spec[0]),np.sum(lost_due_to_buffer_spec[0]),np.sum(mem_spec[1]),np.sum(field_spec[1]),np.sum(field_spec[1]),np.sum(pos_spec[1]),np.sum(neg_spec[1]),np.sum(lost_due_to_buffer_spec[1]),np.sum([np.sum(mem_spec),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(lost_due_to_buffer_spec)])],name='Total')  # total column
     spec_member_stats = Table([spec_member_names,spec_member0])
     for ii in range(len(mem_spec[0])):
-        col = Column([(both[ii]-outliers[ii]),mem_spec[0][ii],field_spec[0][ii],pos_spec[0][ii],neg_spec[0][ii],lost_due_to_buffer_spec[0][ii],mem_spec[1][ii],field_spec[1][ii],pos_spec[1][ii],neg_spec[1][ii],lost_due_to_buffer_spec[1][ii],np.sum([mem_spec[0][ii],field_spec[0][ii],pos_spec[0][ii],neg_spec[0][ii],lost_due_to_buffer_spec[0][ii],mem_spec[1][ii],field_spec[1][ii],pos_spec[1][ii],neg_spec[1][ii],lost_due_to_buffer_spec[1][ii]])],name=col_names[ii])
+        col = Column([(both[ii]-outliers[ii]),mem_spec[0][ii],field_spec[0][ii],far_field_spec[0][ii],pos_spec[0][ii],neg_spec[0][ii],lost_due_to_buffer_spec[0][ii],mem_spec[1][ii],field_spec[1][ii],far_field_spec[1][ii],pos_spec[1][ii],neg_spec[1][ii],lost_due_to_buffer_spec[1][ii],np.sum([mem_spec[0][ii],field_spec[0][ii],far_field_spec[0][ii],pos_spec[0][ii],neg_spec[0][ii],lost_due_to_buffer_spec[0][ii],mem_spec[1][ii],field_spec[1][ii],far_field_spec[1][ii],pos_spec[1][ii],neg_spec[1][ii],lost_due_to_buffer_spec[1][ii]])],name=col_names[ii])
         spec_member_stats.add_column(col)  # add columns to table one cluster at a time
     #
     print('\nSummary Table 4 - SPEC Subsample\nCatalogue by MEMBER:')
     print(spec_member_stats)
     print("\nNOTE: LDTB = Lost Due To Buffer b/w member & field (recall: the def'n of 'field' doesn't start where the def'n of 'member' stops. There's a buffer in between them).\n")
-    print('SF spec. total: %s'%np.sum([mem_spec[0],field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0]]),'\nQ spec. total: %s'%np.sum([mem_spec[1],field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1]]),'\nSF total + Q total + Outliers = %s'%np.sum([mem_spec[0],field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0]]),' + %s'%np.sum([mem_spec[1],field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1]]),' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_spec),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(lost_due_to_buffer_spec),np.sum(outliers)]))
+    print('SF spec. total: %s'%np.sum([mem_spec[0],field_spec[0],far_field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0]]),'\nQ spec. total: %s'%np.sum([mem_spec[1],field_spec[1],far_field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1]]),'\nSF total + Q total + Outliers = %s'%np.sum([mem_spec[0],field_spec[0],far_field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0]]),' + %s'%np.sum([mem_spec[1],field_spec[1],far_field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1]]),' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_spec),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(lost_due_to_buffer_spec),np.sum(outliers)]))
     #####
 #
 #                       
@@ -995,19 +1002,19 @@ exec(open('phot_membership_selection_file.py').read())
 #
 if summary_flag_5 == 1 or adams_flag == 1:
     ## Summarize initial data stats in table
-    phot_member_names = Column(['PHOT subsample total','SF - Total','SF - member','SF - field','SF - FAR field','SF - LDTB','Q - Total','Q - member','Q - field','Q - FAR field','Q - LDTB','SUM (less totals)'],name='Property')
+    phot_member_names = Column(['PHOT subsample total','SF - Total','SF - member','SF - field sample','SF - FAR field','SF - LDTB','Q - Total','Q - member','Q - field sample','Q - FAR field','Q - LDTB','SUM (less totals)'],name='Property')
     col_names = cluster_names
     # SF table
-    phot_member0 = Column([np.sum(phot_only),np.sum([np.sum(mem_phot[0]),np.sum(field_phot[0]),np.sum(lost_due_to_buffer_phot[0]),np.sum(field_outliers[0])]),np.sum(mem_phot[0]),np.sum(field_phot[0]),np.sum(field_outliers[0]),np.sum(lost_due_to_buffer_phot[0]),np.sum([np.sum(mem_phot[1]),np.sum(field_phot[1]),np.sum(lost_due_to_buffer_phot[1]),np.sum(field_outliers[1])]),np.sum(mem_phot[1]),np.sum(field_phot[1]),np.sum(field_outliers[1]),np.sum(lost_due_to_buffer_phot[1]),np.sum([np.sum(mem_phot),np.sum(field_phot),np.sum(field_outliers),np.sum(lost_due_to_buffer_phot)])],name='Total')  # total column
+    phot_member0 = Column([np.sum(phot_only),np.sum([np.sum(mem_phot[0]),np.sum(field_phot[0]),np.sum(far_field_phot[0]),np.sum(lost_due_to_buffer_phot[0]),]),np.sum(mem_phot[0]),np.sum(field_phot[0]),np.sum(far_field_phot[0]),np.sum(lost_due_to_buffer_phot[0]),np.sum([np.sum(mem_phot[1]),np.sum(field_phot[1]),np.sum(far_field_phot[1]),np.sum(lost_due_to_buffer_phot[1])]),np.sum(mem_phot[1]),np.sum(field_phot[1]),np.sum(far_field_phot[1]),np.sum(lost_due_to_buffer_phot[1]),np.sum([np.sum(mem_phot),np.sum(field_phot),np.sum(far_field_phot),np.sum(lost_due_to_buffer_phot)])],name='Total')  # total column
     phot_member_stats = Table([phot_member_names,phot_member0])
     for ii in range(len(mem_phot[0])):
-        col = Column([phot_only[ii],np.sum([mem_phot[0][ii],field_phot[0][ii],field_outliers[0][ii],lost_due_to_buffer_phot[0][ii]]),mem_phot[0][ii],field_phot[0][ii],field_outliers[0][ii],lost_due_to_buffer_phot[0][ii],np.sum([mem_phot[1][ii],field_phot[1][ii],field_outliers[1][ii],lost_due_to_buffer_phot[1][ii]]),mem_phot[1][ii],field_phot[1][ii],field_outliers[1][ii],lost_due_to_buffer_phot[1][ii],np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii],lost_due_to_buffer_phot[0][ii],lost_due_to_buffer_phot[1][ii]])],name=col_names[ii])
+        col = Column([phot_only[ii],np.sum([mem_phot[0][ii],field_phot[0][ii],far_field_phot[0][ii],lost_due_to_buffer_phot[0][ii]]),mem_phot[0][ii],field_phot[0][ii],far_field_phot[0][ii],lost_due_to_buffer_phot[0][ii],np.sum([mem_phot[1][ii],field_phot[1][ii],far_field_phot[1][ii],lost_due_to_buffer_phot[1][ii]]),mem_phot[1][ii],field_phot[1][ii],far_field_phot[1][ii],lost_due_to_buffer_phot[1][ii],np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],far_field_phot[0][ii],field_phot[1][ii],far_field_phot[1][ii],lost_due_to_buffer_phot[0][ii],lost_due_to_buffer_phot[1][ii]])],name=col_names[ii])
         phot_member_stats.add_column(col)  # add columns to table one cluster at a time
     #
     #
     print('\nSummary Table 5 - PHOT-ONLY Subsample\nCatalogue by MEMBER - Star-forming:')
     print(phot_member_stats)
-    print('\nNOTE: LDTB = Lost Due To Buffer b/w member & field.\nTotal FAR Field (z>0.7 or z<0.2): %s' % np.sum(field_outliers))
+    print('\nNOTE: LDTB = Lost Due To Buffer b/w member & field.\nTotal FAR Field (~z>0.55 or ~z<0.3): %s' % np.sum([np.sum(far_field_phot),np.sum(far_field_spec)]))
 #####
 #
     mem_phot_fraction = np.array([0]*2,dtype='float32')     # to keep track of membership acceptance fraction
@@ -1019,12 +1026,12 @@ if summary_flag_5 == 1 or adams_flag == 1:
     print('PHOT ONLY sub-sample: %s' %n_phot_only)
     print('SF (members + field): %s' % np.sum([mem_phot[0],field_phot[0]]))
     print('Q (members + field): %s' % np.sum([mem_phot[1],field_phot[1]]))
-    print('Field outliers (z>0.6 or z<0.3): %s' % np.sum(field_outliers))
+    print('Field outliers (~z>0.55 or ~z<0.3): %s' % np.sum([np.sum(far_field_phot)]))
     print('Lost due to buffer b/w definition of cluster member/field: %s'%np.sum(lost_due_to_buffer_phot))
     print('Stars & outliers: %s' % stars_outliers)
-    print('\nSum of the above: %s'%np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])]))
-    print('\nDifference between # in PHOT-ONLY subsample & sum above: %s'%(n_phot_only - np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])])))
-    print('Other (not in phot only subsample): %s'%other_phot,'\nSum of above + Other: %s'%(np.sum([np.sum(lost_due_to_buffer_phot),np.sum(field_outliers),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]]),other_phot])))
+    print('\nSum of the above: %s'%np.sum([np.sum(lost_due_to_buffer_phot),np.sum([np.sum(far_field_phot)]),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])]))
+    print('\nDifference between # in PHOT-ONLY subsample & sum above: %s'%(n_phot_only - np.sum([np.sum(lost_due_to_buffer_phot),np.sum([np.sum(far_field_phot)]),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]])])))
+    print('Other (not in phot only subsample): %s'%other_phot,'\nSum of above + Other: %s'%(np.sum([np.sum(lost_due_to_buffer_phot),np.sum([np.sum(far_field_phot)]),np.sum([mem_phot[1],field_phot[1]]),np.sum([mem_phot[0],field_phot[0]]),other_phot])))
 #####                      
 #
 ## TIME_FLAG_5 END
@@ -1041,23 +1048,23 @@ else:
 #
 if summary_flag_6 == 1 or adams_flag == 1:
     ## Summarize initial data stats in table
-    member_names = Column(['Parent total','PHOT member','PHOT field (ALL)','PHOT TOTAL','SPEC member','SPEC field','SPEC false pos','SPEC false neg','SPEC TOTAL','SUM (less totals)'],name='Property')
+    member_names = Column(['Parent total','Phot. member','Phot. field sample','Phot. FAR field','PHOT TOTAL','Spec. member','Spec. field sample','Spec. FAR field','SPEC false pos','SPEC false neg','SPEC TOTAL','SUM (less totals)'],name='Property')
     col_names = cluster_names
     # SF table
-    member0 = Column([np.sum([phot_only,both]),np.sum(mem_phot),np.sum([field_phot,field_outliers]),np.sum([mem_phot,field_phot,field_outliers]),np.sum([mem_spec[0],mem_spec[1]]),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum([mem_spec,field_spec,pos_spec,neg_spec]),np.sum([mem_phot,mem_spec,field_phot,field_outliers,field_spec,pos_spec,neg_spec])],name='Total')  # total column
-    #member0 = Column([np.sum([phot_only,both]),np.sum(mem_phot),np.sum(mem_phot[0]),np.sum(mem_phot[1]),np.sum([field_phot,field_outliers]),np.sum([mem_phot,field_phot,field_outliers]),np.sum([mem_spec[0],mem_spec[1]]),np.sum(mem_spec[0]),np.sum(mem_spec[1]),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum([mem_spec,field_spec,pos_spec,neg_spec]),np.sum([mem_phot,mem_spec,field_phot,field_outliers,field_spec,pos_spec,neg_spec])],name='Total')  # total column
+    member0 = Column([np.sum([phot_only,both]),np.sum(mem_phot),np.sum(field_phot),np.sum(far_field_phot),np.sum([mem_phot,field_phot,far_field_phot]),np.sum([mem_spec[0],mem_spec[1]]),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum([mem_spec,field_spec,far_field_spec,pos_spec,neg_spec]),np.sum([mem_phot,mem_spec,field_phot,far_field_phot,far_field_spec,field_spec,pos_spec,neg_spec])],name='Total')  # total column
+    #
     member_stats = Table([member_names,member0])
     for ii in range(len(mem_phot[0])):
-        col = Column([np.sum([phot_only[ii],both[ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii]]),np.sum([field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii]]),np.sum([field_spec[0][ii],field_spec[1][ii]]),np.sum([pos_spec[0][ii],pos_spec[1][ii]]),np.sum([neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii],mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]])],name=col_names[ii])
-        #col = Column([np.sum([phot_only[ii],both[ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii]]),mem_phot[0][ii],mem_phot[1][ii],np.sum([field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii]]),mem_spec[0][ii],mem_spec[1][ii],np.sum([field_spec[0][ii],field_spec[1][ii]]),np.sum([pos_spec[0][ii],pos_spec[1][ii]]),np.sum([neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],field_outliers[0][ii],field_outliers[1][ii],mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]])],name=col_names[ii])
+        col = Column([np.sum([phot_only[ii],both[ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii]]),np.sum([field_phot[0][ii],field_phot[1][ii]]),np.sum([far_field_phot[0][ii],far_field_phot[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],far_field_phot[0][ii],far_field_phot[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii]]),np.sum([field_spec[0][ii],field_spec[1][ii]]),np.sum([far_field_spec[0][ii],far_field_spec[1][ii]]),np.sum([pos_spec[0][ii],pos_spec[1][ii]]),np.sum([neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],far_field_spec[0][ii],far_field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],far_field_phot[0][ii],far_field_phot[1][ii],far_field_spec[0][ii],far_field_spec[1][ii],mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]])],name=col_names[ii])
+        #        
         member_stats.add_column(col)  # add columns to table one cluster at a time
     #
     LDTB_total = np.sum([lost_due_to_buffer_spec,lost_due_to_buffer_phot])
     #
     print('\nSummary Table 6 - FULL Parent Sample\nCatalogue by MEMBER:')
     print(member_stats)
-    print('\nNOTE: Lost Due To Buffer b/w member & field: %s'%LDTB_total,'\nTotal galaxies considered: Members + Buffer + Outliers(spec) = %s'%np.sum([mem_phot,mem_spec,field_phot,field_outliers,field_spec,pos_spec,neg_spec]),' + %s'%LDTB_total,' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_phot),np.sum(mem_spec),np.sum(field_phot),np.sum(field_outliers),np.sum(field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(LDTB_total),np.sum(outliers)]),'\nNOTE: Total (phot) FAR Field (z>0.6 or z<0.3): %s'%np.sum(field_outliers))
-    print('\nTOTAL MEMBERS SELECTED: phot + spec = %s'%(np.sum([mem_phot[0],mem_phot[1]])),' + %s'%(np.sum([mem_spec[0],mem_spec[1]])),' = %s'%np.sum([mem_phot,mem_spec]),'\nFor redshift cutoffs [spec,phot] = %s'%z_cutoff)
+    print('\nNOTE: Lost Due To Buffer b/w member & field: %s'%LDTB_total,'\nTotal galaxies considered: Members + Buffer + Outliers(spec) = %s'%np.sum([mem_phot,mem_spec,field_phot,far_field_phot,far_field_spec,field_spec,pos_spec,neg_spec]),' + %s'%LDTB_total,' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_phot),np.sum(mem_spec),np.sum(field_phot),np.sum(far_field_phot),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(LDTB_total),np.sum(outliers)]),'\nNOTE: Total (phot) FAR Field (z>0.6 or z<0.3): %s'%np.sum([far_field_phot,far_field_spec]))
+    print('\nTOTAL MEMBERS SELECTED: phot + spec = %s'%(np.sum([mem_phot[0],mem_phot[1]])),' + %s'%(np.sum([mem_spec[0],mem_spec[1]])),' = %s'%np.sum([mem_phot,mem_spec]),'\nTOTAL FIELD SAMPLE SELECTED: %s'%np.sum([field_phot,field_spec]),'\nFor redshift cutoffs [spec,phot] = %s'%z_cutoff)
     #
 #
 #

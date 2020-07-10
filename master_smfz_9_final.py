@@ -305,10 +305,17 @@ if summary_flag_1 == 1 or adams_flag == 1:
 ## 
 #
 #
-##### IMPORT DATA FROM AM's EMAIL 06/19/20
+##### use "SF_field_par_list/Q_field_par_list" from "master_parallel*.py"
 #
+##### setup same list for "master_data*.py"
 #
+##### correct for limiting mass completeness separately for all 12 frames (6 cluster, 6 parallel)
 #
+##### normalize all 12 frames by mass to 1, take average
+#
+##### calculate quenched fraction
+#
+##### add to SMF plot
 #
 #
 ## SECTION (2): sort objects into HISTOGRAMS bins for both SF & Q populations, then sum 
