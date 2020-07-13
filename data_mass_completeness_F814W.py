@@ -403,7 +403,7 @@ if summary_flag == 1 or adams_flag == 1:
 #
 ## define range of all histograms to come!
 #
-max_mass__array = [ [], [], [], [], [], [] ]
+max_mass_array = [ [], [], [], [], [], [] ]
 max_mass_index = np.array([0]*6)
 max_mass = np.array([0]*1)
 #
@@ -450,6 +450,7 @@ if plot_flag_1 == 1:
         ax.plot([0,35],[max_min_mass[cluster][1],max_min_mass[cluster][1]], color='maroon', linestyle='--',linewidth=1.2)
         sm =  ScalarMappable(cmap=c_map)
         sm.set_array([])
+        sm.set_clim([0.0,z_cutoff[1]])
         cbar = fig.colorbar(sm, ax=ax)
         cbar.ax.set_title("|${\Delta}$z|$_{phot}$")
         #ax.pcolormesh(plotting_array_temp[0], plotting_array_temp[1], plotting_array_temp[2], cmap=c_map)
@@ -516,6 +517,7 @@ if plot_flag_2 == 1:
         ax.plot([0,35],[max_min_mass[cluster][1],max_min_mass[cluster][1]], color='maroon', linestyle='--',linewidth=1.2)
         sm =  ScalarMappable(cmap=c_map)
         sm.set_array([])
+        sm.set_clim([0.0,z_cutoff[1]])        
         ax.grid(axis='both', alpha=0.75)
         ax.set_xlim([26,28])
         ax.set_ylim([5.5,8.5])

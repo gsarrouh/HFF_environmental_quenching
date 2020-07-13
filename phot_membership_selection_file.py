@@ -10,6 +10,10 @@
 #
 ### Quiescent sub-sample: segregate into secure member, field
 # initialize arrays, format is row_1=SF, row_2=Q
+#
+SF_field_list = [ [], [], [], [], [], [] ]                   # THESE LISTS WILL STORE THE SMF FIELD SAMPLE MASSES
+Q_field_list = [ [], [], [], [], [], [] ]
+#
 mem_phot = np.array([[0]*6]*2)    # for tracking phot members/field galaxies, by cluster
 field_phot = np.array([[0]*6]*2)
 far_field_phot = np.array([[0]*6]*2)
@@ -34,6 +38,7 @@ for counter in range(len(master_cat)):
                     master_cat['member'][counter] = 1         # member=1 for FIELD SAMPLE
                     for ii in range(len(field_phot[0])):
                         if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                            SF_field_list[ii].append(master_cat['lmass'][counter])
                             field_phot[0][ii]+=1
                 else:
                     master_cat['member'][counter] = 4         # member=4 for FAR FIELD
@@ -58,6 +63,7 @@ for counter in range(len(master_cat)):
                     master_cat['member'][counter] = 1         # member=1 for FIELD SAMPLE
                     for ii in range(len(field_phot[1])):
                         if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                            Q_field_list[ii].append(master_cat['lmass'][counter])
                             field_phot[1][ii]+=1
                 else:
                     master_cat['member'][counter] = 4         # member=4 for FAR FIELD

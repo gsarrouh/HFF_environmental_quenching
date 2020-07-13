@@ -16,7 +16,7 @@ plot_flag_2 = 0              # distribution of del_z's (by cluster)
 ## function definitions
 #
 #
-BCG_threshold = 12
+BCG_threshold = 11
 ##
 num_small_BCG = np.array([0]*6)
 num_BCG = np.array([0]*6)

@@ -76,11 +76,11 @@ if project_time_flag == 1:
 ## USER INPUTS
 ## MAY NEED TO EDIT: hard code the cluster membership definition cuts if not running Variational Analysis
 #
-z_cutoff = [0.02,0.06]#1st try[0.02,0.06]     # [spec,phot] cutoffs for cluster membership
+z_cutoff = [0.01,0.05]#1st try[0.02,0.06]     # [spec,phot] cutoffs for cluster membership
 z_cutoff_field = [0.08,0.15]    # same but for definition of "field" galaxies
 bin_width = 0.4  # of the SMF, in dex
-num_bins_SF_pos_neg = [6.6,9.05,10.13,12.3]   # bin edges of the false pos/neg SF histogram, in units of log10(mass); METHOD = 1
-num_bins_Q_pos_neg = [6.6,8.5,10.4,12.3]#1st try -[7.05,10.11,12.3]  # bin edges of the false pos/neg Q histogram;    METHOD = 2
+num_bins_SF_pos_neg = [6.64,9.06,10.13,12.3]#[6.6,9.05,10.13,12.3]   # bin edges of the false pos/neg SF histogram, in units of log10(mass); METHOD = 1
+num_bins_Q_pos_neg = [6.64,8.527,10.413,12.3]#1st try -[7.05,10.11,12.3]  # bin edges of the false pos/neg Q histogram;    METHOD = 2
 #
 #
 #
@@ -111,7 +111,7 @@ section_5_flag = 0                 # SMF
 #    
 #
 ## MAY NEED TO EDIT: choose the filter in which to determine limiting mass
-limiting_mass_flag = 1             #   1 = F160W;   2 = F814W
+limiting_mass_flag = 2             #   1 = F160W;   2 = F814W
 ## Update the user on what this program will run
 #
 print('"main_project_file" will run the following:')

@@ -100,8 +100,8 @@ diag_flag_3 = 0           # prints the indices of objects w/ "NaN" mass estimate
 diag_flag_4 = 1           # Count galaxies sorted through at each step of initial 'for' loop
 diag_flag_5 = 0           # AVAILABLE
 #
-plot_flag_1 = 1           # produce Fig.1: mass vs mag for 1 cluster at a time (plots 6 figures total);
-plot_flag_2 = 1           # produce Fig.2: tiled subplot of all 6 clusters zoomed in (single figure);   
+plot_flag_1 = 0           # produce Fig.1: mass vs mag for 1 cluster at a time (plots 6 figures total);
+plot_flag_2 = 0           # produce Fig.2: tiled subplot of all 6 clusters zoomed in (single figure);   
 #
 #
 #
@@ -112,7 +112,7 @@ plot_flag_2 = 1           # produce Fig.2: tiled subplot of all 6 clusters zoome
 try: 
     F = Column([-99]*len(master_cat),name='F160W_mag',dtype='float32')   # add a column in which to store magnitudes
     master_cat.add_column(F)
-    print("This is the first time you ran this program today, isn't it ghassan?")
+    print("This is the first time you run this program today, isn't it ya ghassan?")
 except:
     pass
 #
@@ -123,6 +123,37 @@ except:
 ## UPDATE: to keep track of the total catalogue population and cluster members separately, I went back to two separate loops.
 #
 #                **** ****                **** ****      HERE          **** ****                **** ****
+#
+#
+#
+print('F160W flag diagnostic\n\na = [flag=0, =1, =2, =3, =4, =-1]\nb=[flux>0,flux<0] for each flag value')
+#
+a = np.array([0]*6)
+b = np.array([[0]*2]*6)
+for counter in range(len(master_cat)):
+    for ii in range(-1,5):
+        if master_cat['flag_F160W'][counter] == ii:
+            a[ii]+=1
+            if master_cat['f_F160W'][counter] > 0:
+                b[ii][0]+=1
+            else: b[ii][1]+=1
+print('a = %s'%a)
+print('total count: %s'%np.sum(a))
+print('length of catalogue: %s'%len(master_cat))
+ratios = []
+for ii in range(len(a)):
+    ratios.append(a[ii]/len(master_cat))
+print(ratios)
+print(np.sum(ratios))
+print('b = %s'%b)
+#
+#
+#
+#
+#
+#
+#
+#
 #
 #
 ## to store RESULT of program
@@ -275,7 +306,7 @@ if (diag_flag_4 == 1 and project_diagnostic_flag == 2) or project_diagnostic_fla
 #
 ## DIAG_FLAG_4: ACCOUNTING for each galaxy at each condition imposed within the above for loop, which sets up the lists of galaxies to be plotted
 if (diag_flag_4 == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:
-    print('\n"flag_F160W==0" OK: %s'%counting_array1[0],'\n"flag_F160W!=0" BAD: %s'%counting_array1[6],'\nGood flag + Bad flag= %s'%counting_array1[0],' + %s'%counting_array1[6],' = %s'%np.sum([counting_array1[0],counting_array1[6]]))
+    print('\n"flag_F160W==0" OK: %s'%counting_array1[0],'\n"flag_F160W!=0" BAD: %s'%counting_array1[6],'\nGood flag + Bad flag = %s'%counting_array1[0],' + %s'%counting_array1[6],' = %s'%np.sum([counting_array1[0],counting_array1[6]]))
     print('\nOf the "Good flag" galaxies\nflux_F160W>0: %s'%counting_array1[1],'\nflux_F160W<0: %s'%counting_array1[5],'\n(flux>0) + (flux<0) = %s'%counting_array1[1],' + %s'%counting_array1[5],' = %s'%(np.sum([counting_array1[1],counting_array1[5]])))
     print('\nlmass = NaN (all): %s'%counting_array1[2],'\nCluster members selected: %s'%counting_array1[4],'\nlmass = NaN (members): %s'%counting_array1[3],'\nBad flag: %s'%counting_array1[7],'\nBad flux (<0): %s'%counting_array1[5])
 
@@ -445,6 +476,7 @@ if plot_flag_1 == 1:
         ax.plot([0,35],[max_min_mass[cluster][1],max_min_mass[cluster][1]], color='maroon', linestyle='--',linewidth=1.2)
         sm =  ScalarMappable(cmap=c_map)
         sm.set_array([])
+        sm.set_clim([0,z_cutoff[1]])
         cbar = fig.colorbar(sm, ax=ax)
         cbar.ax.set_title("|${\Delta}$z|$_{phot}$")
         #ax.pcolormesh(plotting_array_temp[0], plotting_array_temp[1], plotting_array_temp[2], cmap=c_map)
@@ -511,6 +543,7 @@ if plot_flag_2 == 1:
         ax.plot([0,35],[max_min_mass[cluster][1],max_min_mass[cluster][1]], color='maroon', linestyle='--',linewidth=1.2)
         sm =  ScalarMappable(cmap=c_map)
         sm.set_array([])
+        sm.set_clim([0,z_cutoff[1]])
         ax.grid(axis='both', alpha=0.75)
         ax.set_xlim([25,27])
         ax.set_ylim([5.5,8.5])

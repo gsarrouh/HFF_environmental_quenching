@@ -1097,7 +1097,7 @@ exec(open('bcg_hist_diagnostic.py').read())
 #
 if summary_flag_7 == 1 or adams_flag == 1:
     ## Summarize bCG stats in table
-    BCG_names = Column(['Total (>12)','SF_total','SF_spec','SF_phot','Q_total','Q_spec','Q_phot','SF+Q_sum','Spec Outliers','Bad z_phot','Good z_spec','Other TYPE'],name='Property')
+    BCG_names = Column(['Total (>%s)'%BCG_threshold,'SF_total','SF_spec','SF_phot','Q_total','Q_spec','Q_phot','SF+Q_sum','Spec Outliers','Bad z_phot','Good z_spec','Other TYPE'],name='Property')
     col_names = cluster_names
     BCG0 = Column([np.sum(num_BCG),np.sum(BCG_SF),np.sum(BCG_spec[0]),np.sum(BCG_phot[0]),np.sum(BCG_Q),np.sum(BCG_spec[1]),np.sum(BCG_phot[1]),np.sum([BCG_spec[0],BCG_phot[0],BCG_spec[1],BCG_phot[1]]),np.sum(BCG_outliers),np.sum(num_bad_z_phot),len(BCG_delz_spec_plot),np.sum(num_other_type_bcg)],name='Total')  # total column
     BCG_stats = Table([BCG_names,BCG0])
