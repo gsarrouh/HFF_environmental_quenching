@@ -16,6 +16,9 @@
 ### SECTION (5): compute BIN EDGES, CORRECTION FACTORS, & METRIC OF MERIT
 ## The goal now is to produce a list of bin edges that will be applied to both the false pos/neg lists. for the ii'th bin edge from each of the false pos/neg lists, test all possible values for the ii'th bin between false_pos_bin_edge[ii] & false_neg_bin_edge[ii] in increments of 0.01. choose the bin edge which yields the lowest average deviation from 1. then call (i.e. execute the file) "correction_factors.py", which is based on code from "master_smfz*" S3.2. It interpolates/extrapolates SMF bin correction factors from the false pos/neg ratios computed below, and returns the "metric of merit", i.e. (the sum of squared deviations from 1 for each pos/neg ratio bin) divided by (the number of bins). 
 #
+## set diagnostic flag
+diag_flag = 0
+#
 ## ignore 'divide by zero' errors, since they are handled with exceptions below
 np.seterr(divide='ignore')
 #
@@ -154,12 +157,20 @@ else:
                         pass
                     else:
                         bin_edge_means_SF[ii] = mid_pt_to_use 
-                    print('Bin edge to use: bin_edge_means_SF[%s]'%ii,' = %s'%bin_edge_means_SF[ii])
+                    if diag_flag == 1 or project_diagnostic_flag == 1:
+                        if project_diagnostic_flag == 0:
+                            pass
+                        else:
+                            print('Bin edge to use: bin_edge_means_SF[%s]'%ii,' = %s'%bin_edge_means_SF[ii])
                     #        
                     #
                 elif equal_flag == 1:
                     bin_edge_means_SF[ii] = mid_pt_to_use
-                    print('Bin edge to use: bin_edge_means_SF[%s]'%ii,' = %s'%bin_edge_means_SF[ii])
+                    if diag_flag == 1 or project_diagnostic_flag == 1:
+                        if project_diagnostic_flag == 0:
+                            pass
+                        else:
+                            print('Bin edge to use: bin_edge_means_SF[%s]'%ii,' = %s'%bin_edge_means_SF[ii])
                 #
         #########        
 #########                
@@ -329,12 +340,20 @@ else:
                         pass
                     else:
                         bin_edge_means_Q[ii] = mid_pt_to_use 
-                    print('Bin edge to use: bin_edge_means_Q[%s]'%ii,' = %s'%bin_edge_means_Q[ii])
+                    if diag_flag == 1 or project_diagnostic_flag == 1:
+                        if project_diagnostic_flag == 0:
+                            pass
+                        else:
+                            print('Bin edge to use: bin_edge_means_Q[%s]'%ii,' = %s'%bin_edge_means_Q[ii])
                     #        
                     #
                 elif equal_flag == 1:
                     bin_edge_means_Q[ii] = mid_pt_to_use
-                    print('Bin edge to use: bin_edge_means_Q[%s]'%ii,' = %s'%bin_edge_means_Q[ii])
+                    if diag_flag == 1 or project_diagnostic_flag == 1:
+                        if project_diagnostic_flag == 0:
+                            pass
+                        else:
+                            print('Bin edge to use: bin_edge_means_Q[%s]'%ii,' = %s'%bin_edge_means_Q[ii])
                 #
         #########        
 #########                

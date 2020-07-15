@@ -419,128 +419,135 @@ range2_par=[min(limiting_mass_par),max_mass_par[1]]
 ## 
 ## setup dedicated arrays for plotting, since plotting them from my nested list of lists of lists doesn't seem to be working...
 #
-if plot_flag_1 == 1:
-    for cluster in range(len(limiting_mag_par)):
-        plotting_array_temp_par = np.array([[0]*len(mag_by_cluster_member_par[cluster])]*3,dtype='float32') # 0=mag;1=mass;2=z
-        for ii in range(len(mag_by_cluster_member_par[cluster])):
-            plotting_array_temp_par[0][ii] = mag_by_cluster_member_par[cluster][ii][0]   # store mass/magnitudes for the first cluster
-            plotting_array_temp_par[1][ii] = mag_by_cluster_member_par[cluster][ii][1]   # index order: [cluster][object][mag/mass,z_phot]([cluster,row,col])
-            plotting_array_temp_par[2][ii] = mag_by_cluster_member_par[cluster][ii][2]
-        #
-        ## calculate cluster members; display as "Total(Shown)"
-        total_mem_par = np.sum([count_field_sample[0][cluster],count_field_sample[1][cluster]])
-        mem_shown_par = len(plotting_array_temp_par[0])
-        #
-        members_string_par = '# members(F160W): %s'%total_mem_par+'(%s'%mem_shown_par+')'
-        ## Compute std. dev. of cluster objects
-        std_dev_par = np.std(plotting_array_temp_par[1])
-        #
-        ## The figure:
-        #
-        c_map = plt.get_cmap("spring")        # set colorbar map
-        #
-        #    plt.close()
-        fig, ax = plt.subplots()
-        ax.scatter(plotting_array_temp_par[0],plotting_array_temp_par[1], marker='o', s=10, c=plotting_array_temp_par[2], cmap= c_map, vmin=min(plotting_array_temp_par[2]), vmax=max(plotting_array_temp_par[2]))#, edgecolors='k')#,facecolors='none', edgecolors='k')
-        #ax.scatter(SF_masses[0][0],SF_masses[0][1], marker='*', s=10, facecolors='none', edgecolors='b')
-        ax.plot([limiting_mag_par[cluster],limiting_mag_par[cluster]],[0,15],'--r', linewidth=1.4)
-        ax.plot([0,35],[max_min_mass_par[cluster][0],max_min_mass_par[cluster][0]], color='maroon', linestyle='--',linewidth=1.2)    #chang indexing of max_min_mass to [ii][0] & [ii][1] for looped subplots
-        ax.plot([0,35],[max_min_mass_par[cluster][1],max_min_mass_par[cluster][1]], color='maroon', linestyle='--',linewidth=1.2)
-        sm =  ScalarMappable(cmap=c_map)
-        sm.set_array([])
-        sm.set_clim([0,z_cutoff[1]])
-        cbar = fig.colorbar(sm, ax=ax)
-        cbar.ax.set_title("$z$_{phot,F160W}$")
-        #ax.pcolormesh(plotting_array_temp[0], plotting_array_temp[1], plotting_array_temp[2], cmap=c_map)
-        #ax.colorbar()
+if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
+    if project_plot_flag == 0:
+        pass
+    else:
+        for cluster in range(len(limiting_mag_par)):
+            plotting_array_temp_par = np.array([[0]*len(mag_by_cluster_member_par[cluster])]*3,dtype='float32') # 0=mag;1=mass;2=z
+            for ii in range(len(mag_by_cluster_member_par[cluster])):
+                plotting_array_temp_par[0][ii] = mag_by_cluster_member_par[cluster][ii][0]   # store mass/magnitudes for the first cluster
+                plotting_array_temp_par[1][ii] = mag_by_cluster_member_par[cluster][ii][1]   # index order: [cluster][object][mag/mass,z_phot]([cluster,row,col])
+                plotting_array_temp_par[2][ii] = mag_by_cluster_member_par[cluster][ii][2]
+            #
+            ## calculate cluster members; display as "Total(Shown)"
+            total_mem_par = np.sum([count_field_sample_type[0][cluster],count_field_sample_type[1][cluster]])
+            mem_shown_par = len(plotting_array_temp_par[0])
+            #
+            members_string_par = '# members(F160W): %s'%total_mem_par+'(%s'%mem_shown_par+')'
+            ## Compute std. dev. of cluster objects
+            std_dev_par = np.std(plotting_array_temp_par[1])
+            #
+            ## The figure:
+            #
+            c_map = plt.get_cmap("spring")        # set colorbar map
+            #
+            #    plt.close()
+            fig, ax = plt.subplots()
+            ax.scatter(plotting_array_temp_par[0],plotting_array_temp_par[1], marker='o', s=10, c=plotting_array_temp_par[2], cmap= c_map, vmin=min(plotting_array_temp_par[2]), vmax=max(plotting_array_temp_par[2]))#, edgecolors='k')#,facecolors='none', edgecolors='k')
+            #ax.scatter(SF_masses[0][0],SF_masses[0][1], marker='*', s=10, facecolors='none', edgecolors='b')
+            ax.plot([limiting_mag_par[cluster],limiting_mag_par[cluster]],[0,15],'--r', linewidth=1.4)
+            ax.plot([0,35],[max_min_mass_par[cluster][0],max_min_mass_par[cluster][0]], color='maroon', linestyle='--',linewidth=1.2)    #chang indexing of max_min_mass to [ii][0] & [ii][1] for looped subplots
+            ax.plot([0,35],[max_min_mass_par[cluster][1],max_min_mass_par[cluster][1]], color='maroon', linestyle='--',linewidth=1.2)
+            sm =  ScalarMappable(cmap=c_map)
+            sm.set_array([])
+            sm.set_clim([0,z_cutoff[1]])
+            cbar = fig.colorbar(sm, ax=ax)
+            cbar.ax.set_title("|$\Delta$z|$_{phot,F160W}$")
+            #ax.pcolormesh(plotting_array_temp[0], plotting_array_temp[1], plotting_array_temp[2], cmap=c_map)
+            #ax.colorbar()
 
-        #plt.plot([0,35],[max_mass,max_mass], '-.k', linewidth=0.8)
-        #plt.plot([0,35],[min_mass,min_mass], '-.k', linewidth=0.8)
-        ax.set_xlabel('$m_{F160W}$')
-        ax.set_xlim(17,30)
-        ax.set_ylabel('$log(M/M_{\odot})$')
-        ax.set_ylim(5,13)
-        ax.grid(b=False, which='major', axis='both', color = 'k', linestyle = ':')
-        ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True)
-        ax.minorticks_on()
+            #plt.plot([0,35],[max_mass,max_mass], '-.k', linewidth=0.8)
+            #plt.plot([0,35],[min_mass,min_mass], '-.k', linewidth=0.8)
+            ax.set_xlabel('$m_{F160W}$')
+            ax.set_xlim(17,30)
+            ax.set_ylabel('$log(M/M_{\odot})$')
+            ax.set_ylim(5,13)
+            ax.grid(b=False, which='major', axis='both', color = 'k', linestyle = ':')
+            ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True)
+            ax.minorticks_on()
+            #
+            plt.text(21.6,12.1,cluster_names_par[cluster],fontsize=12)
+            plt.text(21.6,11.5,'$M/L_{max}$: %s'%limiting_mass_par[cluster],fontsize=10)
+            plt.text(21.6,10.5,members_string_par,fontsize=10)
+            plt.text(18.1,6.1,'0.3 < z < 0.55',fontsize=10)
+            plt.text(18.1,5.7,'$\sigma_{mass}$ = %s'%std_dev_par,fontsize=10)
+            #
+            plt.show()
         #
-        plt.text(21.6,12.1,cluster_names_par[cluster],fontsize=12)
-        plt.text(21.6,11.5,'$M/L_{max}$: %s'%limiting_mass_par[cluster],fontsize=10)
-        plt.text(21.6,10.5,members_string_par,fontsize=10)
-        plt.text(18.1,6.1,'0.3 < z < 0.55',fontsize=10)
-        plt.text(18.1,5.7,'$\sigma_{mass}$ = %s'%std_dev_par,fontsize=10)
-        #
-        plt.show()
     #
 #
 #
 #
 ## Visualize by cluster
 #
-if plot_flag_2 == 1:
+if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
+    if project_plot_flag == 0:
+        pass
+    else:
+        #
+        fig, axs = plt.subplots(nrows=2,ncols=3,sharex=True,sharey=True)#,tight_layout=True)
+        fig.subplots_adjust(wspace=0,hspace=0)
+        #
+        for cluster in range(len(limiting_mag_par)):
+            plotting_array_temp_par = np.array([[0]*len(mag_by_cluster_member_par[cluster])]*3,dtype='float32') # 0=mag;1=mass;2=z
+            for ii in range(len(mag_by_cluster_member_par[cluster])):
+                plotting_array_temp_par[0][ii] = mag_by_cluster_member_par[cluster][ii][0]   # store mass/magnitudes for the first cluster
+                plotting_array_temp_par[1][ii] = mag_by_cluster_member_par[cluster][ii][1]   # index order: [cluster][object][mag/mass,z_phot]([cluster,row,col])
+                plotting_array_temp_par[2][ii] = mag_by_cluster_member_par[cluster][ii][2]
+            #
+            ## calculate cluster members; display as "Total(Shown)"
+            total_mem_par = np.sum([count_field_sample_type[0][cluster],count_field_sample_type[1][cluster]])
+            mem_shown_par = len(plotting_array_temp_par[0])
+            #
+            members_string_par = '# cluster members(F814W): %s'%total_mem_par+'(%s'%mem_shown_par+')'
+            ## Compute std. dev. of cluster objects
+            std_dev_par = np.std(plotting_array_temp_par[1])
+            #
+            ## The figure:
+            #
+            c_map = plt.get_cmap("spring")        # set colorbar map
+            #
+            lim_mag_minus_par = (limiting_mag_par[cluster]-TOL)
+            lim_mag_plus_par = (limiting_mag_par[cluster]+TOL)
+            #
+            #
+            ax = axs.flat[cluster]
+            #
+            ax.scatter(plotting_array_temp_par[0],plotting_array_temp_par[1], marker='o', s=30, c=plotting_array_temp_par[2], cmap= c_map, vmin=min(plotting_array_temp_par[2]), vmax=max(plotting_array_temp_par[2]))
+            ax.plot([limiting_mag_par[cluster],limiting_mag_par[cluster]],[0,15],'--k', linewidth=1.4)
+            ax.plot([lim_mag_minus_par,lim_mag_minus_par],[0,15],':r', linewidth=1.2)
+            ax.plot([lim_mag_plus_par,lim_mag_plus_par],[0,15],':r', linewidth=1.2)
+            ax.plot([0,35],[max_min_mass_par[cluster][0],max_min_mass_par[cluster][0]], color='maroon', linestyle='--',linewidth=1.2)    #chang indexing of max_min_mass to [ii][0] & [ii][1] for looped subplots
+            ax.plot([0,35],[max_min_mass_par[cluster][1],max_min_mass_par[cluster][1]], color='maroon', linestyle='--',linewidth=1.2)
+            sm =  ScalarMappable(cmap=c_map)
+            sm.set_array([])
+            sm.set_clim([0,z_cutoff[1]])
+            ax.grid(axis='both', alpha=0.75)
+            ax.set_xlim([25,27])
+            ax.set_ylim([5.5,8.5])
+            #
+            #plt.text(21.6,11.5,'$M/L_{max}$: %s'%limiting_mass[cluster],fontsize=10)
+        ## label locations
+        axs.flat[0].text(25.15,6.05,cluster_names_par[0],fontsize=12)
+        axs.flat[0].text(25.15,5.75,'$M/L_{max,F160W}$: %s'%limiting_mass_par[0],fontsize=12)
+        axs.flat[1].text(25.15,6.05,cluster_names_par[1],fontsize=12)
+        axs.flat[1].text(25.15,5.75,'$M/L_{max,F160W}$: %s'%limiting_mass_par[1],fontsize=12)
+        axs.flat[2].text(25.15,6.05,cluster_names_par[2],fontsize=12)
+        axs.flat[2].text(25.15,5.75,'$M/L_{max,F160W}$: %s'%limiting_mass_par[2],fontsize=12)
+        axs.flat[3].text(25.15,6.05,cluster_names_par[3],fontsize=12)
+        axs.flat[3].text(25.15,5.75,'$M/L_{max,F160W}$: %s'%limiting_mass_par[3],fontsize=12)
+        axs.flat[4].text(25.15,6.05,cluster_names_par[4],fontsize=12)
+        axs.flat[4].text(25.15,5.75,'$M/L_{max,F160W}$: %s'%limiting_mass_par[4],fontsize=12)
+        axs.flat[5].text(25.15,6.05,cluster_names_par[5],fontsize=12)
+        axs.flat[5].text(25.15,5.75,'$M/L_{max,F160W}$: %s'%limiting_mass_par[5],fontsize=12)
+        #axs.clim(0,z_cutoff[1])
+        cbar = fig.colorbar(sm, ax=axs[:, 2],location='right')#, vmin=0.0, vmax=z_cutoff[1])
+        cbar.ax.set_title("|$\Delta$z|$_{phot,F160W}$")
+        #            
+        #            
+        plt.show()
     #
-    fig, axs = plt.subplots(nrows=2,ncols=3,sharex=True,sharey=True)#,tight_layout=True)
-    fig.subplots_adjust(wspace=0,hspace=0)
-    #
-    for cluster in range(len(limiting_mag_par)):
-        plotting_array_temp_par = np.array([[0]*len(mag_by_cluster_member_par[cluster])]*3,dtype='float32') # 0=mag;1=mass;2=z
-        for ii in range(len(mag_by_cluster_member_par[cluster])):
-            plotting_array_temp_par[0][ii] = mag_by_cluster_member_par[cluster][ii][0]   # store mass/magnitudes for the first cluster
-            plotting_array_temp_par[1][ii] = mag_by_cluster_member_par[cluster][ii][1]   # index order: [cluster][object][mag/mass,z_phot]([cluster,row,col])
-            plotting_array_temp_par[2][ii] = mag_by_cluster_member_par[cluster][ii][2]
-        #
-        ## calculate cluster members; display as "Total(Shown)"
-        total_mem_par = np.sum([mem_phot_par[0][cluster],mem_phot_par[1][cluster],mem_spec_par[0][cluster],mem_spec_par[1][cluster]])
-        mem_shown_par = len(plotting_array_temp_par[0])
-        #
-        members_string_par = '# cluster members(F814W): %s'%total_mem_par+'(%s'%mem_shown_par+')'
-        ## Compute std. dev. of cluster objects
-        std_dev_par = np.std(plotting_array_temp_par[1])
-        #
-        ## The figure:
-        #
-        c_map = plt.get_cmap("spring")        # set colorbar map
-        #
-        lim_mag_minus_par = (limiting_mag_par[cluster]-TOL)
-        lim_mag_plus_par = (limiting_mag_par[cluster]+TOL)
-        #
-        #
-        ax = axs.flat[cluster]
-        #
-        ax.scatter(plotting_array_temp_par[0],plotting_array_temp_par[1], marker='o', s=30, c=plotting_array_temp_par[2], cmap= c_map, vmin=min(plotting_array_temp_par[2]), vmax=max(plotting_array_temp_par[2]))
-        ax.plot([limiting_mag_par[cluster],limiting_mag_par[cluster]],[0,15],'--k', linewidth=1.4)
-        ax.plot([lim_mag_minus_par,lim_mag_minus_par],[0,15],':r', linewidth=1.2)
-        ax.plot([lim_mag_plus_par,lim_mag_plus_par],[0,15],':r', linewidth=1.2)
-        ax.plot([0,35],[max_min_mass_par[cluster][0],max_min_mass_par[cluster][0]], color='maroon', linestyle='--',linewidth=1.2)    #chang indexing of max_min_mass to [ii][0] & [ii][1] for looped subplots
-        ax.plot([0,35],[max_min_mass_par[cluster][1],max_min_mass_par[cluster][1]], color='maroon', linestyle='--',linewidth=1.2)
-        sm =  ScalarMappable(cmap=c_map)
-        sm.set_array([])
-        sm.set_clim([0,z_cutoff[1]])
-        ax.grid(axis='both', alpha=0.75)
-        ax.set_xlim([25,27])
-        ax.set_ylim([5.5,8.5])
-        #
-        #plt.text(21.6,11.5,'$M/L_{max}$: %s'%limiting_mass[cluster],fontsize=10)
-    ## label locations
-    axs.flat[0].text(25.15,6.05,cluster_names_par[0],fontsize=12)
-    axs.flat[0].text(25.15,5.75,'$M/L_{max,F160W}$: %s'%limiting_mass_par[0],fontsize=12)
-    axs.flat[1].text(25.15,6.05,cluster_names_par[1],fontsize=12)
-    axs.flat[1].text(25.15,5.75,'$M/L_{max,F160W}$: %s'%limiting_mass_par[1],fontsize=12)
-    axs.flat[2].text(25.15,6.05,cluster_names_par[2],fontsize=12)
-    axs.flat[2].text(25.15,5.75,'$M/L_{max,F160W}$: %s'%limiting_mass_par[2],fontsize=12)
-    axs.flat[3].text(25.15,6.05,cluster_names_par[3],fontsize=12)
-    axs.flat[3].text(25.15,5.75,'$M/L_{max,F160W}$: %s'%limiting_mass_par[3],fontsize=12)
-    axs.flat[4].text(25.15,6.05,cluster_names_par[4],fontsize=12)
-    axs.flat[4].text(25.15,5.75,'$M/L_{max,F160W}$: %s'%limiting_mass_par[4],fontsize=12)
-    axs.flat[5].text(25.15,6.05,cluster_names_par[5],fontsize=12)
-    axs.flat[5].text(25.15,5.75,'$M/L_{max,F160W}$: %s'%limiting_mass_par[5],fontsize=12)
-    #axs.clim(0,z_cutoff[1])
-    cbar = fig.colorbar(sm, ax=axs[:, 2],location='right')#, vmin=0.0, vmax=z_cutoff[1])
-    cbar.ax.set_title("$z_{phot,F160W}$")
-    #            
-    #            
-    plt.show()
-#
 #
 #
 #

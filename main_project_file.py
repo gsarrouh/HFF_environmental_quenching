@@ -84,11 +84,11 @@ if project_time_flag == 1:
 ## USER INPUTS
 ## MAY NEED TO EDIT: hard code the cluster membership definition cuts if not running Variational Analysis
 #
-z_cutoff = [0.01,0.05]#1st try[0.02,0.06]     # [spec,phot] cutoffs for cluster membership
+z_cutoff = [0.012,0.055]#1st try[0.02,0.06]     # [spec,phot] cutoffs for cluster membership
 z_cutoff_field = [0.08,0.15]    # same but for definition of "field" galaxies
 bin_width = 0.4  # of the SMF, in dex
-num_bins_SF_pos_neg = [6.64,9.06,10.13,12.3]#[6.6,9.05,10.13,12.3]   # bin edges of the false pos/neg SF histogram, in units of log10(mass); METHOD = 1
-num_bins_Q_pos_neg = [6.64,8.527,10.413,12.3]#1st try -[7.05,10.11,12.3]  # bin edges of the false pos/neg Q histogram;    METHOD = 2
+num_bins_SF_pos_neg = [6.64,8.527,10.413 ,12.3]#[6.6,9.05,10.13,12.3]   # bin edges of the false pos/neg SF histogram, in units of log10(mass); METHOD = 1
+num_bins_Q_pos_neg = [6.64,8.527, 10.413,12.3]#1st try -[7.05,10.11,12.3]  # bin edges of the false pos/neg Q histogram;    METHOD = 2
 #
 #
 #
@@ -103,9 +103,13 @@ adams_flag = 1                     # diagnostic summary table to account for eve
 project_diagnostic_flag = 2        # 0=off, turn OFF ALL diagnostic flags in all files;    1=on, turn ON ALL diagnostics for every file that will be executed; or go into each individual program and turn on specific diagnostic flags by searching "diag_flag";      2=on, allow INDIVIDUAL diagnostic flags within separate programs to be turned on/off
 #
 #
-## PROJECT DIAGNOSTIC FLAG
+## PROJECT VARIATIONAL ANALYSIS FLAG
 project_master_variational_flag = 0        # 0=off, don't perform variational analaysis;  1=on, do it. the analysis may also be turned on/off within "master_data*.py"
 diagnostic_round_flag = 2                  # variational analysis performed in 2 rounds: 1st round (flag==1), try all possible cuts; 2nd round (flag==2), compare the top 6 (3 best SF/Q)
+#
+#
+## PROJECT PLOT FLAG
+project_plot_flag = 2        # 0=off, make no figures;  1=on, make all figures;  2=on, allow individual figures
 #
 #
 ##       0=off, skip section;     1=on, execute section
@@ -114,7 +118,7 @@ diagnostic_round_flag = 2                  # variational analysis performed in 2
 section_1_flag = 1                 # cluster catalogue data prep
 section_2_flag = 1                 # parallel field catalogue data prep# z plots
 section_3_flag = 1                 # limiting mass
-section_4_flag = 1                 # z-plots
+section_4_flag = 0                 # z-plots
 section_5_flag = 0                 # velocity dispersion, r_200, M_200 calculation
 section_6_flag = 0                 # SMF
 #    
@@ -123,7 +127,7 @@ section_6_flag = 0                 # SMF
 limiting_mass_flag = 1             #   1 = F160W;   2 = F814W
 ## Update the user on what this program will run
 #
-print('"main_project_file" will run the following:')
+print('"main_project_file.py" will run the following:')
 #
 if section_1_flag == 1:
     print('Section 1: Import & prepare CLUSTER DATA ("master_data*.py")')

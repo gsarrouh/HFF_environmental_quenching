@@ -99,69 +99,76 @@ for ii in range(len(BCG_delz_phot_plot)):
 total_BCG = len(BCG_delz_phot_plot)
 #
 string = 'z=-99.0: %s'%num_bad_BCG+'/%s'%total_BCG
-print('z=-99 (not in Parent sample): %s'%num_bad_BCG,'\nOther (in Parent sample)%s'%len(good_BCG_phot))
+print('z=-99 (not in Parent sample): %s'%num_bad_BCG,'\nOther (in Parent sample): %s'%len(good_BCG_phot))
 #
 ## PLOT FLAG
-if plot_flag_1 == 1:
-    ## Visualize del_z distribution
+if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
+    if project_plot_flag == 0:
+        pass
+    else:
+        ## Visualize del_z distribution
+        #
+        ## PHOT
+        plt.figure()
+        n, bins, patches = plt.hist(x=np.abs(good_BCG_phot),bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7, rwidth=1)
+        plt.grid(axis='y', alpha=0.75)
+        plt.xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=12)
+        plt.ylabel('# count',fontsize=12)
+        plt.title('|${\Delta}$z|$_{phot}$ bCG (in parent sample)',fontsize=15)
+        plt.text(0.2,3,string,fontsize=9)
+        plt.show()
+        # 
+        ## SPEC
+        plt.figure()
+        n, bins, patches = plt.hist(x=np.abs(BCG_delz_spec_plot),bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7, rwidth=1)
+        plt.grid(axis='y', alpha=0.75)
+        plt.xlabel('$z_{spec}$ - $z_{cluster}$ / 1 + $z_{spec}$',fontsize=12)
+        plt.ylabel('# count',fontsize=12)
+        plt.title('|${\Delta}$z|$_{spec}$ bCG - NOT IN PARENT SAMPLE',fontsize=15)
+        plt.text(0.2,3,string,fontsize=9)
+        plt.show()
+        #
+        #
+        #print('# phot: %s'%len(delz_phot_plot),'\n# spec: %s'%len(delz_spec_plot),'\nTotal: %s'%(len(delz_phot_plot)+len(delz_spec_plot)))
+        #
     #
-    ## PHOT
-    plt.figure()
-    n, bins, patches = plt.hist(x=np.abs(good_BCG_phot),bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7, rwidth=1)
-    plt.grid(axis='y', alpha=0.75)
-    plt.xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=12)
-    plt.ylabel('# count',fontsize=12)
-    plt.title('|${\Delta}$z|$_{phot}$ bCG',fontsize=15)
-    ax.text(0.2,3,string,fontsize=9)
-    plt.show()
-    # 
-    ## SPEC
-    plt.figure()
-    n, bins, patches = plt.hist(x=np.abs(BCG_delz_spec_plot),bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7, rwidth=1)
-    plt.grid(axis='y', alpha=0.75)
-    plt.xlabel('$z_{spec}$ - $z_{cluster}$ / 1 + $z_{spec}$',fontsize=12)
-    plt.ylabel('# count',fontsize=12)
-    plt.title('|${\Delta}$z|$_{spec}$ bCG - NOT IN PARENT SAMPLE',fontsize=15)
-    ax.text(0.2,3,string,fontsize=9)
-    plt.show()
-    #
-    #
-    #print('# phot: %s'%len(delz_phot_plot),'\n# spec: %s'%len(delz_spec_plot),'\nTotal: %s'%(len(delz_phot_plot)+len(delz_spec_plot)))
-    #
-if plot_flag_2 == 1:
-    ## Visualize by cluster
-    #
-    #
-    nrows=2
-    ncols=3
-    #plot_titles = ['SF','Q']
-    #
-    fig, axs = plt.subplots(nrows,ncols,sharex=True,sharey=True,tight_layout=True)
-    #fig.suptitle('abs(DEL_Z PHOT)',fontsize=12)
-    #
-    counter = 0
-    #
-    for jj in range(nrows):
-        for kk in range(ncols):
-            if counter < len(BCG_delz_phot_plot):
-            #
-                ax = axs[jj][kk]
+if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
+    if project_plot_flag == 0:
+        pass
+    else:
+        ## Visualize by cluster
+        #
+        #
+        nrows=2
+        ncols=3
+        #plot_titles = ['SF','Q']
+        #
+        fig, axs = plt.subplots(nrows,ncols,sharex=True,sharey=True,tight_layout=True)
+        #fig.suptitle('abs(DEL_Z PHOT)',fontsize=12)
+        #
+        counter = 0
+        #
+        for jj in range(nrows):
+            for kk in range(ncols):
+                if counter < len(BCG_delz_phot_plot):
                 #
-                ax.hist(np.abs(BCG_delz_phot[counter]),bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7)
-                ax.grid(axis='y', alpha=0.75)
-                ax.set_xlim([min(bins_phot),max(bins_phot)])
-                ax.title.set_text(cluster_names[kk])
-                #ax.text(0.05,2500,cluster_names[counter],fontsize=9)
-                counter+=1
-                if jj == 1:      # put xlabels on 1st row
-                    ax.set_xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=10)
-                if kk == 0:
-                    ax.set_ylabel('# count',fontsize=10)
-        #####            
-    #            
-    #            
-    plt.show()
-    #
+                    ax = axs[jj][kk]
+                    #
+                    ax.hist(np.abs(BCG_delz_phot[counter]),bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7)
+                    ax.grid(axis='y', alpha=0.75)
+                    ax.set_xlim([min(bins_phot),max(bins_phot)])
+                    ax.title.set_text(cluster_names[kk])
+                    #ax.text(0.05,2500,cluster_names[counter],fontsize=9)
+                    counter+=1
+                    if jj == 1:      # put xlabels on 1st row
+                        ax.set_xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=10)
+                    if kk == 0:
+                        ax.set_ylabel('# count',fontsize=10)
+            #####            
+        #            
+        #            
+        plt.show()
+        #
     #
 #
 #
