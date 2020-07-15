@@ -486,7 +486,7 @@ if plot_flag_1 == 1:
         #plt.plot([0,35],[min_mass,min_mass], '-.k', linewidth=0.8)
         ax.set_xlabel('$m_{F160W}$')
         ax.set_xlim(17,30)
-        ax.set_ylabel('$log(M/M_{\odot})$')
+        ax.set_ylabel('$log_{10}$(M/M$_{\odot})$')
         ax.set_ylim(5,13)
         ax.grid(b=False, which='major', axis='both', color = 'k', linestyle = ':')
         ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True)
