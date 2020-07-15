@@ -60,7 +60,7 @@ diag_flag = 1
 #
 ## DEFINITIONS 
 #
-## define a function to convert a redshift to a recessional velocity
+## define a function to convert a redshift to a recessional velocity in UNITS of m/s
 def recessional_velocity(z):
     v = c * ( ((1+z)**2 - 1) / ((1+z)**2 + 1) )
     return v
@@ -71,19 +71,27 @@ def friedmann_equation(z_clu):
     return H2
 #
 ## define a function to convert metres to parsecs
-def m_to_kpc(r_m):
-    r_kpc = r_m / 3.0857e19                # conversion factor from wikipedia 
-    return r_kpc
+def m_to_Mpc(r_m):
+    r_Mpc = r_m / 3.0857e22                # conversion factor from wikipedia 
+    return r_Mpc
 #
 ## define a function to convert kilograms to solar masses
-def kg_to_log10_Msol(m_kg):
-    m_Msol = m_kg / 1988500e24             # conversion factor from NASA sun fact sheet 
-    log10_Msol = np.log10(m_Msol)
-    return log10_Msol
+def kg_to_log10_Msol(m_kg):             
+    m_log10_Msol = np.log10(m_kg / 1.9885e30) # conversion factor from NASA sun fact sheet 
+    return m_log10_Msol
+#
+## define a function to convert log10(Msol) to log10(log10(Msol)), to deal with doing math on huge numbers
+def log10_mSol_to_log10_log10_Msol(m_log10_Msol):
+    m_log10_log10_Msol = np.log10(m_log10_Msol)        
+    return m_log10_log10_Msol
+#
+## define a function to convert log10(log10(Msol)) back to log10(Msol)
+def log10_log10_Msol_to_log10_mSol(log10_Msol):
+    m_Msol = 10**log10_Msol     
+    return m_Msol
 #
 ## define a function to convert kilograms to solar masses
 def log10_Msol_to_kg(m_log10_Msol):
-    m_kg = np.float128
     m_kg = 10**m_log10_Msol              # get mass in solar units, not log_10()
     m_kg = m_kg * 1988500e24             # conversion factor from NASA sun fact sheet: 1 M_sol = 1,988,500e24 kg 
     return m_kg
@@ -94,11 +102,11 @@ def log10_Msol_to_kg(m_log10_Msol):
 ## CONSTANTS & USER INPUTS
 ## MAY NEED TO EDIT
 #
-H_0 = 70                          # units [s^-1]; NO REFERENCE - THIS WILL NEED TO BE UPDATED: MAY NEED TO EDIT
-G = 6.67430e-11                   # gravitational constant; units [m^3*(kg*s^2)^-1]; physics.nist.gov
-c = 2.99792458e+8                 # speed of light, units [m/s]; from physics.nist.gov
-omega_m = 0.3                     # energy density of matter (***AT THE PRESENT EPOCH???***)
-omega_lambda = 0.7                # energy density of Lambda (both of these omegas are dimensionless)
+H_0 = 67.4*(1/3.0857e19)        # units [kms^-1Mpc^-1]*[Mpc per km]; Freedman et al 2019, APJ
+G = 6.67430e-11*((1/3.0857e+16)**3)*((1.9885e30/1)) # gravitational constant; units [m^3*k^-1g*s^-2]*[Mpc/m]^3*[kg/Msol] = [Mpc^3*(Msol*s^2)^-1]; physics.nist.gov
+c = 2.99792458e+8               # speed of light, units [m/s]; from physics.nist.gov
+omega_m = 0.3                   # energy density of matter (***AT THE PRESENT EPOCH???***)
+omega_lambda = 0.7              # energy density of Lambda (both of these omegas are dimensionless)
 #
 ##
 #
@@ -172,18 +180,25 @@ if (diag_flag == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag 
 ## calculate the velocity dispersion in the z-direction (sigma_z), which is the standard deviation of the recessional velocities (i.e. the velocities in the z-direction); ASSUMPTION: velocity is ISOTROPIC, so velocity dispersion squared is sum of squared components (x,y,z). we calculate the z-component from the redshift (recessional velocity), square it, and multiply by 3 to get the squared total velocity dispersion.
 #
 vel_disp_mean = np.array([0]*6,dtype='float128')
-vel_disp_z = np.array([0]*6,dtype='float128')
-vel_disp_sq = np.array([0]*6,dtype='float128')
-for ii in range(len(vel_disp)):
+vel_disp_z_m = np.array([0]*6,dtype='float128')
+vel_disp_sq_m = np.array([0]*6,dtype='float128')
+for ii in range(len(vel_disp_mean)):
     vel_disp_mean[ii] = np.mean(cluster_velocities[ii])
-    vel_disp_z[ii] = np.std(cluster_velocities[ii])
-    vel_disp_sq[ii] = 3*(np.std(cluster_velocities[ii])**2)
+    vel_disp_z_m[ii] = np.std(cluster_velocities[ii])
+    vel_disp_sq_m[ii] = 3*(np.std(cluster_velocities[ii])**2)
+#
+## convert squared velocity dispersion to units of [Mpc/s}^2
+vel_disp_sq_Mpc = np.array([0]*6,dtype='float128')
+#
+for ii in range(len(vel_disp_sq_Mpc)):
+    vel_disp_sq_Mpc[ii] = m_to_Mpc(vel_disp_z_m[ii])
+vel_disp_sq_Mpc = 3*(vel_disp_sq_Mpc**2)
 #
 if (diag_flag == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:
     if project_diagnostic_flag == 0:
         pass
     else:
-        print('\nMean recessional velocity (km/s): \n%s'%(vel_disp_mean/1e3),'\nRecessional velocity dispersion (z-direction) by cluster (km/s): \n%s'%(vel_disp_z/1e3),'\nTOTAL velocity dispersion by cluster (km/s): \n%s'%(np.sqrt(vel_disp_sq)/1e3),'\nVelocity dispersion squared (total) by cluster (km/s): \n%s'%(vel_disp_sq/1e3))
+        print('\nMean recessional velocity (km/s): \n%s'%(vel_disp_mean/1e3),'\nRecessional velocity dispersion (z-direction) by cluster (km/s): \n%s'%(vel_disp_z_m/1e3),'\nTOTAL velocity dispersion by cluster (km/s): \n%s'%(np.sqrt(vel_disp_sq_m)/1e3),'\nTOTAL velocity dispersion (squared) by cluster (km/s): \n%s'%(vel_disp_sq_m/1e3))
 #
 #
 #
@@ -194,26 +209,26 @@ if (diag_flag == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag 
 #
 ## first calculate the total stellar mass in each cluster; then apply KE = 0.5 * (M_star total) * vel_disp_sq
 #
-cluster_stellar_mass_total_Msol = np.array([0]*6,dtype='float128')
+cluster_stellar_mass_total_log10_Msol = np.array([0]*6,dtype='float128')
 #
 for ii in range(len(cluster_mass)): 
-    cluster_stellar_mass_total_Msol[ii] = np.sum(cluster_mass[ii])
+    cluster_stellar_mass_total_log10_Msol[ii] = np.sum(cluster_mass[ii])
 #
-## convert masses from [log10(solar mass units)] to [kg]
-cluster_stellar_mass_total_kg = np.empty_like(cluster_stellar_mass_total_Msol,dtype='float128')
-cluster_stellar_mass_total_kg = log10_Msol_to_kg(cluster_stellar_mass_total_Msol)
+####### convert masses from [log10(solar mass units)] to [kg]
+#####cluster_stellar_mass_total_kg = np.empty_like(cluster_stellar_mass_total_log10_Msol,dtype='float128')
+#####cluster_stellar_mass_total_kg = log10_Msol_to_kg(cluster_stellar_mass_total_log10_Msol)
 #
 #
-kinetic_energy = 0
-for ii in range(len(cluster_stellar_mass_total)):
-    kinetic_energy+=(0.5*cluster_stellar_mass_total_kg[ii]*vel_disp_sq[ii])
+#####kinetic_energy = 0
+#####for ii in range(len(cluster_stellar_mass_total)):
+#####    kinetic_energy+=(0.5*cluster_stellar_mass_total_kg[ii]*vel_disp_sq[ii])
 #
 #
 if (diag_flag == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:
     if project_diagnostic_flag == 0:
         pass
     else:
-        print('\nTotal STELLAR Mass by cluster (units: [M_sol]:\n%s'%cluster_stellar_mass_total_Msol)
+        print('\nTotal STELLAR Mass by cluster (units: [log_10(M_sol)]:\n%s'%cluster_stellar_mass_total_log10_Msol)
 #
 ## SECTION (3.2): RHS: compute the POTENTIAL ENERGY --> really, compute r_200 & M_200: the radius within which the average density is 200 times the critical density of a spatially flat univervse, and the mass enclosed within a sphere of that radius
 #
@@ -223,28 +238,28 @@ H2 = np.array([0]*6,dtype='float128')
 for ii in range(len(z_cluster)):
     H2[ii] = friedmann_equation(z_cluster[ii])
 #
-r_200_m = np.array([0]*6,dtype='float128')
+## r_200 in UNITS [Mpc]
+r_200_Mpc = np.array([0]*6,dtype='float128')
 for ii in range(len(r_200_m)):
-    r_200_m[ii] = np.sqrt((1/100)*(1/H2[ii])*cluster_stellar_mass_total_kg[ii]*vel_disp_sq[ii])    # dimensionally correct: units of 
+    #r_200_m[ii] = np.sqrt((1/100)*(1/H2[ii])*vel_disp_sq_m[ii])
+    #r_200_Mpc = m_to_Mpc(r_200_m)
+    r_200_Mpc[ii] = np.sqrt((1/100)*(1/H2[ii])*vel_disp_sq_Mpc[ii])    # dimensionally correct: units of 
 #
-## convert r_200 from metres to kiloparsecs
-r_200_kpc = np.array([0]*6,dtype='float128')
-r_200_kpc = m_to_kpc(r_200_m)
-## M_200: for a derivation, see Notes; 
+## M_200: for a derivation, see Notes; in UNITS [Msol]
 #
-M_200_kg = np.array([0]*6,dtype='float128')
+M_200_log10_Msol = np.array([0]*6,dtype='float128')
 for ii in range(len(M_200_kg)):
-    M_200_kg[ii] = (100)*(H2[ii])*(r_200_m[ii]**3)/G        # dimensionally correct
+    M_200_log10_Msol[ii] = np.log10((100)*(H2[ii])*(r_200_Mpc[ii]**3)/G)        # dimensionally correct
 #
 ## convert M_200 from kg to log10(M_sol)
-M_200_Msol = np.array([0]*6,dtype='float128')
-M_200_Msol = kg_to_log10_Msol(M_200_kg)
+#M_200_Msol = np.array([0]*6,dtype='float128')
+#M_200_Msol = kg_to_log10_Msol(M_200_kg)
 #
 if (diag_flag == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:
     if project_diagnostic_flag == 0:
         pass
     else:
-        print('\nHubble factor by cluser:\n%s'%H2,'\nr_200 by cluster (kpc):\n%s'%r_200_kpc,'\nM_200 by cluster (log10(M_sol)):\n%s'%M_200_Msol)
+        print('\nHubble factor by cluser:\n%s'%H2,'\n\nr_200 by cluster (Mpc):\n%s'%r_200_Mpc,'\n\nM_200 by cluster (log10(M_sol)):\n%s'%M_200_log10_Msol)
 #
 #
 #
