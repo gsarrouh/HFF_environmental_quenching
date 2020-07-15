@@ -20,24 +20,32 @@
 ### (0.1)  FLAGS
 #
 ### (1)    main DATA preparation file; imports raw data, sorts it, and
-###        determine cluster membership;  
+###        determines cluster membership; it also performs a variational 
+###        analysis (VAR) to determine the optimal memebrship cut which yields 
+###        the spec. completeness correction factors closest to 1 in each 
+###        mass bin
 ###        MAIN program: master_data_7_final.py;  
-###        SUB-programs: spec_completeness_binning.py, correction_factors.py; 
+###        SUB-programs: spec_completeness_binning.py, phot_completeness_binning.py, 
+###        spec_correction_factors.py (VAR), data_mass_completeness*.py (VAR),
+###        delz_hist_diagnostic.py, bcg_hist_diagnostic.py,
+###        spec_asymmetric_binning.py (VAR),; 
 #
-### (2):   REDSHIFT plots; executes a file which produces figures 
-###        ANALYZING the QUALITY of the data set; 
-###        MAIN program: master_zplots_2_final.py;
+### (2):   by and large a copy of master_data*.py, imports and anlyzes 
+###        the field sample from the Hubble Parallel Fields ; 
+###        MAIN program: masterparallel_2.py;
 #
 ### (3):   determine LIMITING MASS - self-explanatory; MAIN program: ******.py 
 #
-### (4):   produce Stellar Mass Function (SMF); 
-###        MAIN program: master_smfz_8_final.py;
+### (4):   REDSHIFT plots; executes a file which produces figures 
+###        ANALYZING the QUALITY of the data set; 
+###        MAIN program: master_zplots_2_final.py;
 #
-### (5):   ;
+### (5):   determine SCALE RADIUS and MASS "r_200" & "M_200" of each cluster
+###        MAIN program: velocity_dispersion.py
 #
-### (6):   ;
+### (6):   produce Stellar Mass Function (SMF); ;
+###        MAIN program: master_smfz_9_final.py;
 #
-### (7):   ;
 #
 ### PROGRAM END
 #
@@ -104,14 +112,15 @@ diagnostic_round_flag = 2                  # variational analysis performed in 2
 #
 #
 section_1_flag = 1                 # cluster catalogue data prep
-section_2_flag = 1                 # parallel field catalogue data prep
-section_3_flag = 0                 # z plots
-section_4_flag = 1                 # limiting mass
-section_5_flag = 0                 # SMF
+section_2_flag = 1                 # parallel field catalogue data prep# z plots
+section_3_flag = 1                 # limiting mass
+section_4_flag = 1                 # z-plots
+section_5_flag = 0                 # velocity dispersion, r_200, M_200 calculation
+section_6_flag = 0                 # SMF
 #    
 #
 ## MAY NEED TO EDIT: choose the filter in which to determine limiting mass
-limiting_mass_flag = 2             #   1 = F160W;   2 = F814W
+limiting_mass_flag = 1             #   1 = F160W;   2 = F814W
 ## Update the user on what this program will run
 #
 print('"main_project_file" will run the following:')
@@ -123,17 +132,22 @@ if section_2_flag == 1:
     print('Section 2: Import & prepare PARALLEL FIELD DATA ("master_parallel*.py")')
 #
 if section_3_flag == 1:
-    print('Section 3: Prepare redshift & SF/Q classification FIGURES ("master_zplots*.py")')
-#
-if section_4_flag == 1:
-    print('Section 4: Determine LIMITING MASS ("data_mass_completeness*.py")')
+    print('Section 3: Determine LIMITING MASS ("data_mass_completeness*.py")')
     if limiting_mass_flag == 1:
         print('Limiting mass calculated in F160W.')
     elif limiting_mass_flag == 2:
         print('Limiting mass calculated in F814W.')
 #
+if section_4_flag == 1:
+    print('Section 4: Prepare redshift & UVJ classification FIGURES ("master_zplots*.py")')
+
+#
 if section_5_flag == 1:
-    print('Section 5: Produce SMF ("master_smf*.py")')
+    print('Section 5: calculate Velocity Dispersion, r_200, M_200 ("velocity_dispersion.py")')
+#
+#
+if section_6_flag == 1:
+    print('Section 6: Produce SMF ("master_smf*.py")')
 #
 ## SECTION (1): main DATA preparation file; imports raw data, sorts it by data type (i.e. photometric/spectroscopic data, stars, etc...), and classifies all galaxies with good photometric redshift estimates as Star-Forming (SF) or Quiescent (Q); it then runs a VARIATIONAL ANALYSIS to determine optimal redshift definitions (redshift "cuts") for cluster membership, based on which cuts yield an equal number of false positives/negatives in each mass bin; executes redshift cuts, classifies SF/Q galaxies as either cluster members, false pos/neg, or field galaxy; and finally, checks the catalogue for Brightest Cluster Galaxies (bCGs); MAIN program: master_data_7_final.py; SUB-programs: spec_completeness_binning.py, correction_factors.py;
 
@@ -171,24 +185,11 @@ if section_2_flag == 1:
 #
 #
 #
-## SECTION (3): SF/Q classification & spec. subsample selection FIGURES
-#
-## Call and execute the "master_zplots*.py" file, to create plots assessing the quality of the data and visualizes galaxy classification (i.e. SF/Q).  Fig. 1: z_phot v z_spec;  Fig. 2: cluster members/field/false pos/false neg;  Fig. 3: UVJ diagram
+## SECTION (3): LIMITING MASS CALCULATION
 #
 #
 #
 if section_3_flag == 1:
-    print('\nBeginning "master_zplots*.py"')
-    exec(open('master_zplots_2_final.py').read())      #opens and executes the script 
-#
-#
-#
-#
-## SECTION (4): LIMITING MASS CALCULATION
-#
-#
-#
-if section_4_flag == 1:
     print('\nBeginning "data_mass_completeness*.py"')
     #
     if limiting_mass_flag == 1:
@@ -199,13 +200,37 @@ if section_4_flag == 1:
 #
 #
 #
+## SECTION (4): SF/Q classification & spec. subsample selection FIGURES
+#
+## Call and execute the "master_zplots*.py" file, to create plots assessing the quality of the data and visualizes galaxy classification (i.e. SF/Q).  Fig. 1: z_phot v z_spec;  Fig. 2: cluster members/field/false pos/false neg;  Fig. 3: UVJ diagram
+#
+#
+#
+if section_4_flag == 1:
+    print('\nBeginning "master_zplots*.py"')
+    exec(open('master_zplots_2_final.py').read())      #opens and executes the script 
+#
+#
+#
+#
 ## SECTION (5): SMF
 #
 #
 #
 if section_5_flag == 1:
+    print('\nBeginning "velocity_dispersion.py"')
+    exec(open('velocity_dispersion.py').read())      #opens and executes the script 
+#
+#
+#
+#
+## SECTION (5): SMF
+#
+#
+#
+if section_6_flag == 1:
     print('\nBeginning "master_smfz*.py"')
-    exec(open('master_smfz_8_final.py').read())      #opens and executes the script 
+    exec(open('master_smfz_9_final.py').read())      #opens and executes the script 
 #
 #
 #
