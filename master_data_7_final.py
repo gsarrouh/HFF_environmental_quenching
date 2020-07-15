@@ -160,7 +160,7 @@ if 'project_diagnostic_flag' in locals():
 else:
     project_diagnostic_flag = 2
     project_master_variational_flag = 0
-    z_cutoff = [0.02,0.06]     # [spec,phot] cutoffs for cluster membership
+    z_cutoff = [0.01,0.06]     # [spec,phot] cutoffs for cluster membership
     z_cutoff_field = [0.08,0.15] 
     limiting_mass_flag = 1
     bin_width = 0.4
@@ -582,8 +582,7 @@ else:
 #
 #
 #
-## SECTION (3): add FILTER TYPE: separate SF/Q for both subsamples based on van der Burg (2013) 
-## colour criteria;    filter name: 'type'  IDs below
+## SECTION (3): add FILTER TYPE: separate SF/Q for both subsamples;    filter name: 'type'  IDs below; SELECTION CRITERIA from Shipley et al. 2018, Section (5.3)
 ##   0 = stars;  1 = SF (star-forming);    2 = Q (quiscient);    3 = outliers
 #
 print('\n"master_data*.py" Section 3: classifying galaxy TYPE as star-forming or quiescent...')
@@ -608,14 +607,42 @@ for counter in range(len(master_cat)):
             if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
                 stars_type[ii]+=1
     elif master_cat['sub'][counter]==1 or master_cat['sub'][counter]==2:    # sub=1 for (spec & phot) subsample, sub=2 for phot subsample; i.e. look at all objects with photometry   <-- THIS IS THE LINE THAT MATTERS!
-        if master_cat['uv'][counter] > 1.3 and master_cat['vj'][counter] < 1.6 and master_cat['uv'][counter] > ((0.88*master_cat[counter]['vj']) + 0.6): 
-            if master_cat['type'][counter] !=3:             # skip outliers
-                master_cat['type'][counter] = 2             # identify passive (QUIESCENT) galaxies, type=2
-                for ii in range(len(Q_type[0])):
-                    if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
-                        if master_cat['sub'][counter] == 1:
-                            Q_type[0][ii]+=1
-                        else: Q_type[1][ii]+=1
+        if master_cat['vj'][counter] < 0.75:
+            if master_cat['uv'][counter] < 1.3: 
+                if master_cat['type'][counter] !=3:             # skip outliers
+                    master_cat['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1 
+                    for ii in range(len(SF_type[0])):
+                        if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
+                            if master_cat['sub'][counter] == 1:
+                                SF_type[0][ii]+=1                # track spec vs phot
+                            else: SF_type[1][ii]+=1
+            else:
+                if master_cat['type'][counter] !=3 and master_cat['type'][counter] !=0:    # skip outliers & stars    
+                    master_cat['type'][counter] = 2             # identify passive (QUIESCENT) galaxies, type=2
+                    for ii in range(len(Q_type[0])):
+                        if master_cat['cluster'][counter] == (ii+1):   # keep 
+                            if master_cat['sub'][counter] == 1:
+                                Q_type[0][ii]+=1               # track spec vs phot
+                            else:
+                                Q_type[1][ii]+=1
+        elif master_cat['vj'][counter] >= 0.75:
+            if master_cat['uv'][counter] < ( (0.8 * master_cat['vj'][counter]) + 0.7 ): 
+                if master_cat['type'][counter] !=3:             # skip outliers
+                    master_cat['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1 
+                    for ii in range(len(Q_type[0])):
+                        if master_cat['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
+                            if master_cat['sub'][counter] == 1:
+                                SF_type[0][ii]+=1
+                            else: SF_type[1][ii]+=1
+            else:
+                if master_cat['type'][counter] !=3 and master_cat['type'][counter] !=0:    # skip outliers & stars    
+                    master_cat['type'][counter] = 2             # identify passive (QUIESCENT) galaxies, type=2
+                    for ii in range(len(SF_type[0])):
+                        if master_cat['cluster'][counter] == (ii+1):   # keep 
+                            if master_cat['sub'][counter] == 1:
+                                Q_type[0][ii]+=1               # track spec vs phot
+                            else:
+                                Q_type[1][ii]+=1
         else:
             if master_cat['type'][counter] !=3:             # skip outliers    
                 master_cat['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1
@@ -1063,7 +1090,7 @@ if summary_flag_6 == 1 or adams_flag == 1:
     #
     print('\nSummary Table 6 - FULL Parent Sample\nCatalogue by MEMBER:')
     print(member_stats)
-    print('\nNOTE: Lost Due To Buffer b/w member & field: %s'%LDTB_total,'\nTotal galaxies considered: Members + Buffer + Outliers(spec) = %s'%np.sum([mem_phot,mem_spec,field_phot,far_field_phot,far_field_spec,field_spec,pos_spec,neg_spec]),' + %s'%LDTB_total,' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_phot),np.sum(mem_spec),np.sum(field_phot),np.sum(far_field_phot),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(LDTB_total),np.sum(outliers)]),'\nNOTE: Total (phot) FAR Field (z>0.6 or z<0.3): %s'%np.sum([far_field_phot,far_field_spec]))
+    print('\nNOTE: Lost Due To Buffer b/w member & field: %s'%LDTB_total,'\nTotal galaxies considered: (Members+All_field) + Buffer + Outliers(spec) = %s'%np.sum([mem_phot,mem_spec,field_phot,far_field_phot,far_field_spec,field_spec,pos_spec,neg_spec]),' + %s'%LDTB_total,' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_phot),np.sum(mem_spec),np.sum(field_phot),np.sum(far_field_phot),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(LDTB_total),np.sum(outliers)]),'\nNOTE: Total (phot) FAR Field (z>0.6 or z<0.3): %s'%np.sum([far_field_phot,far_field_spec]))
     print('\nTOTAL MEMBERS SELECTED: phot + spec = %s'%(np.sum([mem_phot[0],mem_phot[1]])),' + %s'%(np.sum([mem_spec[0],mem_spec[1]])),' = %s'%np.sum([mem_phot,mem_spec]),'\nTOTAL FIELD SAMPLE SELECTED: %s'%np.sum([field_phot,field_spec]),'\nFor redshift cutoffs [spec,phot] = %s'%z_cutoff)
     #
 #
@@ -1071,7 +1098,7 @@ if summary_flag_6 == 1 or adams_flag == 1:
 #                        
 ## SECTION (6): BCGs. Brightest Cluster Galaxies (BCGs) need to be taken out of the cluster sample as they are unique to overly dense environments and so lack a counterpart in the field against which to make a fair comparison. as such, we remove them from our sample before making the SMF
 #
-print('\n"master_data*.py" Section 6: removing BCGs beginning...')
+print('\n"master_data*.py" Section 6: search for BCGs beginning...')
 #
 #
 ## TIME_FLAG_6 START
@@ -1097,12 +1124,12 @@ exec(open('bcg_hist_diagnostic.py').read())
 #
 if summary_flag_7 == 1 or adams_flag == 1:
     ## Summarize bCG stats in table
-    BCG_names = Column(['Total (>%s)'%BCG_threshold,'SF_total','SF_spec','SF_phot','Q_total','Q_spec','Q_phot','SF+Q_sum','Spec Outliers','Bad z_phot','Good z_spec','Other TYPE'],name='Property')
+    BCG_names = Column(['Total (>%s)'%BCG_threshold,'SF_total','SF_spec','SF_phot','Q_total','Q_spec','Q_phot','SF+Q_sum','Spec Outliers','Bad z_phot','Good z_spec','Other TYPE','SUM - SF_total,Q_total,Outliers,bad_z_phot'],name='Property')
     col_names = cluster_names
-    BCG0 = Column([np.sum(num_BCG),np.sum(BCG_SF),np.sum(BCG_spec[0]),np.sum(BCG_phot[0]),np.sum(BCG_Q),np.sum(BCG_spec[1]),np.sum(BCG_phot[1]),np.sum([BCG_spec[0],BCG_phot[0],BCG_spec[1],BCG_phot[1]]),np.sum(BCG_outliers),np.sum(num_bad_z_phot),len(BCG_delz_spec_plot),np.sum(num_other_type_bcg)],name='Total')  # total column
+    BCG0 = Column([np.sum(num_BCG),np.sum(BCG_SF),np.sum(BCG_spec[0]),np.sum(BCG_phot[0]),np.sum(BCG_Q),np.sum(BCG_spec[1]),np.sum(BCG_phot[1]),np.sum([BCG_spec[0],BCG_phot[0],BCG_spec[1],BCG_phot[1]]),np.sum(BCG_outliers),np.sum(num_bad_z_phot),len(BCG_delz_spec_plot),np.sum(num_other_type_bcg),np.sum([np.sum(BCG_SF),np.sum(BCG_Q),np.sum(BCG_outliers),np.sum(num_bad_z_phot)])],name='Total')  # total column
     BCG_stats = Table([BCG_names,BCG0])
     for ii in range(len(num_BCG)):
-        BCG_col = Column([num_BCG[ii],BCG_SF[ii],BCG_spec[0][ii],BCG_phot[0][ii],BCG_Q[ii],BCG_spec[1][ii],BCG_phot[1][ii],np.sum([BCG_spec[0][ii],BCG_phot[0][ii],BCG_spec[1][ii],BCG_phot[1][ii]]),BCG_outliers[ii],num_bad_z_phot[ii],len(BCG_delz_spec[ii]),num_other_type_bcg[ii]],name=col_names[ii])               # cluster columns
+        BCG_col = Column([num_BCG[ii],BCG_SF[ii],BCG_spec[0][ii],BCG_phot[0][ii],BCG_Q[ii],BCG_spec[1][ii],BCG_phot[1][ii],np.sum([BCG_spec[0][ii],BCG_phot[0][ii],BCG_spec[1][ii],BCG_phot[1][ii]]),BCG_outliers[ii],num_bad_z_phot[ii],len(BCG_delz_spec[ii]),num_other_type_bcg[ii],np.sum([BCG_SF[ii],BCG_Q[ii],BCG_outliers[ii],num_bad_z_phot[ii]])],name=col_names[ii])               # cluster columns
         BCG_stats.add_column(BCG_col) 
     #
     #
