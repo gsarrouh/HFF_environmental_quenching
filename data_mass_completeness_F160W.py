@@ -22,7 +22,10 @@
 ### (0)    import modules, define functions; define LIMITING MAGNITUDES (ref. Shipley et al. 2018)
 ### (1)    compute MAGNITUDES, collect lists, check accounting of all selected cluster members
 ### (1.1)   prepare SUMMARY TABLES
-### (2)    VISUALIZATION; individually (PLOT_FLAG_1) and tiled subplot (PLOT_FLAG_2) 
+### (2)    determine LIMITING MASS
+### (3)    VISUALIZATION; individually (PLOT_FLAG_1) and tiled subplot (PLOT_FLAG_2) 
+### (4)    REMOVE all galaxies below limiting mass from prelimenary cluster member sample (i.e. reclassify 
+### (4.1)   prepare SUMMARY TABLES
 #
 #
 #
@@ -88,17 +91,18 @@ def min_nested_list(nested_list,axis):
 #
 #
 limiting_mag = np.array([26.2,26.5,25.5,26.1,26.5,26.7])    # NOTE: order is [M0416,M1149,M0717,A370,A1063,A274]
+limiting_mag_814 = np.array([27.5,27.4,26.9,27.1,27.4,27.2])
 cluster_names = ['M0416','M1149','M0717','A370','A1063','A2744']   # in the order corresponding to limiting mags above
 #
 ## FLAGS - search flag name to find it, or search "MAY NEED TO EDIT"
 #
 summary_flag = 0          # print summary table comparing total & cluster members here to those in 'master_data*.py'
 #
-diag_flag = 0
-diag_flag_1 = 0           # display cluster stats and comparison w/ "master_data*.py" analysis;
+diag_flag = 1
+diag_flag_1 = 1           # display cluster stats and comparison w/ "master_data*.py" analysis;
 diag_flag_2 = 1           # display result: limiting mag, limiting mass, magnitude of object chosen as limiting mass
 diag_flag_3 = 0           # prints the indices of objects w/ "NaN" mass estimates;  
-diag_flag_4 = 0           # Count galaxies sorted through at each step of initial 'for' loop
+diag_flag_4 = 1           # Count galaxies sorted through at each step of initial 'for' loop
 diag_flag_5 = 0           # AVAILABLE
 #
 plot_flag_1 = 0           # produce Fig.1: mass vs mag for 1 cluster at a time (plots 6 figures total);
@@ -112,7 +116,9 @@ plot_flag_2 = 0           # produce Fig.2: tiled subplot of all 6 clusters zoome
 #
 try: 
     F = Column([-99]*len(master_cat),name='F160W_mag',dtype='float32')   # add a column in which to store magnitudes
-    master_cat.add_column(F)
+    master_cat.add_column(F) 
+    G = Column([-99]*len(master_cat),name='F814W_mag',dtype='float32')   # add a column in which to store magnitudes
+    master_cat.add_column(G)
     print("This is the first time you run this program today, isn't it ya ghassan?")
 except:
     pass
@@ -162,7 +168,9 @@ if (diag_flag == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag 
 #
 #
 #
-#
+## MAY NEED TO EDIT
+## store the offset in magnitudes to be used between magnitudes measured in F160W filter and F814W
+offset = limiting_mag - limiting_mag_814    # [limiting mag F160] - [limiting mag F814W]
 #
 #
 ## to store RESULT of program
@@ -191,10 +199,105 @@ count_nans1 = np.array([0]*6)                       # keep track of objects w/ N
 count_non_member = np.array([0]*6) 
 #
 counting_array1 = np.array([0]*9)
+counting_array3 = np.array([0]*9)
 #
 #
 for counter in range(len(master_cat)):             # loop through catalogue
-    if master_cat['flag_F160W'][counter] == 0:         # avoid objects w/ bad phot; good galaxies marked by flag_band == 0
+    for cluster in range(len(limiting_mag)):
+        if master_cat['cluster'][counter] == (cluster+1):       # start by looking at clusters, one at a time
+            if master_cat['flag_F160W'][counter] != -1 and master_cat['f_F160W'][counter] > 0:         # look at good objects w/ good fluxes
+                master_cat['F160W_mag'][counter] = ((-2.5*np.log10(master_cat['f_F160W'][counter]))+25)     # AB_mag system zero point = 25, confirmed in Shipley et al. 
+                if (diag_flag_3 == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:   # diagnostic check
+                    if project_diagnostic_flag == 0:
+                        pass
+                    else:
+                        if np.isnan(master_cat['F160W_mag'][counter]) == 1:      # to identify bad mass estimates (i.e NaNs)
+                            print('Diag. 3: NaNs in mag estimates\nNan index in master_cat (mag) = %s'%counter)
+                        elif np.isnan(master_cat['lmass'][counter]) == 1:
+                            print('Diag. 3: NaNs in mass estimates\nNan index in master_cat (mass) = %s'%counter)
+                            #
+                #
+                if np.isnan(master_cat['lmass'][counter]) == 1:          # track all nans in IMAGE
+                    count_nans1[ii]+=1
+                    counting_array1[2]+=1 # galaxies w/ bad mass estimates
+                else:
+                    #masses[ii].append(master_cat['lmass'][counter])      # store all the masses (regardless of type)
+                    mag_by_cluster[ii].append([master_cat['F160W_mag'][counter],master_cat['lmass'][counter],master_cat['z_clusterphot'][counter]])     # look at all objects in the ii'th image
+                #
+                if master_cat['member'][counter] == 0:    # now look only at cluster MEMBERS only  
+                    counting_array1[4]+=1
+                    if master_cat['sub'][counter] == 1:     # (spec+phot)
+                        mag_spec1[ii]+=1
+                    elif master_cat['sub'][counter] == 2:   # phot only
+                        mag_phot1[ii]+=1
+                    #
+                    #
+                    ###  if you want to track SF/Q TYPE galaxies, add a list here
+                    #
+                    #
+                    ## now track objects at the limiting magnitude of the cluster
+                    #
+                else:
+                    counting_array1[8]+=1   # all non-member galaxies            
+                    for ii in range(len(limiting_mag)):
+                        if master_cat['cluster'][counter] == (ii+1):
+                            count_non_member[ii]+=1
+                #  
+                #
+                #
+                #
+            elif master_cat['flag_F814W'][counter] != -1 and master_cat['f_F814W'][counter] > 0:   #use F814W where F160W unavailable
+                master_cat['F814W_mag'][counter] = ((-2.5*np.log10(master_cat['f_F814W'][counter]))+25) + offset[cluster]    # AB_mag system zero point = 25, confirmed in Shipley et al.; "offset" refers to offset b/w F160W & F814W bands 
+                #
+                if (diag_flag_3 == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:   # diagnostic check
+                    if project_diagnostic_flag == 0:
+                        pass
+                    else:
+                        if np.isnan(master_cat['F160W_mag'][counter]) == 1:      # to identify bad mass estimates (i.e NaNs)
+                            print('Diag. 3: NaNs in mag estimates\nNan index in master_cat (mag) = %s'%counter)
+                        elif np.isnan(master_cat['lmass'][counter]) == 1:
+                            print('Diag. 3: NaNs in mass estimates\nNan index in master_cat (mass) = %s'%counter)
+                            #
+                #
+                #
+                if np.isnan(master_cat['lmass'][counter]) == 1:          # track all nans in IMAGE
+                    count_nans1[ii]+=1
+                    counting_array1[2]+=1 # galaxies w/ bad mass estimates
+                else:
+                    #masses[ii].append(master_cat['lmass'][counter])      # store all the masses (regardless of type)
+                    mag_by_cluster[ii].append([master_cat['F814W_mag'][counter],master_cat['lmass'][counter],master_cat['z_clusterphot'][counter]])     # look at all objects in the ii'th image
+                #
+                #
+                if master_cat['member'][counter] == 0:    # now look only at cluster MEMBERS only  
+                    counting_array1[4]+=1
+                    if master_cat['sub'][counter] == 1:     # (spec+phot)
+                        mag_spec1[ii]+=1
+                    elif master_cat['sub'][counter] == 2:   # phot only
+                        mag_phot1[ii]+=1
+                    #
+                    #
+                    ###  if you want to track SF/Q TYPE galaxies, add a list here
+                    #
+                    #
+                    ## now track objects at the limiting magnitude of the cluster
+                    #
+                else:
+                    counting_array1[8]+=1   # all non-member galaxies            
+                    for ii in range(len(limiting_mag)):
+                        if master_cat['cluster'][counter] == (ii+1):
+                            count_non_member[ii]+=1
+                #  
+                #
+            #
+        #
+    #
+    
+    ADD IN THE MAG_AT_CLSTER_MMEMBER LIST FROM BELOW TO THIS LOOP, THEN DELETE THAT OTHER LOO[P
+    
+    
+    
+    
+    
         counting_array1[0]+=1  # good flag galaxies
         if master_cat['f_F160W'][counter] > 0:         # double check, since bad phots are set to == -99
             counting_array1[1]+=1  # good flux galaxies
@@ -246,16 +349,52 @@ for counter in range(len(master_cat)):             # loop through catalogue
                     bad_flux1[cluster]+=1
                     counting_array1[5]+=1    # bad flux (<0)
     else:
-        counting_array1[6]+=1     # bad flag ALL
-        for cluster in range(len(limiting_mag)):
-            if master_cat['cluster'][counter] == (cluster+1):
-                bad_flag1[cluster]+=1
-        for cluster in range(len(limiting_mag)):
-            if master_cat['cluster'][counter] == (cluster+1):
-                if master_cat['member'][counter] == 0:     # we're only interesting in comparing for cluster members
-                    
-                    counting_array1[7]+=1     # bad flag member
+        counting_array3[0]+=1  # good flag galaxies
+        if master_cat['f_F814W'][counter] > 0:         # double check, since bad phots are set to == -99
+            counting_array3[1]+=1  # good flux galaxies
+            if (diag_flag_3 == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:   # diagnostic check
+                if project_diagnostic_flag == 0:
+                    pass
+                else:
+                    if np.isnan(master_cat['F814_mag'][counter]) == 1:      # to identify bad mass estimates (i.e NaNs)
+                        print('Diag. 3: NaNs in mag estimates\nNan index in master_cat (mag) = %s'%counter)
+                    elif np.isnan(master_cat['lmass'][counter]) == 1:
+                        print('Diag. 3: NaNs in mass estimates\nNan index in master_cat (mass) = %s'%counter)
+                        #
             #
+            for ii in range(len(limiting_mag)):
+                if master_cat['cluster'][counter] == (ii+1):                 # track objects by cluster
+                    if np.isnan(master_cat['lmass'][counter]) == 1:          # track all nans in IMAGE
+                        count_nans1[ii]+=1
+                        counting_array1[2]+=1 # galaxies w/ bad mass estimates
+                    else:
+                        #masses[ii].append(master_cat['lmass'][counter])      # store all the masses (regardless of type)
+                        master_cat['F814W_mag'][counter] = ((-2.5*np.log10(master_cat['f_F814W'][counter]))+25) + offset[cluster]    # AB_mag system zero point = 25, confirmed in Shipley et al.; "offset" refers to offset b/w F160W & F814W bands 
+                        mag_by_cluster[ii].append([master_cat['F814W_mag'][counter],master_cat['lmass'][counter],master_cat['z_clusterphot'][counter]])     # look at all objects in the ii'th image
+                        if np.isnan(master_cat['lmass'][counter]) == 1:      # track all nans in CLUSTER
+                            counting_array1[3]+=1
+                        else:
+                            if master_cat['member'][counter] == 0:    # now look only at cluster MEMBERS only  
+                                counting_array1[4]+=1
+                                if master_cat['sub'][counter] == 1:     # (spec+phot)
+                                    mag_spec1[ii]+=1
+                                elif master_cat['sub'][counter] == 2:   # phot only
+                                    mag_phot1[ii]+=1
+                                #
+                                #
+                                ###  if you want to track SF/Q TYPE galaxies, add a list here
+                                #
+                                #
+                                ## now track objects at the limiting magnitude of the cluster
+                                #
+                            else:
+                                counting_array3[8]+=1   # all non-member galaxies            
+                                for ii in range(len(limiting_mag)):
+                                    if master_cat['cluster'][counter] == (ii+1):
+                                        count_non_member[ii]+=1
+            #
+        #
+    #
 #
 if (diag_flag_4 == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:
     print('\n[good_flag,good_flux,NaN-mass,NaN-mass(member),member,bad_flux,bad_flag,bad_flag_member,non_member]:\n%s'%counting_array1)
@@ -295,6 +434,7 @@ for counter in range(len(master_cat)):
                             if master_cat['F160W_mag'][counter] < (limiting_mag[ii]+TOL) and master_cat['F160W_mag'][counter] > (limiting_mag[ii]-TOL):           # if flux is equal to limiting magnitude, +/- 'TOL', store mass value...
                                 masses_at_lim_mag[ii].append([master_cat['F160W_mag'][counter],master_cat['lmass'][counter],master_cat['z_clusterphot'][counter]])
                                 #
+                            #
                         #
                 else:
                     counting_array2[3]+=1               # outside parent sample
@@ -303,6 +443,30 @@ for counter in range(len(master_cat)):
                     if master_cat['cluster'][counter] == (ii+1):  # bad flux
                         bad_flux2[ii]+=1
                 counting_array2[4]+=1                            
+        elif master_cat['f_F814W'][counter] > 0:                # good flux
+            counting_array2[2]+=1
+            if np.isnan(master_cat['lmass'][counter]) == 1:
+                for ii in range(len(limiting_mag)):
+                    if master_cat['cluster'][counter] == (ii+1):
+                        count_nans2[ii]+=1
+            elif master_cat['sub'][counter] == 1:     # (spec+phot)
+                for ii in range(len(limiting_mag)):
+                    if master_cat['cluster'][counter] == (ii+1):
+                        mag_by_cluster_member[ii].append([master_cat['F814W_mag'][counter],master_cat['lmass'][counter],master_cat['z_clusterphot'][counter]])
+                        mag_spec2[ii]+=1
+                        if master_cat['F814W_mag'][counter] < (limiting_mag[ii]+TOL) and master_cat['F814W_mag'][counter] > (limiting_mag[ii]-TOL):           # if flux is equal to limiting magnitude, +/- 'TOL', store mass value...
+                            masses_at_lim_mag[ii].append([master_cat['F814W_mag'][counter],master_cat['lmass'][counter],master_cat['z_clusterphot'][counter]])
+                                #
+            elif master_cat['sub'][counter] == 2:   # phot only
+                for ii in range(len(limiting_mag)):
+                    if master_cat['cluster'][counter] == (ii+1):
+                        mag_by_cluster_member[ii].append([master_cat['F814W_mag'][counter],master_cat['lmass'][counter],master_cat['z_clusterphot'][counter]])
+                        mag_phot2[ii]+=1
+                        if master_cat['F814W_mag'][counter] < (limiting_mag[ii]+TOL) and master_cat['F814W_mag'][counter] > (limiting_mag[ii]-TOL):           # if flux is equal to limiting magnitude, +/- 'TOL', store mass value...
+                            masses_at_lim_mag[ii].append([master_cat['F814W_mag'][counter],master_cat['lmass'][counter],master_cat['z_clusterphot'][counter]])
+                            #
+                        #
+                    #
         else:
             for ii in range(len(limiting_mag)):
                 if master_cat['cluster'][counter] == (ii+1):      # bad flag
@@ -318,7 +482,46 @@ if (diag_flag_4 == 1 and project_diagnostic_flag == 2) or project_diagnostic_fla
     print('\n"flag_F160W==0" OK: %s'%counting_array1[0],'\n"flag_F160W!=0" BAD: %s'%counting_array1[6],'\nGood flag + Bad flag = %s'%counting_array1[0],' + %s'%counting_array1[6],' = %s'%np.sum([counting_array1[0],counting_array1[6]]))
     print('\nOf the "Good flag" galaxies\nflux_F160W>0: %s'%counting_array1[1],'\nflux_F160W<0: %s'%counting_array1[5],'\n(flux>0) + (flux<0) = %s'%counting_array1[1],' + %s'%counting_array1[5],' = %s'%(np.sum([counting_array1[1],counting_array1[5]])))
     print('\nlmass = NaN (all): %s'%counting_array1[2],'\nCluster members selected: %s'%counting_array1[4],'\nlmass = NaN (members): %s'%counting_array1[3],'\nBad flag: %s'%counting_array1[7],'\nBad flux (<0): %s'%counting_array1[5])
-
+#
+#
+#
+#
+#
+## SECTION (1.1): SUMMARY TABLE
+#
+## Summary Table
+#
+#
+if summary_flag == 1 or adams_flag == 1:
+    ## Summarize limiting mass calculation in table for PARENT SAMPLE
+    lim_mass_names = Column(['Full CATALOGUE ("master_data*.py")','Phot Members','Spec Members','Non-members','Bad flag (!=0)','Bad flux (F160W<0)','Mass = NaN','SUM'],name='Property')
+    col_names = cluster_names
+    lim_mass0 = Column([np.sum([phot_only,both,spec_only,no_data,stars_sub]),np.sum(mag_phot1),np.sum(mag_spec1),np.sum(count_non_member),np.sum(bad_flag1),np.sum(bad_flux1),np.sum(count_nans1),np.sum([mag_phot1,mag_spec1,bad_flag1,bad_flux1,count_nans1,count_non_member])],name='Total')  # total column
+    lim_mass_stats = Table([lim_mass_names,lim_mass0])
+    for ii in range(len(mag_phot1)):
+        lim_mass_col = Column([np.sum([phot_only[ii],both[ii],spec_only[ii],no_data[ii],stars_sub[ii]]),mag_phot1[ii],mag_spec1[ii],count_non_member[ii],bad_flag1[ii],bad_flux1[ii],count_nans1[ii],np.sum([mag_phot1[ii],mag_spec1[ii],bad_flag1[ii],bad_flux1[ii],count_nans1[ii],count_non_member[ii]])],name=col_names[ii])               # cluster columns
+        lim_mass_stats.add_column(lim_mass_col) 
+    #
+    #
+    #
+    ## Summarize limiting mass calculation in table for CLUSTER MEMBERS
+    lim_mass_member_names = Column(['Members ("master_data*.py")','Phot Members','Spec Members','Bad flag (!=0)','Bad flux (F160W<0)','Mass = NaN','SUM'],name='Property')
+    col_names = cluster_names
+    lim_member_mass0 = Column([np.sum([mem_phot,mem_spec]),np.sum(mag_phot2),np.sum(mag_spec2),np.sum(bad_flag2),np.sum(bad_flux2),np.sum(count_nans2),np.sum([mag_phot2,mag_spec2,bad_flag2,bad_flux2,count_nans2])],name='Total')  # total column
+    lim_mass_member_stats = Table([lim_mass_member_names,lim_member_mass0])
+    for ii in range(len(mag_phot1)):
+        lim_mass_member_col = Column([np.sum([mem_phot[0][ii],mem_phot[1][ii],mem_spec[0][ii],mem_spec[1][ii]]),mag_phot2[ii],mag_spec2[ii],bad_flag2[ii],bad_flux2[ii],count_nans2[ii],np.sum([mag_phot2[ii],mag_spec2[ii],bad_flag2[ii],bad_flux2[ii],count_nans2[ii]])],name=col_names[ii])               # cluster columns
+        lim_mass_member_stats.add_column(lim_mass_member_col) 
+    #
+#
+    print('\n"data_mass_completeness*.py" Full CATALOGUE breakdown\n%s'%lim_mass_stats)
+    print('\nMember sample breakdown\n%s'%lim_mass_member_stats)
+#
+#
+#
+#
+## SECTION (2): determine limiting mass
+#
 #
 for ii in range(len(limiting_mag)):
     mag_by_cluster[ii].sort(key=lambda x: x)                # sort data by magnitude within each clust
@@ -401,40 +604,8 @@ if (diag_flag_2 == 1 and project_diagnostic_flag == 2) or project_diagnostic_fla
 #
 #
 #
-## SECTION (1.1): SUMMARY TABLE
 #
-## Summary Table
-#
-#
-if summary_flag == 1 or adams_flag == 1:
-    ## Summarize limiting mass calculation in table for PARENT SAMPLE
-    lim_mass_names = Column(['Full CATALOGUE ("master_data*.py")','Phot Members','Spec Members','Non-members','Bad flag (!=0)','Bad flux (F160W<0)','Mass = NaN','SUM'],name='Property')
-    col_names = cluster_names
-    lim_mass0 = Column([np.sum([phot_only,both,spec_only,no_data,stars_sub]),np.sum(mag_phot1),np.sum(mag_spec1),np.sum(count_non_member),np.sum(bad_flag1),np.sum(bad_flux1),np.sum(count_nans1),np.sum([mag_phot1,mag_spec1,bad_flag1,bad_flux1,count_nans1,count_non_member])],name='Total')  # total column
-    lim_mass_stats = Table([lim_mass_names,lim_mass0])
-    for ii in range(len(mag_phot1)):
-        lim_mass_col = Column([np.sum([phot_only[ii],both[ii],spec_only[ii],no_data[ii],stars_sub[ii]]),mag_phot1[ii],mag_spec1[ii],count_non_member[ii],bad_flag1[ii],bad_flux1[ii],count_nans1[ii],np.sum([mag_phot1[ii],mag_spec1[ii],bad_flag1[ii],bad_flux1[ii],count_nans1[ii],count_non_member[ii]])],name=col_names[ii])               # cluster columns
-        lim_mass_stats.add_column(lim_mass_col) 
-    #
-    #
-    #
-    ## Summarize limiting mass calculation in table for CLUSTER MEMBERS
-    lim_mass_member_names = Column(['Members ("master_data*.py")','Phot Members','Spec Members','Bad flag (!=0)','Bad flux (F160W<0)','Mass = NaN','SUM'],name='Property')
-    col_names = cluster_names
-    lim_member_mass0 = Column([np.sum([mem_phot,mem_spec]),np.sum(mag_phot2),np.sum(mag_spec2),np.sum(bad_flag2),np.sum(bad_flux2),np.sum(count_nans2),np.sum([mag_phot2,mag_spec2,bad_flag2,bad_flux2,count_nans2])],name='Total')  # total column
-    lim_mass_member_stats = Table([lim_mass_member_names,lim_member_mass0])
-    for ii in range(len(mag_phot1)):
-        lim_mass_member_col = Column([np.sum([mem_phot[0][ii],mem_phot[1][ii],mem_spec[0][ii],mem_spec[1][ii]]),mag_phot2[ii],mag_spec2[ii],bad_flag2[ii],bad_flux2[ii],count_nans2[ii],np.sum([mag_phot2[ii],mag_spec2[ii],bad_flag2[ii],bad_flux2[ii],count_nans2[ii]])],name=col_names[ii])               # cluster columns
-        lim_mass_member_stats.add_column(lim_mass_member_col) 
-    #
-#
-    print('\n"data_mass_completeness*.py" Full CATALOGUE breakdown\n%s'%lim_mass_stats)
-    print('\nMember sample breakdown\n%s'%lim_mass_member_stats)
-#
-#
-#
-#
-## SECTION (2) VISUALIZATION
+## SECTION (3) VISUALIZATION
 #
 ## define range of all histograms to come!
 #
@@ -511,6 +682,66 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
             plt.text(18.1,5.7,'$\sigma_{mass}$ = %s'%std_dev,fontsize=10)
             #
             plt.show()
+            #
+            #
+            lim_mag_minus = (limiting_mag[cluster]-TOL)
+            lim_mag_plus = (limiting_mag[cluster]+TOL)
+        #
+        fig, axs = plt.subplots(nrows=2,ncols=3,sharex=True,sharey=True)#,tight_layout=True)
+        fig.subplots_adjust(wspace=0,hspace=0)
+        #
+        for cluster in range(len(limiting_mag)):
+            plotting_array_temp = np.array([[0]*len(mag_by_cluster_member[cluster])]*3,dtype='float32') # 0=mag;1=mass;2=z
+            for ii in range(len(mag_by_cluster_member[cluster])):
+                plotting_array_temp[0][ii] = mag_by_cluster_member[cluster][ii][0]   # store mass/magnitudes for the first cluster
+                plotting_array_temp[1][ii] = mag_by_cluster_member[cluster][ii][1]   # index order: [cluster][object][mag/mass,z_phot]([cluster,row,col])
+                plotting_array_temp[2][ii] = mag_by_cluster_member[cluster][ii][2]
+            #
+            ## calculate cluster members; display as "Total(Shown)"
+            total_mem = np.sum([mem_phot[0][cluster],mem_phot[1][cluster],mem_spec[0][cluster],mem_spec[1][cluster]])
+            mem_shown = len(plotting_array_temp[0])
+            #
+            members_string = '# cluster members(F160W): %s'%total_mem+'(%s'%mem_shown+')'
+            ## Compute std. dev. of cluster objects
+            std_dev = np.std(plotting_array_temp[1])
+            #
+            ## The figure:
+            #
+            c_map = plt.get_cmap("spring")        # set colorbar map
+            #
+            lim_mag_minus = (limiting_mag[cluster]-TOL)
+            lim_mag_plus = (limiting_mag[cluster]+TOL)
+            #
+            #
+            ax = axs.flat[cluster]
+            #
+            ax.scatter(plotting_array_temp[0],plotting_array_temp[1], marker='o', s=30, c=plotting_array_temp[2], cmap= c_map, vmin=min(plotting_array_temp[2]), vmax=max(plotting_array_temp[2]))
+            ax.plot([limiting_mag[cluster],limiting_mag[cluster]],[0,15],'--k', linewidth=1.4)
+            #ax.plot([lim_mag_minus,lim_mag_minus],[0,15],':r', linewidth=1.2)
+            #ax.plot([lim_mag_plus,lim_mag_plus],[0,15],':r', linewidth=1.2)
+            ax.plot([0,35],[max_min_mass[cluster][0],max_min_mass[cluster][0]], color='maroon', linestyle='--',linewidth=1.2)    #chang indexing of max_min_mass to [ii][0] & [ii][1] for looped subplots
+            ax.plot([0,35],[max_min_mass[cluster][1],max_min_mass[cluster][1]], color='maroon', linestyle='--',linewidth=1.2)
+            sm =  ScalarMappable(cmap=c_map)
+            sm.set_array([])
+            sm.set_clim([0,z_cutoff[1]])
+            ax.grid(axis='both', alpha=0.75)
+            ax.set_xlim(17,30)
+            ax.set_ylim(5,13)
+            ## label locations
+            axs.flat[cluster].text(21.6,12.1,cluster_names[cluster],fontsize=12)
+            axs.flat[cluster].text(21.6,11.5,'$M/L_{max,F160W}$: %s'%limiting_mass[cluster],fontsize=12)
+            axs.flat[cluster].text(21.6,10.5,members_string,fontsize=10)
+            axs.flat[cluster].text(18.1,6.1,'z = %s'%z_cluster[cluster],fontsize=10)
+            axs.flat[cluster].text(18.1,5.7,'$\sigma_{mass}$ = %s'%std_dev,fontsize=10)
+            #
+            #plt.text(21.6,11.5,'$M/L_{max}$: %s'%limiting_mass[cluster],fontsize=10)
+        #
+        cbar = fig.colorbar(sm, ax=axs[:, 2],location='right')#, vmin=0.0, vmax=z_cutoff[1])
+        cbar.ax.set_title("|${\Delta}$z|$_{phot,F160W}$")
+        #            
+        #            
+        plt.show()
+        #
         #
     #
 #
@@ -584,6 +815,58 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         #            
         plt.show()
     #
+#
+#
+#
+#
+## SECTION (4): REMOVE all galaxies from cluster member sample which are below limiting mass (filter: from member=0(1) to member=6(7) for cluster(field) galaxies)
+#
+##
+above_lim_mass_mem = np.array([0]*6)
+above_lim_mass_field = np.array([0]*6)
+below_lim_mass_mem = np.array([0]*6)
+below_lim_mass_field = np.array([0]*6)
+other = np.array([0]*6)
+#
+for counter in range(len(master_cat)):
+    for cluster in range(len(below_lim_mass_mem)):
+        if master_cat['cluster'][counter] == (cluster+1):              # track galaxies by CLUSTER
+            if master_cat['member'][counter] == 0:                     # deal with CLUSTER MEMBERS
+                if master_cat['lmass'][counter] < limiting_mass[cluster]:    # isolate galaxies below LIMITING MASS by cluster
+                    master_cat['member'][counter] = 6                  # RECLASSIFY
+                    below_lim_mass_mem[cluster]+=1                     # keep count of numbers
+                else:
+                    above_lim_mass_mem[cluster]+=1
+            elif master_cat['member'][counter] == 1:                     # deal with FIELD MEMBERS
+                if master_cat['lmass'][counter] < limiting_mass[cluster]:    # isolate galaxies below LIMITING MASS by cluster
+                    master_cat['member'][counter] = 7                  # RECLASSIFY
+                    below_lim_mass_field[cluster]+=1                     # keep count of numbers
+                else:
+                    above_lim_mass_field[cluster]+=1
+            else: 
+                other[cluster]+=1                                      # all others (i.e. not cluster members or field members)
+        #
+    #
+#
+#
+#
+## SECTION (4.1): Summary Table for Cluster/Field MEMBERS
+#
+#
+if summary_flag == 1 or adams_flag == 1:
+    ## Summarize limiting mass calculation in table for PARENT SAMPLE
+    below_lim_mass_names = Column(['CLUSTER members ("master_data*.py")','FIELD members ("master_data*.py")','Cluster above lim. mass','Cluster below lim. mass','SUM (Cluster)','Field above lim. mass','Field below lim. mass','SUM (Field)'],name='Property')
+    col_names = cluster_names
+    below_lim_mass0 = Column([np.sum([mem_phot,mem_spec]),np.sum([field_phot,field_spec]),np.sum(above_lim_mass_mem),np.sum(below_lim_mass_mem),np.sum([above_lim_mass_mem,below_lim_mass_mem]),np.sum(above_lim_mass_field),np.sum(below_lim_mass_field),np.sum([above_lim_mass_field,below_lim_mass_field])],name='Total')  # total column
+    below_lim_mass_stats = Table([below_lim_mass_names,below_lim_mass0])
+    for ii in range(len(mag_phot1)):
+        below_lim_mass_col = Column([np.sum([mem_phot[0][ii],mem_phot[1][ii],mem_spec[0][ii],mem_spec[1][ii]]),np.sum([field_phot[0][ii],field_phot[1][ii],field_spec[0][ii],field_spec[1][ii]]),above_lim_mass_mem[ii],below_lim_mass_mem[ii],np.sum([above_lim_mass_mem[ii],below_lim_mass_mem[ii]]),above_lim_mass_field[ii],below_lim_mass_field[ii],np.sum([above_lim_mass_field[ii],below_lim_mass_field[ii]])],name=col_names[ii])               # cluster columns
+        below_lim_mass_stats.add_column(below_lim_mass_col) 
+    #
+    #
+    #
+#
+    print('\n"data_mass_completeness*.py" Full CATALOGUE breakdown\n%s'%below_lim_mass_stats)
 #
 #
 #
