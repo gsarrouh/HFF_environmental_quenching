@@ -41,7 +41,8 @@
 ## 3: false negative
 ## 4: FAR field       <-- this comprises galaxies well outside the allowable redshift range of our study
 ## 5: BCGs            <-- identified in the last section of the program, over-writing MEMBER assignment from section 4
-## 6: 
+## 6: cluster MEMBERS lost BELOW limiting mass
+## 7: FIELD lost BELOW limiting mass
 #
 #
 #
@@ -124,7 +125,7 @@ if time_flag == 1:
 ## FLAGS !!!
 ## MAY NEED TO EDIT
 ## MASTER diagnostic flag:   0=all flags off;   1=all flags on;    2=individual flags may be turned on
-diag_flag_master = 1
+diag_flag_master = 2
 #
 variational_anaylsis_master_flag = 0         # this allows you to set the above master flag to 1, without entering the variational analysis
 #
@@ -139,21 +140,21 @@ summary_flag_5 = 1          # S5: MEMBER-filter classification (PHOT subsample)
 summary_flag_6 = 1          # S7: Full MEMBERSHIP CUT summary of full Parent sample (SPEC + PHOT subsamples)
 summary_flag_7 = 1          # S6: bCGs
 ## diagnostic flags:
-diag_flag_1 = 1             # S2: histograms of del_z spec/phot     
-diag_flag_2 = 1 
-diag_flag_3 = 1    
+diag_flag_1 = 0             # S2: histograms of del_z spec/phot     
+diag_flag_2 = 0 
+diag_flag_3 = 0    
 diag_flag_4 = 0             
-minor_diag_flag_4 = 1
-diag_flag_5 = 1             
-diag_flag_6 = 1             
-diag_flag_7 = 1             
+minor_diag_flag_4 = 0
+diag_flag_5 = 0             
+diag_flag_6 = 0             
+diag_flag_7 = 0             
 ## time flags
 time_flag_1 = 1              # S1: import data
-time_flag_2 = 1              # S2: del_z's & outliers
-time_flag_3 = 1              # S3: classify TYPE (SF/Q)
-time_flag_4 = 1              # S4: Spec. membership selection
-time_flag_5 = 1              # S5: Phot. membership selection
-time_flag_6 = 1              # S6: bCGs
+time_flag_2 = 0              # S2: del_z's & outliers
+time_flag_3 = 0              # S3: classify TYPE (SF/Q)
+time_flag_4 = 0              # S4: Spec. membership selection
+time_flag_5 = 0              # S5: Phot. membership selection
+time_flag_6 = 0              # S6: bCGs
 #
 if 'project_diagnostic_flag' in locals():
     pass
@@ -729,8 +730,8 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
     #
     ## MAY NEED TO EDIT: "increment" & "*cutoff_range", for both SPEC (immediately below) and PHOT (after the first 'for' loop)
     ## SPEC cuts
-    increment = np.array([0.01,0.01])   # [spec,phot]
-    z_cutoff_spec_range = np.array([0.010,(0.040+increment[0])])
+    increment = np.array([0.001,0.005])   # [spec,phot]
+    z_cutoff_spec_range = np.array([0.010,(0.020+increment[0])])
     #z_cutoff_spec_range = np.array([    ])
     #
     # define cut-offs for SF & Q
@@ -765,7 +766,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
             progress = (cutoff_spec / len(z_cutoff_spec)*100)    # calculate progress through z_cutoff_spec_range
             print('%s'%(cutoff_spec+1),'th cut of %s'%len(z_cutoff_spec),' being investigated.\nz_spec cut: %.3f'%z_cutoff_spec[cutoff_spec],'; in range %.3f'%z_cutoff_spec[0],' to %.3f'%z_cutoff_spec[-1],'\nCurrent progress: %.3f'%progress,'%')
         ## PHOT cuts
-        z_cutoff_phot_range = [max(z_cutoff_spec[cutoff_spec],0.03),(0.09+(increment[1]))]  ## MAY NEED TO EDIT phot range
+        z_cutoff_phot_range = [max(z_cutoff_spec[cutoff_spec],0.05),(0.09+(increment[1]))]  ## MAY NEED TO EDIT phot range
         z_cutoff_phot = np.round(np.arange(z_cutoff_phot_range[0],z_cutoff_phot_range[1],increment[1]),decimals=3) # create array from [0.01,0.05] in steps of increment_phot; replace in loop below with z_cutoff once cutoffs are determined
         #z_cutoff_phot = np.array([])
         #
@@ -773,6 +774,12 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
             #
             ## define spec & phot cutoffs
             z_cutoff = np.array([z_cutoff_spec[cutoff_spec],z_cutoff_phot[cutoff_phot]])
+            #
+            #
+            ## compute redshift range of galaxies in cluster sample
+            lower_bound = (min(z_cluster) - z_cutoff[1]) / (1 + z_cutoff[1])
+            upper_bound = (max(z_cluster) + z_cutoff[1]) / (1 - z_cutoff[1])
+            z_field_bounds = [lower_bound, upper_bound]
             #
             ## check it directories to store outputs exist. if not, create them
             output_dir = '/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/z_spec_%.3f'%z_cutoff[0]
@@ -859,7 +866,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
         #
         ## print the results to a file 
         filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_results_%s'%increment[0]+'_sorted_by_ZCUT_%s'%F_filter_W+'.txt'
-        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)  
+        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=True,header=True)  
         #
         ## save the list when ordered by Metric of Merit
         df_result = pd.concat(df_list, axis=0, ignore_index=True)
@@ -867,7 +874,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
         #
         ## print the results to a file 
         filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_results_%s'%increment[0]+'_sorted_by_MoM_%s'%F_filter_W+'.txt'
-        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
+        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=True,header=True)
         #
         #
         ## save the list when ordered by Type, MoM
@@ -876,7 +883,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
         #
         ## print the results to a file 
         filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_results_%s'%increment[0]+'_sorted_by_TYPE_%s'%F_filter_W+'.txt'
-        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
+        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=True,header=True)
         #
         #
         #
@@ -899,7 +906,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
         #
         ## print the results to a file 
         filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_3_%s'%increment[0]+'_sorted_by_TOTAL_MoM_%s'%F_filter_W+'.txt'
-        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
+        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=True,header=True)
         #
         ## save the list when ordered by type, TOTAL MoM
         df_result = pd.concat(df_list, axis=0, ignore_index=True)
@@ -907,7 +914,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
         #
         ## print the results to a file 
         filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_3_%s'%increment[0]+'_sorted_by_TYPE_%s'%F_filter_W+'.txt'
-        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
+        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=True,header=True)
         #
         #
         ## save the list when ordered by z_cutoff
@@ -915,8 +922,8 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
         df_result = df_result.sort_values(by=['z_spec_cutoff','z_phot_cutoff','TOTAL_MoM'])       
         #
         ## print the results to a file 
-        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_2_%s'%increment[0]+'_sorted_by_ZCUT_%s'%F_filter_W+'.txt'
-        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=False,header=True)
+        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_3_%s'%increment[0]+'_sorted_by_ZCUT_%s'%F_filter_W+'.txt'
+        df_result.to_csv(filename,sep=' ',na_rep='NaN',index=True,header=True)
         #
         #
         ## TIME_FLAG END
@@ -1124,7 +1131,7 @@ exec(open('bcg_hist_diagnostic.py').read())
 #
 if summary_flag_7 == 1 or adams_flag == 1:
     ## Summarize bCG stats in table
-    BCG_names = Column(['Total (>%s)'%BCG_threshold,'SF_total','SF_spec','SF_phot','Q_total','Q_spec','Q_phot','SF+Q_sum','Spec Outliers','Bad z_phot','Good z_spec','Other TYPE','SUM - SF_total,Q_total,Outliers,bad_z_phot'],name='Property')
+    BCG_names = Column(['Total (>%s)'%BCG_threshold,'SF_total','SF_spec','SF_phot','Q_total','Q_spec','Q_phot','SF+Q_sum','Spec Outliers','Bad z_phot','Good z_spec (w/ bad z_phot)','Other TYPE','SUM (SF/Q,Out,bad_z)'],name='Property')
     col_names = cluster_names
     BCG0 = Column([np.sum(num_BCG),np.sum(BCG_SF),np.sum(BCG_spec[0]),np.sum(BCG_phot[0]),np.sum(BCG_Q),np.sum(BCG_spec[1]),np.sum(BCG_phot[1]),np.sum([BCG_spec[0],BCG_phot[0],BCG_spec[1],BCG_phot[1]]),np.sum(BCG_outliers),np.sum(num_bad_z_phot),len(BCG_delz_spec_plot),np.sum(num_other_type_bcg),np.sum([np.sum(BCG_SF),np.sum(BCG_Q),np.sum(BCG_outliers),np.sum(num_bad_z_phot)])],name='Total')  # total column
     BCG_stats = Table([BCG_names,BCG0])
@@ -1137,7 +1144,7 @@ if summary_flag_7 == 1 or adams_flag == 1:
     print('\nSummary Table 7: bCG stats\n%s'%BCG_stats)
     #
     ## print summary of operation
-    print('Total potential (M > %s'%BCG_threshold,') bCGs identified from catalogue: %s'%np.sum(num_BCG),'.\nTotal in Parent sample: %s'%len(good_BCG_phot),'\nBCGs identified by cluster: %s'%num_BCG)
+    print('Total potential (M > %s'%BCG_threshold,') bCGs identified from catalogue: %s'%np.sum(num_BCG),'.\nTotal in Parent sample: %s'%len(good_BCG_phot),'.\nTotal NOT in Parent sample: %s'%(np.sum(num_BCG)-len(good_BCG_phot)),'\nBCGs identified by cluster: %s'%num_BCG)
 #
 #
 ## TIME_FLAG_6 END
