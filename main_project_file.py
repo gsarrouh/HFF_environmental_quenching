@@ -119,8 +119,9 @@ section_1_flag = 1                 # cluster catalogue data prep
 section_2_flag = 1                 # parallel field catalogue data prep# z plots
 section_3_flag = 1                 # limiting mass
 section_4_flag = 0                 # z-plots
-section_5_flag = 0                 # velocity dispersion, r_200, M_200 calculation
-section_6_flag = 0                 # SMF
+section_5_flag = 1                 # UVJ diagram
+section_6_flag = 0                 # velocity dispersion, r_200, M_200 calculation
+section_7_flag = 0                 # SMF
 #    
 #
 ## MAY NEED TO EDIT: choose the filter in which to determine limiting mass
@@ -143,15 +144,19 @@ if section_3_flag == 1:
         print('Limiting mass calculated in F814W.')
 #
 if section_4_flag == 1:
-    print('Section 4: Prepare redshift & UVJ classification FIGURES ("master_zplots*.py")')
+    print('Section 4: Prepare redshift FIGURES ("master_zplots*.py")')
 
 #
 if section_5_flag == 1:
-    print('Section 5: calculate Velocity Dispersion, r_200, M_200 ("velocity_dispersion.py")')
+    print('Section 5: Prepare UVJ diagram(s) ("UVJ_plots.py")')
 #
 #
 if section_6_flag == 1:
-    print('Section 6: Produce SMF ("master_smf*.py")')
+    print('Section 6: Calculate Velocity Dispersion, r_200, M_200 ("velocity_dispersion.py")')
+#
+#
+if section_7_flag == 1:
+    print('Section 7: Produce SMF ("master_smf*.py")')
 #
 ## SECTION (1): main DATA preparation file; imports raw data, sorts it by data type (i.e. photometric/spectroscopic data, stars, etc...), and classifies all galaxies with good photometric redshift estimates as Star-Forming (SF) or Quiescent (Q); it then runs a VARIATIONAL ANALYSIS to determine optimal redshift definitions (redshift "cuts") for cluster membership, based on which cuts yield an equal number of false positives/negatives in each mass bin; executes redshift cuts, classifies SF/Q galaxies as either cluster members, false pos/neg, or field galaxy; and finally, checks the catalogue for Brightest Cluster Galaxies (bCGs); MAIN program: master_data_7_final.py; SUB-programs: spec_completeness_binning.py, correction_factors.py;
 
@@ -217,30 +222,33 @@ if section_4_flag == 1:
 #
 #
 #
-## SECTION (5): SMF
+## SECTION (5): UVJ Diagram(s)
 #
 #
 #
 if section_5_flag == 1:
+    print('\nBeginning "UVJ_plots.py"')
+    exec(open('UVJ_plots.py').read())      #opens and executes the script 
+#
+#
+#
+#
+## SECTION (6): VELOCITY DISPERSION
+#
+#
+#
+if section_6_flag == 1:
     print('\nBeginning "velocity_dispersion.py"')
     exec(open('velocity_dispersion.py').read())      #opens and executes the script 
 #
 #
 #
 #
-## SECTION (5): SMF
+## SECTION (7): SMF 
 #
-#
-#
-if section_6_flag == 1:
+if section_7_flag == 1:
     print('\nBeginning "master_smfz*.py"')
     exec(open('master_smfz_9_final.py').read())      #opens and executes the script 
-#
-#
-#
-## SECTION (6): 
-#
-#
 #
 #
 #
