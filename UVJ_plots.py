@@ -44,10 +44,11 @@ mass_threshold = [9,range2[1]]                        # mass threshold in units 
 ## SECTION (0): set PLOT_FLAGS    # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
 ### MAY NEED TO EDIT ### plot_flag_*/time_flag_*/diag_flag_*
 #
-plot_flag_1 = 1           # Fig.1 - UVJ diagram
-plot_flag_2 = 1           # Fig.2-4 - diagnostic plots in greyscale;  0=off;  1=on, plot above log_10(Msol) >/< threshold;  2=on, plot everything; 
+plot_flag_1 = 1           # Fig.1 - UVJ diagram; colorbar = mass
+plot_flag_2 = 0           # Fig.2-4 - diagnostic plots in greyscale;  0=off;  1=on, plot above log_10(Msol) >/< threshold;  2=on, plot everything; 
+plot_flag_3 = 1           # Fig.1 - UVJ diagram; color = spec/phot
 #
-lines_flag = 0            # include boundary line b/w SF/Q populations in UVJ plot
+lines_flag = 1            # include boundary line b/w SF/Q populations in UVJ plot
 #
 diag_flag_1 = 0           # Section 1: UVJ diagram
 #
@@ -60,8 +61,11 @@ diag_flag_1 = 0           # Section 1: UVJ diagram
 #
 #
 counting_array_uvj = np.array([0]*5)         # counts number of galaxies at each condition; diagnostic check
+counting_array_sub = np.array([0]*2)         # count number of [spec/phot] galaxies there are
 SF_array = [ [], [], [] ]                # stores: [ [(V-J)], [(U-V)], [mass] ]
 Q_array = [ [], [], [] ]    
+spec_array = [ [], [] ]                # stores: [ [(V-J)], [(U-V)] ]
+phot_array = [ [], [] ]                # stores: [ [(V-J)], [(U-V)] ]
 total_array = [ [], [], [] ]
 field_array = [ [], [], [] ]
 ## cluster
@@ -92,7 +96,15 @@ for counter in range(len(master_cat)):
             total_array[1].append(master_cat['uv'][counter])
             total_array[2].append(master_cat['lmass'][counter])
         else:
-            counting_array_uvj[3] +=1
+            counting_array_uvj[3]+=1
+        if master_cat['sub'][counter] == 1:
+            counting_array_sub[0]+=1                         # count for spec+phot subsample
+            spec_array[0].append(master_cat['vj'][counter])
+            spec_array[1].append(master_cat['uv'][counter])
+        elif master_cat['sub'][counter] == 2:
+            counting_array_sub[1]+=1                         # count for phot-only subsample
+            phot_array[0].append(master_cat['vj'][counter])
+            phot_array[1].append(master_cat['uv'][counter])
     else:
         counting_array_uvj[4] +=1
 #
@@ -112,6 +124,8 @@ for counter in range(len(master_cat_par)):
 ## convert lists to arrays
 SF_array = np.array(SF_array)
 Q_array = np.array(Q_array)
+spec_array = np.array(spec_array)
+phot_array = np.array(phot_array)
 total_array = np.array(total_array)
 field_array = np.array(field_array)
 field_array_par = np.array(field_array_par)
@@ -127,7 +141,7 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         #
         fig, ax = plt.subplots()
         # print diagnostic information
-        print('Field: %s'%counting_array[0],'\nSF members: %s'%counting_array[1],'\nQ members: %s'%counting_array[2],'\nOther than SF/Q (members): %s'%counting_array[3],'\nOther than member/field: %s'%counting_array[4])
+        print('Field: %s'%counting_array_uvj[0],'\nSF members: %s'%counting_array_uvj[1],'\nQ members: %s'%counting_array_uvj[2],'\nOther than SF/Q (members): %s'%counting_array_uvj[3],'\nOther than member/field: %s'%counting_array_uvj[4])
         #
         c_map = plt.get_cmap("CMRmap")        # set colorbar map
         sm =  ScalarMappable(cmap=c_map)
@@ -137,9 +151,9 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         cbar.ax.set_title('$log_{10}$(M/M$_{\odot})$')
         #
         #
-        ax.scatter(field_array[0],field_array[1],s=(field_array[2]*1.5),c='grey', marker='s', alpha=0.35, linewidths=0)
-        ax.scatter(field_array_par[0],field_array_par[1],s=(field_array_par[2]*1.5),c='grey', marker='s', alpha=0.35, linewidths=0)
-        ax.scatter(total_array[0],total_array[1],c=total_array[2],cmap= c_map, marker='.', alpha=0.8, linewidths=0)
+        ax.scatter(field_array[0],field_array[1],s=50,c='grey', marker='s', alpha=0.3, linewidths=0)
+        ax.scatter(field_array_par[0],field_array_par[1],s=50,c='grey', marker='s', alpha=0.3, linewidths=0)
+        ax.scatter(total_array[0],total_array[1],s=60,c=total_array[2],cmap= c_map, marker='.', alpha=0.8, linewidths=0)
         #ax.scatter(SF_array[0],SF_array[1],s=(SF_array[2]*1.5),cmap= c_map, marker='*', alpha=0.8, linewidths=0)
         #ax.scatter(Q_array[0],Q_array[1],s=(Q_array[2]*1.5),cmap= c_map, marker='.', alpha=0.4, linewidths=0)
         #
@@ -155,9 +169,9 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax.minorticks_on()
         #
         ax.set_title('~0.25 < z < ~0.6')
-        ax.text(-1.3,2.3,'SF: %s'%counting_array_uvj[1],c='k',fontsize=15)
-        ax.text(-1.3,2.15,'Q: %s'%counting_array_uvj[2],c='k',fontsize=15)
-        ax.text(-1.3,2.0,'Field (clu+par): %s'%(counting_array_uvj[0]+counting_array_par[0]),c='k',fontsize=15)
+        ax.text(-1.3,2.3,'SF: %s'%counting_array_uvj[1],c='k',fontsize=25)
+        ax.text(-1.3,2.15,'Q: %s'%counting_array_uvj[2],c='k',fontsize=25)
+        ax.text(-1.3,2.0,'Field (clu+par): %s'%(counting_array_uvj[0]+counting_array_par[0]),c='k',fontsize=25)
         #
         plt.show()
         #
@@ -417,8 +431,45 @@ elif (plot_flag_2 == 2 and project_plot_flag ==2) or project_plot_flag == 1:
         plt.show()
         #
         #
-        
-    
+    #
+#
+## UVJ Diagram: colour-colour plots; modify to add in photometric sub-sample
+#
+if (plot_flag_3 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
+    if project_plot_flag == 0:
+        pass
+    else:
+        #
+        fig, ax = plt.subplots()
+        # print diagnostic information
+        print('Field: %s'%counting_array[0],'\nSpec members: %s'%counting_array_sub[0],'\nPhot members: %s'%counting_array_sub[1],'\nOther than member/field: %s'%counting_array[4])
+        #
+        #
+        ax.scatter(field_array[0],field_array[1],s=50,c='grey', marker='s', alpha=0.3, linewidths=0)
+        ax.scatter(field_array_par[0],field_array_par[1],s=50,c='grey', marker='s', alpha=0.3, linewidths=0)
+        ax.scatter(phot_array[0],phot_array[1],s=60,c='gold', marker='.', alpha=0.8, linewidths=0)
+        ax.scatter(spec_array[0],spec_array[1],s=60,c='green', marker='.', alpha=0.8, linewidths=0)
+        #
+        if lines_flag == 1:
+            ax.plot([-5,0.75],[1.3,1.3],'-k',[0.75,3],[1.3,3],'-k', linewidth=1) #overlay boundary cutoff for SF/Passive
+        #
+        ax.set_xlabel('$(V-J)_{rest}$',fontsize=20)
+        ax.set_xlim(-1.5,2)
+        ax.set_ylabel('$(U-V)_{rest}$', fontsize=20)
+        ax.set_ylim(0,2.5)
+        ax.grid(b=False)
+        ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True)
+        ax.minorticks_on()
+        #
+        ax.set_title('~0.25 < z < ~0.6')
+        ax.text(-1.3,2.3,'Spec: %s'%counting_array_sub[0],c='k',fontsize=25)
+        ax.text(-1.3,2.15,'Phot: %s'%counting_array_sub[1],c='k',fontsize=25)
+        ax.text(-1.3,2.0,'Field (clu+par): %s'%(counting_array_uvj[0]+counting_array_par[0]),c='k',fontsize=25)
+        #
+        plt.show()
+        #
+    #
+#    
 #
 #
 #
