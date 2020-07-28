@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 #
 ## PLOT FLAG: supresses figure output
-plot_flag_1 = 0              # distribution of del_z's (whole sample)
+plot_flag_1 = 1              # distribution of del_z's (whole sample)
 plot_flag_2 = 0              # distribution of del_z's (by cluster)
 ## function definitions
 #
@@ -20,13 +20,14 @@ BCG_threshold = 11
 ##
 num_small_BCG = np.array([0]*6)
 num_BCG = np.array([0]*6)
-num_other_type_bcg = np.array([0]*6)
+num_other_type_bcg = np.array([[0]*6]*5)
 num_bad_z_phot = np.array([0]*6)
 BCG_spec = np.array([[0]*6]*2)       # row1=SF;  row2=Q; cols=clusters
 BCG_phot = np.array([[0]*6]*2)
 BCG_SF = np.array([0]*6)
 BCG_Q =  np.array([0]*6)
 BCG_outliers = np.array([0]*6)
+
 #
 BCG_delz_phot = [ [], [], [], [], [], [] ]
 BCG_delz_spec = [ [], [], [], [], [], [] ]
@@ -34,35 +35,46 @@ small_BCG_delz = [ [], [], [], [], [], [] ]
 #
 #
 for counter in range(len(master_cat)):
-    if master_cat['lmass'][counter] >= BCG_threshold:
+    if master_cat['bandtotal'][counter] == 'bcg':
     #if master_cat['flag_F160W'][counter] == 4:
         #master_cat['member'][counter] = 5              # member=5 for BCGs so they don't contaminate the "member=0" cluster member sample
         for BCG in range(len(num_BCG)):
             if master_cat['cluster'][counter] == (BCG+1):    # track massive galaxies by cluster
                 num_BCG[BCG]+=1
                 BCG_delz_phot[BCG].append(master_cat['z_clusterphot'][counter])
-                if master_cat['type'][counter] == 1:         # SF sample
-                    BCG_SF[BCG]+=1    
-                    if master_cat['sub'][counter] == 1:         # spec subsample
-                        BCG_spec[0][BCG]+=1
-                    elif master_cat['sub'][counter] == 2:         # spec subsample
-                        BCG_phot[0][BCG]+=1
-                elif master_cat['type'][counter] == 2:         # Q sample
-                    BCG_Q[BCG]+=1
-                    if master_cat['sub'][counter] == 1:         # spec subsample
-                        BCG_spec[1][BCG]+=1
-                    elif master_cat['sub'][counter] == 2:         # spec subsample
-                        BCG_phot[1][BCG]+=1
-                elif master_cat['type'][counter] == 3:         # SF spec outliers
-                    BCG_outliers[BCG]+=1
+                if np.abs(master_cat['z_clusterphot'][counter]) != 99:
+                    if master_cat['type'][counter] == 1:           # SF sample
+                        BCG_SF[BCG]+=1    
+                        if master_cat['sub'][counter] == 1:           # spec subsample
+                            BCG_spec[0][BCG]+=1
+                        elif master_cat['sub'][counter] == 2:         # spec subsample
+                            BCG_phot[0][BCG]+=1
+                    elif master_cat['type'][counter] == 2:         # Q sample
+                        BCG_Q[BCG]+=1
+                        if master_cat['sub'][counter] == 1:           # spec subsample
+                            BCG_spec[1][BCG]+=1
+                        elif master_cat['sub'][counter] == 2:         # spec subsample
+                            BCG_phot[1][BCG]+=1
+                    elif master_cat['type'][counter] == 3:         # spec outliers
+                        BCG_outliers[BCG]+=1
                 else:
-                    if np.abs(master_cat['z_clusterphot'][counter]) == 99:
+                    if np.abs(master_cat['z_peak'][counter]) == 99:
                         num_bad_z_phot[BCG]+=1
+                        if master_cat['z_spec'][counter] > 0:        # sub=3 for spec_only
+                            BCG_delz_spec[BCG].append(master_cat['z_clusterspec'][counter])
                     else:
-                        num_other_type_bcg[BCG]+=1
-                if master_cat['z_spec'][counter] > 0:        # sub=3 for spec_only
-                    BCG_delz_spec[BCG].append(master_cat['z_clusterspec'][counter])
-    elif master_cat['lmass'][counter] >= 11 and master_cat['lmass'][counter] < BCG_threshold:      # track "small bCGs"
+                        if master_cat['sub'][counter] == 0:
+                            num_other_type_bcg[0][BCG]+=1
+                        elif master_cat['sub'][counter] == 1:
+                            num_other_type_bcg[1][BCG]+=1
+                        elif master_cat['sub'][counter] == 2:
+                            num_other_type_bcg[2][BCG]+=1
+                        elif master_cat['sub'][counter] == 3:
+                            num_other_type_bcg[3][BCG]+=1
+                        elif master_cat['sub'][counter] == 4:
+                            num_other_type_bcg[4][BCG]+=1
+                
+    if master_cat['lmass'][counter] >= BCG_threshold and master_cat['lmass'][counter] < 12.5:      # track "small bCGs"
         for BCG in range(len(num_BCG)):
             if master_cat['cluster'][counter] == (BCG+1):    # track massive galaxies by cluster
                 small_BCG_delz[BCG].append(master_cat['z_clusterphot'][counter])
@@ -80,7 +92,7 @@ for ii in range(len(BCG_delz_phot)):
     for jj in range(len(BCG_delz_phot[ii])):
         BCG_delz_phot_plot.append(np.abs(BCG_delz_phot[ii][jj]))
     #
-## collape for plotting purposes
+## collape for plotting purposes - bCGs w/o phot. but WITH spec
 BCG_delz_spec_plot = []
 for ii in range(len(BCG_delz_spec)):
     for jj in range(len(BCG_delz_spec[ii])):
@@ -119,23 +131,27 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         plt.show()
         # 
         ## SPEC
-        plt.figure()
-        n, bins, patches = plt.hist(x=np.abs(BCG_delz_spec_plot),bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7, rwidth=1)
-        plt.grid(axis='y', alpha=0.75)
-        plt.xlabel('$z_{spec}$ - $z_{cluster}$ / 1 + $z_{spec}$',fontsize=12)
-        plt.ylabel('# count',fontsize=12)
-        plt.title('|${\Delta}$z|$_{spec}$ bCG - NOT IN PARENT SAMPLE',fontsize=15)
-        plt.text(0.2,3,string,fontsize=9)
-        plt.show()
-        #
-        #
-        #print('# phot: %s'%len(delz_phot_plot),'\n# spec: %s'%len(delz_spec_plot),'\nTotal: %s'%(len(delz_phot_plot)+len(delz_spec_plot)))
-        #
+        if len(BCG_delz_spec_plot) == 0:
+            pass
+        else:
+            plt.figure()
+            n, bins, patches = plt.hist(x=np.abs(BCG_delz_spec_plot),bins=bins_phot,color='deepskyblue',edgecolor='steelblue',alpha=0.7, rwidth=1)
+            plt.grid(axis='y', alpha=0.75)
+            plt.xlabel('$z_{spec}$ - $z_{cluster}$ / 1 + $z_{spec}$',fontsize=12)
+            plt.ylabel('# count',fontsize=12)
+            plt.title('|${\Delta}$z|$_{spec}$ bCG - NOT IN PARENT SAMPLE',fontsize=15)
+            plt.text(0.2,3,string,fontsize=9)
+            plt.show()
+            #
+            #
+            #print('# phot: %s'%len(delz_phot_plot),'\n# spec: %s'%len(delz_spec_plot),'\nTotal: %s'%(len(delz_phot_plot)+len(delz_spec_plot)))
+            #
     #
 if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
     if project_plot_flag == 0:
         pass
     else:
+        #
         ## Visualize by cluster
         #
         #
