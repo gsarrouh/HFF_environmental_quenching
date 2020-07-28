@@ -51,6 +51,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.cm import ScalarMappable
 import time
+from astropy.stats import sigma_clip
 #
 ## FLAGS
 #
@@ -184,8 +185,8 @@ vel_disp_z_m = np.array([0]*6,dtype='float128')
 vel_disp_sq_m = np.array([0]*6,dtype='float128')
 for ii in range(len(vel_disp_mean)):
     vel_disp_mean[ii] = np.mean(cluster_velocities[ii])
-    vel_disp_z_m[ii] = np.std(cluster_velocities[ii])
-    vel_disp_sq_m[ii] = 3*(np.std(cluster_velocities[ii])**2)
+    vel_disp_z_m[ii] = = sigma_clip(cluster_velocities[ii], sigma=3, maxiters=5,cenfunc=mean)
+    vel_disp_sq_m[ii] = 3*(vel_disp_z_m[ii]**2)
 #
 ## convert squared velocity dispersion to units of [Mpc/s}^2
 vel_disp_sq_Mpc = np.array([0]*6,dtype='float128')
