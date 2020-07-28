@@ -126,13 +126,13 @@ diag_flag_6 = 1
 diag_flag_7 = 1             
 #
 #
-#
 if 'project_diagnostic_flag' in locals():
     pass
 else:
+    project_plot_flag = 2
     project_diagnostic_flag = 2
     project_master_variational_flag = 0
-    z_cutoff = [0.02,0.06]     # [spec,phot] cutoffs for cluster membership
+    z_cutoff = [0.012,0.055]     # [spec,phot] cutoffs for cluster membership
     z_cutoff_field = [0.08,0.15] 
     limiting_mass_flag = 1
     bin_width = 0.4
@@ -519,13 +519,6 @@ print('"master_parallel*.py" Section 2 complete.\n')
 #
 print('\n"master_data*.py" Section 3: classifying galaxy TYPE as star-forming or quiescent...')
 #
-## TIME_FLAG_3 START
-#
-if time_flag_3 == 1 and time_flag == 2:
-    if project_time_flag == 1:
-        pass
-    else:
-        start_time = time.time()
 #  
 SF_type_par = np.array([[0]*6]*2)                         # initialize arrays;  row1=spec;  row2=phot
 Q_type_par = np.array([[0]*6]*2)
@@ -536,7 +529,7 @@ stars_outliers_par = np.array([0]*6)
 for counter in range(len(master_cat_par)):
     if master_cat_par['star_flag'][counter] == 1:          # identify STARS, filter type=0
         master_cat_par['type'][counter] = 0              
-        for ii in range(len(stars_type)):
+        for ii in range(len(stars_type_par)):
             if master_cat_par['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
                 stars_type_par[ii]+=1
     elif master_cat_par['sub'][counter]==1 or master_cat_par['sub'][counter]==2:    # sub=1 for (spec & phot) subsample, sub=2 for phot subsample; i.e. look at all objects with photometry   <-- THIS IS THE LINE THAT MATTERS!
@@ -787,6 +780,15 @@ if summary_flag_5 == 1 or adams_flag == 1:
 #
 print('\n"master_parallel*.py" Section 6 complete.')
 #
+#
+#
+## TIME_FLAG END
+#
+if time_flag == 1:
+    if project_time_flag == 1:
+        pass
+    else:
+        print('Program "master_parallel*.py" took: %s seconds to run.\n\n' % (time.time() - start_time))
 #
 #
 #
