@@ -32,7 +32,7 @@ for counter in range(len(master_cat)):
                         if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
                             field_spec[0][ii]+=1
                 else:
-                    master_cat['member'][counter] = 4         # member=4 for FIELD
+                    master_cat['member'][counter] = 4         # member=4 for FAR FIELD
                     for ii in range(len(far_field_spec[0])):
                         if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
                             far_field_spec[0][ii]+=1
