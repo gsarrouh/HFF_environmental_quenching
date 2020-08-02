@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 #
 ## PLOT FLAG: supresses figure output
-plot_flag_1 = 1              # distribution of del_z's (whole sample)
+plot_flag_1 = 0              # distribution of del_z's (whole sample)
 plot_flag_2 = 0              # distribution of del_z's (by cluster)
 ## function definitions
 #
