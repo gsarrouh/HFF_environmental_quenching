@@ -517,7 +517,7 @@ print('"master_parallel*.py" Section 2 complete.\n')
 ## SECTION (3): add FILTER TYPE: separate SF/Q for both subsamples;    filter name: 'type'  IDs below; SELECTION CRITERIA from Shipley et al. 2018, Section (5.3)
 ##   0 = stars;  1 = SF (star-forming);    2 = Q (quiscient);    3 = outliers
 #
-print('\n"master_data*.py" Section 3: classifying galaxy TYPE as star-forming or quiescent...')
+print('\n"master_parallel*.py" Section 3: classifying galaxy TYPE as star-forming or quiescent...')
 #
 #  
 SF_type_par = np.array([[0]*6]*2)                         # initialize arrays;  row1=spec;  row2=phot
