@@ -57,7 +57,7 @@ def delz_bound(x):
 ## SECTION (0): set PLOT_FLAGS    # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
 ### MAY NEED TO EDIT ### plot_flag_*/time_flag_*/diag_flag_*
 #
-plot_flag_1 = 0           # Fig.1 - z_spec v z_phot plot
+plot_flag_1 = 1           # Fig.1 - z_spec v z_phot plot
 plot_flag_2 = 1           # Fig.2 - del_z plot
 #
 time_flag_1 = 0
@@ -96,12 +96,12 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         for counter in range(len(master_cat)):
             if master_cat['sub'][counter] == 1:    # sub=1 for (spec+phot) subsample
                 if master_cat['type'][counter] == 3:    # type=3 for outliers
-                    outz = ax1.scatter(master_cat['z_spec'][counter],master_cat['z_peak'][counter],c='r',marker='v',alpha=0.7,linewidths = 0)
+                    outz = ax1.scatter(master_cat['z_spec'][counter],master_cat['z_peak'][counter],c='r',marker='v',alpha=0.6,linewidths = 0)
                     outlier_scatter.append(np.abs(master_cat['del_z'][counter]))
                     count_outlier+=1
                     #print('Outlier: %s'%master_cat['type'][counter])
                 elif master_cat['type'][counter] !=0 :
-                    memz = ax1.scatter(master_cat['z_spec'][counter],master_cat['z_peak'][counter],c='b', marker='^',alpha=0.35,linewidths = 0)
+                    memz = ax1.scatter(master_cat['z_spec'][counter],master_cat['z_peak'][counter],c='b', marker='^',alpha=0.25,linewidths = 0)
                     count_mem+=1
                     if master_cat['type'][counter] == 1:         # type=1 for SF
                         SF_scatter.append(np.abs(master_cat['del_z'][counter]))
@@ -142,22 +142,22 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         y_upper_bound, y_lower_bound = delz_bound(x_bound)
         #
         ## construct a string to plot the outlier fraction & std dev ('scatter')
-        string = 'Median |$\Delta$z|: %.3f'%mean_abs_delz[0]+'\n$\sigma_{|$\Delta$z|}$ = %.3f'%std_abs_delz[0]+'\nOutliers: ~%.2f'%outlier_fraction+'%'
+        string = 'Median |$\Delta$z|: %.3f'%mean_abs_delz[0]+'\n$\sigma_{|\Delta z|}$ = %.3f'%std_abs_delz[0]+'\nOutliers: %.2f'%outlier_fraction+'%'
         ## add text to plot
-        ax1.text(0.15,1.085,string)
-        ax1.plot([0,2],[0,2],'--k', linewidth=1)
-        ax1.plot(x_bound,y_upper_bound,':k', linewidth=1)
-        ax1.plot(x_bound,y_lower_bound,':k', linewidth=1)
-        ax1.set_xlabel("$z_{spec}$")
+        ax1.text(0.17,1.085,string, fontsize=15)
+        ax1.plot([0,2],[0,2],'--k', linewidth=2)
+        ax1.plot(x_bound,y_upper_bound,':k', linewidth=1.75)
+        ax1.plot(x_bound,y_lower_bound,':k', linewidth=1.75)
+        ax1.set_xlabel("$z_{spec}$", fontsize=30)
         ax1.set_xscale('linear')
         ax1.set_xlim(0,1.5)
-        ax1.set_ylabel("$z_{phot}$")
+        ax1.set_ylabel("$z_{phot}$", fontsize=30)
         ax1.set_yscale('linear')
         ax1.set_ylim(0,1.5)
         #ax1.set_title("$z_{spec} vs. z_{phot}$")
-        ax1.legend((memz,outz),('Spec. subsample: %i'%count_mem,'Outliers: %i'%count_outlier),scatterpoints=1,loc='upper left', frameon=False)
+        ax1.legend((memz,outz),('Spec. subsample: %i'%count_mem,'Outliers: %i'%count_outlier),scatterpoints=1,fontsize=15,loc='upper left', frameon=False)
         #plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = ':')
-        ax1.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='on')
+        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False)
         ax1.minorticks_on()
         plt.show()
         #
@@ -259,20 +259,20 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax1.scatter(SF_members[0],SF_members[1],s=100,c='g', marker='P',alpha=0.4, linewidths = 0, label='Member')
         ax1.scatter(SF_fields[0],SF_fields[1],s=100,c='b', marker='P',alpha=0.4, linewidths = 0, label='Field')
         # add z_cutoff limits
-        ax1.plot([-0.5,1],[z_cutoff[1],z_cutoff[1]],':k', linewidth=1)  # horizontal cuts (phot)
-        ax1.plot([-0.5,1],[-z_cutoff[1],-z_cutoff[1]],':k', linewidth=1)
-        ax1.plot([-z_cutoff[0],-z_cutoff[0]],[-0.5,1],':k', linewidth=1)  #vertical cuts
-        ax1.plot([z_cutoff[0],z_cutoff[0]],[-0.5,1],':k', linewidth=1)  
+        ax1.plot([-0.5,1],[z_cutoff[1],z_cutoff[1]],':k', linewidth=3)  # horizontal cuts (phot)
+        ax1.plot([-0.5,1],[-z_cutoff[1],-z_cutoff[1]],':k', linewidth=3)
+        ax1.plot([-z_cutoff[0],-z_cutoff[0]],[-0.5,1],':k', linewidth=3)  #vertical cuts
+        ax1.plot([z_cutoff[0],z_cutoff[0]],[-0.5,1],':k', linewidth=3)  
         # add details
-        ax1.set_title('Star-forming',fontsize=20)
-        ax1.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$')
+        ax1.set_title('Star-forming',fontsize=40)
+        ax1.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$',fontsize=35)
         ax1.set_xlim(-0.25,0.25)
-        ax1.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$')
+        ax1.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$',fontsize=35)
         ax1.set_ylim(-0.25,0.25)
         ax1.grid(b=False)
         ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True, labeltop=False,labelbottom=True)
         ax1.minorticks_on()
-        ax1.legend(loc='upper left', frameon=False, fontsize=12)
+        ax1.legend(loc='upper left', frameon=False, fontsize=25, markerscale=2)
         #
         ## now do the Q plot
         ## scatter the points
@@ -281,15 +281,15 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax2.scatter(Q_poss[0],Q_poss[1],s=100,c='firebrick', marker='X',alpha=0.4, linewidths = 0)
         ax2.scatter(Q_negs[0],Q_negs[1],s=100,c='darkviolet', marker='X',alpha=0.4, linewidths = 0)
         # add z_cutoff limits
-        ax2.plot([-0.5,1],[z_cutoff[1],z_cutoff[1]],':k', linewidth=1)  # horizontal cuts (phot)
-        ax2.plot([-0.5,1],[-z_cutoff[1],-z_cutoff[1]],':k', linewidth=1)
-        ax2.plot([-z_cutoff[0],-z_cutoff[0]],[-0.5,1],':k', linewidth=1)  #vertical cuts
-        ax2.plot([z_cutoff[0],z_cutoff[0]],[-0.5,1],':k', linewidth=1)  
+        ax2.plot([-0.5,1],[z_cutoff[1],z_cutoff[1]],':k', linewidth=3)  # horizontal cuts (phot)
+        ax2.plot([-0.5,1],[-z_cutoff[1],-z_cutoff[1]],':k', linewidth=3)
+        ax2.plot([-z_cutoff[0],-z_cutoff[0]],[-0.5,1],':k', linewidth=3)  #vertical cuts
+        ax2.plot([z_cutoff[0],z_cutoff[0]],[-0.5,1],':k', linewidth=3)  
         # add details
-        ax2.set_title('Quiescent',fontsize=20)
-        ax2.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$')
+        ax2.set_title('Quiescent',fontsize=40)
+        ax2.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$',fontsize=35)
         ax2.set_xlim(-0.25,0.25)
-        ax2.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$')
+        ax2.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$',fontsize=35)
         ax2.yaxis.set_label_position('right')
         ax2.set_ylim(-0.25,0.25)
         ax2.grid(b=False)
@@ -297,6 +297,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax2.minorticks_on()                        
         #
         #
+        plt.show()
     #####    
     #    
 #   
