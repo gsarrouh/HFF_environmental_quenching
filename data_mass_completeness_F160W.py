@@ -155,21 +155,21 @@ for counter in range(len(master_cat)):
                 mag_F160W[cluster].append(master_cat['F160W_mag'][counter])
                 mag_F814W[cluster].append(master_cat['F814W_mag'][counter])
 #
-## compute medians and offset ( offset = mean(F160W_mag) - mean(F814W_mag) )
+## compute medians and offset ( offset = median(F160W_mag) - median(F814W_mag) )
+
+offset = np.array([0.0]*6)
 #
-#offset = np.array([0.0]*6)
-##
-#for ii in range(len(limiting_mag)):
-#    temp_F160W = np.array(mag_F160W[ii])
-#    temp_F814W = np.array(mag_F814W[ii])
-#    medians = np.array([0.0]*2)
-#    medians[0] = np.median(temp_F160W)
-#    medians[1] = np.median(temp_F814W)
-##
+for ii in range(len(limiting_mag)):
+    temp_F160W = np.array(mag_F160W[ii])
+    temp_F814W = np.array(mag_F814W[ii])
+    medians = np.array([0.0]*2)
+    medians[0] = np.median(temp_F160W)
+    medians[1] = np.median(temp_F814W)
+#
 #    offset[ii] = medians[0] - medians[1]
 #
 # store the offset in magnitudes to be used between magnitudes measured in F160W filter and F814W
-offset = limiting_mag - limiting_mag_814    # [limiting mag F160] - [limiting mag F814W]
+#offset = limiting_mag - limiting_mag_814    # [limiting mag F160] - [limiting mag F814W]
 #
 #
 #
@@ -629,7 +629,7 @@ if (plot_flag_3 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
             total_mem = np.sum([mem_phot[0][cluster],mem_phot[1][cluster],mem_spec[0][cluster],mem_spec[1][cluster]])
             mem_shown = len(plotting_array_temp[0])
             #
-            members_string = '# cluster members(F160W+F814W): %s'%total_mem+'(%s'%mem_shown+')'
+            members_string = '$M^{*}_{lim}$: %s'%limiting_mass[cluster]+'\n# cluster members(F160W): %s'%total_mem+'(%s'%mem_shown+')\nz$_{cluster}$ = %s'%z_cluster[cluster]
             ## Compute std. dev. of cluster objects
             std_dev = np.std(plotting_array_temp[1])
             #
@@ -637,8 +637,10 @@ if (plot_flag_3 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
             #
             fig, axs = plt.subplots(nrows=1,ncols=2,sharex=False,sharey=False)#,tight_layout=True)
             fig.subplots_adjust(wspace=0,hspace=0)
+            fig.set_size_inches(20,8)
             #
-            c_map = plt.get_cmap("spring")        # set colorbar map
+            #
+            c_map = plt.get_cmap("autumn")        # set colorbar map
             #
             lim_mag_minus = (limiting_mag[cluster]-TOL)
             lim_mag_plus = (limiting_mag[cluster]+TOL)
@@ -647,43 +649,57 @@ if (plot_flag_3 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
             ax1 = axs.flat[0]
             #
             ax1.scatter(plotting_array_temp[0],plotting_array_temp[1], marker='o', s=150, c=plotting_array_temp[2], cmap= c_map, vmin=min(plotting_array_temp[2]), vmax=max(plotting_array_temp[2]))
-            ax1.plot([limiting_mag[cluster],limiting_mag[cluster]],[0,15],'--k', linewidth=1.4)
-            ax1.plot([lim_mag_minus,lim_mag_minus],[0,15],':r', linewidth=1.2)
-            ax1.plot([lim_mag_plus,lim_mag_plus],[0,15],':r', linewidth=1.2)
-            ax1.plot([0,35],[max_min_mass[cluster][0],max_min_mass[cluster][0]], color='maroon', linestyle='--',linewidth=1.2)    #chang indexing of max_min_mass to [ii][0] & [ii][1] for looped subplots
-            ax1.plot([0,35],[max_min_mass[cluster][1],max_min_mass[cluster][1]], color='maroon', linestyle='--',linewidth=1.2)
+            ax1.plot([limiting_mag[cluster],limiting_mag[cluster]],[0,15],'--k', linewidth=2.5)
+            ax1.plot([lim_mag_minus,lim_mag_minus],[0,15],':r', linewidth=1.5)
+            ax1.plot([lim_mag_plus,lim_mag_plus],[0,15],':r', linewidth=1.5)
+            ax1.plot([0,35],[max_min_mass[cluster][0],max_min_mass[cluster][0]], color='k', linestyle='--',linewidth=2.5)    #chang indexing of max_min_mass to [ii][0] & [ii][1] for looped subplots
+            ax1.plot([0,35],[max_min_mass[cluster][1],max_min_mass[cluster][1]], color='k', linestyle='--',linewidth=2.5)
             #
             ax1.grid(axis='both', alpha=0.75)
             ax1.set_xlim([17,30])
+            ax1.set_xlabel('m$_{F160W}$',fontsize=20)
             ax1.set_ylim([5,13])
+            ax1.set_ylabel('$log_{10}$(M/M$_{\odot})$',fontsize=20)
+            ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=False,labelright=False, labelleft=True,labelsize=20)
             #
             ## label locations
-            ax1.text(20.1,12.1,cluster_names[cluster],fontsize=15)
-            ax1.text(20.1,11.7,'$M/L_{max}$: %s'%limiting_mass[cluster],fontsize=13)
-            ax1.text(20.1,11.3,members_string,fontsize=13)
-            ax1.text(17.6,6.1,'z = %s'%z_cluster[cluster],fontsize=13)
-            ax1.text(17.6,5.7,'$\sigma_{mass}$ = %s'%std_dev,fontsize=13)
+            ax1.text(20.1,12.1,cluster_names[cluster],fontsize=25)
+            ax1.text(20.1,11.0,members_string,fontsize=20)
             #
             #
             # zoom in
             ax2 = axs.flat[1]
             #
+            #
+            ## define function for drawing a circle on plots
+            def circle(x, y, radius=0.15):
+                from matplotlib.patches import Circle
+                from matplotlib.patheffects import withStroke
+                circle = Circle((x, y), radius, clip_on=False, zorder=10, linewidth=1,
+                                edgecolor='black', facecolor=(0, 0, 0, .0125),
+                                path_effects=[withStroke(linewidth=5, foreground='w')])
+                ax2.add_artist(circle)
+            #
+            #
             ax2.scatter(plotting_array_temp[0],plotting_array_temp[1], marker='o', s=150, c=plotting_array_temp[2], cmap= c_map, vmin=min(plotting_array_temp[2]), vmax=max(plotting_array_temp[2]))
-            ax2.plot([limiting_mag[cluster],limiting_mag[cluster]],[0,15],'--k', linewidth=1.4)
-            ax2.plot([lim_mag_minus,lim_mag_minus],[0,15],':r', linewidth=1.2)
-            ax2.plot([lim_mag_plus,lim_mag_plus],[0,15],':r', linewidth=1.2)
-            ax2.plot([0,35],[max_min_mass[cluster][0],max_min_mass[cluster][0]], color='maroon', linestyle='--',linewidth=1.2)    #chang indexing of max_min_mass to [ii][0] & [ii][1] for looped subplots
-            ax2.plot([0,35],[max_min_mass[cluster][1],max_min_mass[cluster][1]], color='maroon', linestyle='--',linewidth=1.2)
+            ax2.plot([limiting_mag[cluster],limiting_mag[cluster]],[0,15],'--k', linewidth=2.0)
+            ax2.plot([lim_mag_minus,lim_mag_minus],[0,15],':r', linewidth=2.0)
+            ax2.plot([lim_mag_plus,lim_mag_plus],[0,15],':r', linewidth=2.0)
+            ax2.plot([0,35],[max_min_mass[cluster][0],max_min_mass[cluster][0]], color='k', linestyle='--',linewidth=2.5)    #chang indexing of max_min_mass to [ii][0] & [ii][1] for looped subplots
+            ax2.plot([0,35],[max_min_mass[cluster][1],max_min_mass[cluster][1]], color='k', linestyle='--',linewidth=2.5)
             sm =  ScalarMappable(cmap=c_map)
             sm.set_array([])
             sm.set_clim([0,z_cutoff[1]])
             ax2.grid(axis='both', alpha=0.75)
-            ax2.set_xlim([25,27])
+            ax2.set_xlim([25.5,27.5])
+            ax2.set_xlabel('m$_{F160W}$',fontsize=20)
             ax2.set_ylim([(max_min_mass[cluster][1]-0.2),9])
-            ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True, labelleft=False)
+            circle(mag_of_limiting_mass[cluster],limiting_mass[cluster])
+            ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True, labelleft=False,labelsize=20)
             cbar = fig.colorbar(sm, ax=ax2)#,location='right')#, vmin=0.0, vmax=z_cutoff[1])
-            cbar.ax.set_title("|${\Delta}$z|$_{phot}$")
-            #        
+            cbar.ax.set_title("|${\Delta}$z|$_{phot}$",fontsize=20)
+            #     
+            plt.show()
 
 #
 #
