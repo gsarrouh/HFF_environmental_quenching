@@ -168,7 +168,7 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True)
         ax.minorticks_on()
         #
-        ax.set_title('~0.25 < z < ~0.6')
+        ax.set_title('~0.25 < z < ~0.6',fontsize=30)
         ax.text(-1.3,2.3,'SF: %s'%counting_array_uvj[1],c='k',fontsize=25)
         ax.text(-1.3,2.15,'Q: %s'%counting_array_uvj[2],c='k',fontsize=25)
         ax.text(-1.3,2.0,'Field (clu+par): %s'%(counting_array_uvj[0]+counting_array_par[0]),c='k',fontsize=25)
@@ -447,24 +447,24 @@ if (plot_flag_3 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         #
         ax.scatter(field_array[0],field_array[1],s=50,c='grey', marker='s', alpha=0.3, linewidths=0)
         ax.scatter(field_array_par[0],field_array_par[1],s=50,c='grey', marker='s', alpha=0.3, linewidths=0)
-        ax.scatter(phot_array[0],phot_array[1],s=60,c='gold', marker='.', alpha=0.8, linewidths=0)
-        ax.scatter(spec_array[0],spec_array[1],s=60,c='green', marker='.', alpha=0.8, linewidths=0)
+        ax.scatter(phot_array[0],phot_array[1],s=60,c='firebrick', marker='.', alpha=0.8, linewidths=0)
+        ax.scatter(spec_array[0],spec_array[1],s=60,c='goldenrod', marker='.', alpha=0.8, linewidths=0)
         #
         if lines_flag == 1:
             ax.plot([-5,0.75],[1.3,1.3],'-k',[0.75,3],[1.3,3],'-k', linewidth=1) #overlay boundary cutoff for SF/Passive
         #
-        ax.set_xlabel('$(V-J)_{rest}$',fontsize=20)
+        ax.set_xlabel('$(V-J)_{rest}$',fontsize=30)
         ax.set_xlim(-1.5,2)
-        ax.set_ylabel('$(U-V)_{rest}$', fontsize=20)
+        ax.set_ylabel('$(U-V)_{rest}$', fontsize=30)
         ax.set_ylim(0,2.5)
         ax.grid(b=False)
-        ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True)
+        ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True,labelsize=20)
         ax.minorticks_on()
         #
-        ax.set_title('~0.25 < z < ~0.6')
-        ax.text(-1.3,2.3,'Spec: %s'%counting_array_sub[0],c='k',fontsize=25)
-        ax.text(-1.3,2.15,'Phot: %s'%counting_array_sub[1],c='k',fontsize=25)
-        ax.text(-1.3,2.0,'Field (clu+par): %s'%(counting_array_uvj[0]+counting_array_par[0]),c='k',fontsize=25)
+        ax.set_title('~0.25 < z < ~0.6',fontsize=20)
+        ax.text(-1.3,2.3,'Spec: %s'%counting_array_sub[0],c='k',fontsize=25,color='goldenrod')
+        ax.text(-1.3,2.15,'Phot: %s'%counting_array_sub[1],c='k',fontsize=25,color='firebrick')
+        ax.text(-1.3,2.0,'Field (clu+par): %s'%(counting_array_uvj[0]+counting_array_par[0]),c='k',fontsize=25,color='grey')
         #
         plt.show()
         #
