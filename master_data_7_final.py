@@ -163,7 +163,7 @@ else:
     project_diagnostic_flag = 2
     project_plot_flag = 2
     project_master_variational_flag = 0
-    z_cutoff = [0.012,0.055]     # [spec,phot] cutoffs for cluster membership
+    z_cutoff = [0.012,0.06]     # [spec,phot] cutoffs for cluster membership
     z_cutoff_field = [0.05,0.10] 
     limiting_mass_flag = 1
     bin_width = 0.4
