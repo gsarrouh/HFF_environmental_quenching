@@ -118,7 +118,7 @@ def mass_completeness_correction_function(mass_bin_edges,limiting_masses):
     mass_completeness_correction_factors = np.transpose(6/mass_completeness_correction_factors) # take recipricol for multiplicative factors
     return mass_completeness_correction_factors
 #
-## define a function to take in a list of 6 SMFs, normalize them all by MASS to a total mass of 1 per SMF, and then combines them into a single SMF and divides by 6, effectively taking the average SMF, whose area-under-the-curve (i.e. total mass) has been normalized to 1
+## define a function to take in a list of 6 SMFs, normalize them all by MASS to a total mass of 1 per SMF, and then combines them into a single SMF and divides by 6, effectively taking the average SMF, whose area-under-the-curve (i.e. total mass) has been normalized to 1; see Section (3.3)
 #
 def normalize_smf_mass(SF_raw_smf,Q_raw_smf,midbins):
     #
@@ -154,7 +154,7 @@ def normalize_smf_mass(SF_raw_smf,Q_raw_smf,midbins):
     #
 #####
 #
-## define a function to take in a list of 6 SMFs, normalize them all by NUMBER COUNT of 1 galaxy per SMF, and then combines them into a single SMF and divides by 6, effectively taking the average SMF, whose area-under-the-curve (i.e. total # of galaxies) has been normalized to 1
+## define a function to take in a list of 6 SMFs, normalize them all by NUMBER COUNT of 1 galaxy per SMF, and then combines them into a single SMF and divides by 6, effectively taking the average SMF, whose area-under-the-curve (i.e. total # of galaxies) has been normalized to 1; see Section (3.3)
 #
 def normalize_smf_count(SF_raw_smf,Q_raw_smf,midbins):
 ## Add mass & spec corrections to *_raw_smf lists 
@@ -185,6 +185,27 @@ def normalize_smf_count(SF_raw_smf,Q_raw_smf,midbins):
     total_smf = SF_smf + Q_smf
     return SF_smf, Q_smf, total_smf, count_fraction_by_cluster
     #
+#####
+#
+#
+## define a function to interpolate the relative errors of the Spec. Completeness Correction ratios (n bins) to the SMF mass bin correction factors (N bins), where n < N. see Section (4); 
+#
+def interpolate_errors(ratios,ratios_err,correction_factors,ratio_bins,mass_bins):
+    correction_factors_err = np.empty_like(correction_factors)
+    for ii in range(len(correction_factors)): 
+        for jj in range(len(ratio_bins)):
+            if mass_bins[ii] < ratio_bins[0]:
+                correction_factors_err[ii] = (ratios_err[0] / ratios[0]) * correction_factors[ii]
+            elif mass_bins[ii] > ratio_bins[-1]:
+                correction_factors_err[ii] = (ratios_err[-1] / ratios[-1]) * correction_factors[ii]
+            elif mass_bins[ii] >= ratio_bins[jj] and mass_bins[ii] < ratio_bins[jj+1]:
+                D = ratio_bins[jj+1] - ratio_bins[jj]
+                d = mass_bins[ii] - ratio_bins[jj]
+                correction_factors_err[ii] = np.sqrt( ((D-d)/D)*(ratios_err[jj]/ratios[jj])**2 + (d/D)*(ratios_err[jj+1]/ratios[jj+1])**2 )*correction_factors[ii]
+    return correction_factors_err
+#
+#
+#
 #
 #
 ### TEMPORARY WRITING FLAG
@@ -712,20 +733,23 @@ for ii in range(len(Q_ratio_midbins)-1):
     m_Q[ii] = (Q_ratio[ii+1] - Q_ratio[ii]) / (Q_ratio_midbins[ii+1] - Q_ratio_midbins[ii]) # calc slope
     b_Q[ii] = Q_ratio[ii] - (Q_ratio_midbins[ii]*m_Q[ii])   # calc intercept
 #
-for ii in range(len(Q_midbins)):
+for ii in range(len(SF_midbins)):
     if Q_spec_completeness_correction[ii] == 0:     # don't overwrite cell once correction factor is computed
-        if Q_midbins[ii] < Q_ratio_midbins[0]:      # extrapolate below lowest mass bin
-            Q_spec_completeness_correction[ii] = m_Q[0]*Q_midbins[ii] + b_Q[0]    
-        elif Q_midbins[ii] > Q_ratio_midbins[-1]:    # extrapolate above highest mass bin
-            Q_spec_completeness_correction[ii] = m_Q[-1]*Q_midbins[ii] + b_Q[-1]    
-        elif Q_midbins[ii] > Q_ratio_midbins[0] and Q_midbins[ii] < Q_ratio_midbins[-1]:    # interpolate in between all other points
+        if SF_midbins[ii] < Q_ratio_midbins[0]:      # extrapolate below lowest mass bin
+            Q_spec_completeness_correction[ii] = m_Q[0]*SF_midbins[ii] + b_Q[0]    
+        elif SF_midbins[ii] > Q_ratio_midbins[-1]:    # extrapolate above highest mass bin
+            Q_spec_completeness_correction[ii] = m_Q[-1]*SF_midbins[ii] + b_Q[-1]    
+        elif SF_midbins[ii] > Q_ratio_midbins[0] and SF_midbins[ii] < Q_ratio_midbins[-1]:    # interpolate in between all other points
             for jj in range(len(Q_ratio_midbins)-1):
-                if Q_midbins[ii] > Q_ratio_midbins[jj] and Q_midbins[ii] < Q_ratio_midbins[jj+1]:
-                    Q_spec_completeness_correction[ii] = m_Q[jj]*Q_midbins[ii] + b_Q[jj]
+                if SF_midbins[ii] > Q_ratio_midbins[jj] and SF_midbins[ii] < Q_ratio_midbins[jj+1]:
+                    Q_spec_completeness_correction[ii] = m_Q[jj]*SF_midbins[ii] + b_Q[jj]
         else:
             print('Error in Q spec completeness correction computation. ABORT')
             break   
-#    
+#
+## Now compute errors on the interpolated correction factors
+SF_spec_completeness_correction_err = interpolate_errors(SF_ratio,SF_ratio_err,SF_spec_completeness_correction,SF_ratio_midbins,SF_midbins)
+Q_spec_completeness_correction_err = interpolate_errors(Q_ratio,Q_ratio_err,Q_spec_completeness_correction,Q_ratio_midbins,SF_midbins)
 #
 ## FIGURE ##
 #
@@ -744,8 +768,10 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax.plot(SF_ratio_midbins,SF_ratio,'-b', linewidth=1.0, label='Star-forming')
         ax.plot(Q_ratio_midbins,Q_ratio,'-r', linewidth=1.0, label='Quiescent')
         ax.plot([6,13],[1,1],'--k',linewidth = 0.5)
-        ax.scatter(SF_midbins,SF_spec_completeness_correction,c='b', marker='x')
-        ax.scatter(Q_midbins,Q_spec_completeness_correction,c='r', marker='x')
+        #ax.scatter(SF_midbins,SF_spec_completeness_correction,c='b', marker='x',linewidth=0.0)
+        #ax.scatter(Q_midbins,Q_spec_completeness_correction,c='b', marker='x',linewidth=0.0)
+        ax.errorbar(SF_midbins,SF_spec_completeness_correction,yerr=SF_spec_completeness_correction_err,c='b', marker='x',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
+        ax.errorbar(Q_midbins,Q_spec_completeness_correction,yerr=Q_spec_completeness_correction_err,c='r', marker='x',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
         ax.legend(loc='upper right', frameon=False,fontsize=25)
         ax.set_xlabel('$log(M/M_{\odot})$',fontsize=30)
         ax.set_ylim=(-0.5,4.1)
@@ -947,39 +973,81 @@ quenched_fraction[1] = Q_field_smf / total_field_smf                 # quenched 
 ## SECTION (4) ERROR BARS & relative fractions
 #
 ## METHOD 1: Poissonian error bars will be added to the spec. sample only; the error in the phot sample must propogate the error in the completeness correction; (total rel. error in smf, squared) = (sum of squared rel. errors (spec subsample = phot subsample);
-## RECALL key lists: spec/phot subsamples are stored in "SF_spec_list/SF_phot_list" & "Q_spec_list/Q_phot_list", which are lists of lists organized by cluster
+## RECALL key lists: spec/phot subsamples are stored in "SF_spec_list/SF_phot_list" & "Q_spec_list/Q_phot_list", which are lists of lists organized by cluster, corresponding to "SF_spec_smf/SF_phot_smf" & "Q_spec_smf/Q_phot_smf" respectively
 #
 ## Method 2: treat each bin as its own Poisson distribution, and draw samples (i.e. Bootstrap re-sampling with replacement), where the number of galaxies drawn in each realization of the resampling follows a Poisson distribution, with the mean of the distribution equal to the number count in the SMF mass bin. 
 #
 #
 if smf_error_method == 1:                  # method 1: see above
     # initialize arrays
-    SF_spec_error = np.empty_like(SF_midbins)
-    SF_phot_error = np.empty_like(SF_midbins)
-    Q_spec_error = np.empty_like(SF_midbins)
-    Q_phot_error = np.empty_like(SF_midbins)
+    SF_error_rel = np.empty_like(SF_midbins)
+    Q_error_rel = np.empty_like(SF_midbins)
+    SF_spec_error_rel = np.empty_like(SF_midbins)
+    SF_phot_error_rel = np.empty_like(SF_midbins)
+    SF_phot_error_counting_rel = np.empty_like(SF_midbins)
+    Q_spec_error_rel = np.empty_like(SF_midbins)
+    Q_phot_error_rel = np.empty_like(SF_midbins)
+    Q_phot_error_counting_rel = np.empty_like(SF_midbins)
     #
     ## the error on the spec sample is just sqrt(N), i.e. a Poissonian error
-    SF_spec_error
-#
+    SF_spec_error_rel = np.sqrt(np.sum(SF_spec_smf,axis=0)) / np.sum(SF_spec_smf,axis=0)
+    Q_spec_error_rel = np.sqrt(np.sum(Q_spec_smf,axis=0)) / np.sum(Q_spec_smf,axis=0)
+    #
+    ## reshape arrays to match SMF
+    SF_spec_error_rel = SF_spec_error_rel.reshape(len(SF_midbins))
+    Q_spec_error_rel = Q_spec_error_rel.reshape(len(SF_midbins))
+    #
+    ## remove NaNs due to empty bins
+    for ii in range(len(SF_spec_error_rel)):
+        if np.isnan(SF_spec_error_rel[ii])==1:
+            SF_spec_error_rel[ii] = 0
+        if np.isnan(Q_spec_error_rel[ii])==1:
+            Q_spec_error_rel[ii] = 0
+    #
+    ## the error on the phot sample is also sqrt(N), plus an additional term for the uncertainty in the spec. completeness correction factor; this accounts for the counting error only still need to add in the uncertainty due to spec. completeness
+    SF_phot_error_counting_rel = np.sqrt(np.sum(SF_phot_smf,axis=0))/np.sum(SF_phot_smf,axis=0)     
+    Q_phot_error_counting_rel = np.sqrt(np.sum(Q_phot_smf,axis=0))/np.sum(Q_phot_smf,axis=0)       
+    #
+    ## reshape arrays to match SMF
+    SF_phot_error_counting_rel = SF_phot_error_counting_rel.reshape(len(SF_midbins))
+    Q_phot_error_counting_rel = Q_phot_error_counting_rel.reshape(len(SF_midbins))
+    #
+    ## remove NaNs due to empty bins
+    for ii in range(len(SF_phot_error_counting_rel)):
+        if np.isnan(SF_phot_error_counting_rel[ii])==1:
+            SF_phot_error_counting_rel[ii] = 0
+        if np.isnan(Q_phot_error_counting_rel[ii])==1:
+            Q_phot_error_counting_rel[ii] = 0
+    #
+    ## compute the relative error on the phot sample
+    SF_phot_error_rel = np.sqrt(np.transpose((SF_spec_completeness_correction_err/SF_spec_completeness_correction)**2) + (SF_phot_error_counting_rel)**2)
+    Q_phot_error_rel = np.sqrt(np.transpose((Q_spec_completeness_correction_err/Q_spec_completeness_correction)**2) + (Q_phot_error_counting_rel)**2)
+    #
+    ## reshape arrays to match SMF
+    SF_phot_error_rel = SF_phot_error_rel.reshape(len(SF_midbins))
+    Q_phot_error_rel = Q_phot_error_rel.reshape(len(SF_midbins))
+    #
+    ## now put it all together: total relative error (squared) = sum of relative errors (squared)
+    SF_error_rel = np.sqrt( SF_spec_error_rel**2 + SF_phot_error_rel**2 )
+    Q_error_rel = np.sqrt( Q_spec_error_rel**2 + Q_phot_error_rel**2 )
+    #
+    ## compute error bars for SMF plot
+    SF_error = SF_error_rel * SF_smf
+    Q_error = Q_error_rel * Q_smf
+    #
+    total_error = SF_error + Q_error
+    #
+    ## reshape arrays to match SMF
+    #SF_error = SF_error.reshape(len(SF_midbins))
+    #Q_error = Q_error.reshape(len(SF_midbins))
+    #total_error = total_error.reshape(len(SF_midbins))
+#####
 #
 #
 elif smf_error_method == 2:                # method 2: boostrap resampling
-    
+    pass
 #
 #
-#
-
-#
-## I. error values by sample type, cluster & field
-SF_error = np.sqrt(SF_smf)        #assign errors by population as sqrt of count in each mass bin
-Q_error = np.sqrt(Q_smf)
-total_error = np.sqrt((SF_error/SF_smf)**2 + (Q_error/Q_smf)**2)*total_smf
-SF_field_error = np.sqrt(SF_field_smf)        #assign errors by population as sqrt of count in each mass bin
-Q_field_error = np.sqrt(Q_field_smf)
-total_field_error = np.sqrt((SF_field_error/SF_field_smf)**2 + (Q_field_error/Q_field_smf)**2)*total_field_smf
-#
-
 #
 #
 #
@@ -992,9 +1060,9 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
     if project_plot_flag == 0:
         pass
     else:
-        SF_error = np.zeros_like(SF_smf)
-        Q_error = np.zeros_like(Q_smf)
-        total_error = np.zeros_like(total_smf)
+        SF_field_error = np.zeros_like(SF_smf)
+        Q_field_error = np.zeros_like(Q_smf)
+        total_field_error = np.zeros_like(total_smf)
         quenched_err = np.zeros_like(quenched_fraction[0])
     ## upper: SMF for cluster, field;       lower: fractions of SF/Q in cluster, field
     #
@@ -1046,9 +1114,9 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
         #
         ## FIELD
         ax1 = plt.subplot(gs[1])      
-        ax1.errorbar(SF_midbins,SF_field_smf,yerr=SF_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5, label='Star-forming')#yerr=SF_error,
-        ax1.errorbar(Q_midbins,Q_field_smf,yerr=Q_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5,label='Quiescent')
-        ax1.errorbar(SF_midbins,total_field_smf,yerr=total_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5,label='Total')
+        ax1.errorbar(SF_midbins,SF_field_smf,yerr=SF_field_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5, label='Star-forming')#yerr=SF_error,
+        ax1.errorbar(Q_midbins,Q_field_smf,yerr=Q_field_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5,label='Quiescent')
+        ax1.errorbar(SF_midbins,total_field_smf,yerr=total_field_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5,label='Total')
         ## Plot Schechter fits:  (uncomment 5 hashtags when fits complete)
         ######plt.plot(x_plot_Q,Q_model_ml_plot, ':r')
         #####plt.plot(x_plot_Q,Q_model_mcmc_plot, '--r')
