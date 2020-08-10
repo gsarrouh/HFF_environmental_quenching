@@ -75,6 +75,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import astropy
+from astropy.stats import bootstrap
+from astropy.utils import NumpyRNGContext
 from astropy.table import Table
 from astropy.table import Column
 #from scipy.optimize import curve_fit
@@ -212,9 +214,14 @@ def interpolate_errors(ratios,ratios_err,correction_factors,ratio_bins,mass_bins
 where_im_at_flag = 0
 #
 #
-## NORMALIZATION FLAG
+## MAY NEED TO EDIT: NORMALIZATION FLAG
 ## Choose your normalization:   1=by mass;  2=by volume;   3=by number count (i.e. # of galaxies in each cluster)
 normalization_flag = 3
+#
+#
+## MAY NEED TO EDIT: choose the method to CALCULATE ERRORS
+smf_error_method = 3             #   1 = propagate errors;   2 = bootstrap resampling
+spec_completeness_error_flag = 2     # 1 = sum of rel. errors; 2 = (rel. error of numerator)^2 + (rel. error of denom.)^2
 #
 #
 ## MASTER DIAGNOSTIC FLAG: allows you to "turn off" all diagnostics at once (if equals 0), "turn on" all flags (if equal to 1), or set diagnostic flags individually (equal to 2 - search "MAY NEED TO EDIT" to find flags)
@@ -224,7 +231,7 @@ diag_flag_master = 2       # 0= all flags turned off;     1= all flags turned on
 diag_flag_1 = 1            # counting array through initial loop, tracking all object categories
 diag_flag_2 = 1            # add spec & phot subsampes together for each cluster, and ensure they equal the total raw count in each mass bin
 diag_flag_3 = 1            # limiting mass completeness correction factors
-diag_flag_4 = 0            # DEPRECATED: old variational analysis flag
+diag_flag_4 = 1            # display bootstrap sampling results
 diag_flag_5 = 1            # spec completeness correction factors
 diag_flag_6 = 1            # display diagnostics before/after normalization
 #
@@ -685,17 +692,34 @@ SF_ratio_midbins = midbins(bins_SF)
 Q_ratio_midbins = midbins(bins_Q)
 #
 #
-## now compute the errors for the spec. completeness plot, which is simply sqrt(N) since the spectroscopic uncertainty is Poissonian in nature. do so by computing the relative error for the false pos & false neg histograms for each of SF/Q, and then sum in quadrature to determine relative error of fractions
-#              
-SF_relerr_mem = (np.sqrt(SF_mem))/SF_mem
-SF_relerr_pos = (np.sqrt(SF_pos_hist))/SF_pos_hist
-SF_relerr_neg = (np.sqrt(SF_neg_hist))/SF_neg_hist
-Q_relerr_mem = (np.sqrt(Q_mem))/Q_mem
-Q_relerr_pos = (np.sqrt(Q_pos_hist))/Q_pos_hist
-Q_relerr_neg = (np.sqrt(Q_neg_hist))/Q_neg_hist
-#              
-SF_ratio_err = np.sqrt((SF_relerr_pos**2) + (SF_relerr_neg**2) + (SF_relerr_mem**2))*SF_ratio              
-Q_ratio_err = np.sqrt((Q_relerr_pos**2) + (Q_relerr_neg**2) + (Q_relerr_mem**2))*Q_ratio              
+## now compute the errors for the spec. completeness plot, which is simply sqrt(N) since the spectroscopic uncertainty is Poissonian in nature. do so by computing the relative error for the false pos & false neg histograms for each of SF/Q, and then sum in quadrature to determine relative error of fractions; 
+#
+if spec_completeness_error_flag == 1:
+    ## compute individual rel errors
+    SF_relerr_mem = (np.sqrt(SF_mem))/SF_mem
+    SF_relerr_pos = (np.sqrt(SF_pos_hist))/SF_pos_hist
+    SF_relerr_neg = (np.sqrt(SF_neg_hist))/SF_neg_hist
+    Q_relerr_mem = (np.sqrt(Q_mem))/Q_mem
+    Q_relerr_pos = (np.sqrt(Q_pos_hist))/Q_pos_hist
+    Q_relerr_neg = (np.sqrt(Q_neg_hist))/Q_neg_hist
+    ## compute error of derived quantity              
+    SF_ratio_err = np.sqrt((SF_relerr_pos**2) + (SF_relerr_neg**2) + (SF_relerr_mem**2))*SF_ratio              
+    Q_ratio_err = np.sqrt((Q_relerr_pos**2) + (Q_relerr_neg**2) + (Q_relerr_mem**2))*Q_ratio         
+elif spec_completeness_error_flag == 2: 
+    ## compute individual rel errors
+    SF_err_mem = np.sqrt(SF_mem)
+    SF_err_pos = np.sqrt(SF_pos_hist)
+    SF_err_neg = np.sqrt(SF_neg_hist)
+    SF_num_relerr = (SF_err_mem + SF_err_neg) / (SF_mem + SF_neg_hist)
+    SF_den_relerr = (SF_err_mem + SF_err_pos) / (SF_mem + SF_pos_hist)
+    Q_err_mem = np.sqrt(Q_mem)
+    Q_err_pos = np.sqrt(Q_pos_hist)
+    Q_err_neg = np.sqrt(Q_neg_hist)
+    Q_num_relerr = (Q_err_mem + Q_err_neg) / (Q_mem + Q_neg_hist)
+    Q_den_relerr = (Q_err_mem + Q_err_pos) / (Q_mem + Q_pos_hist)
+    ## compute error of derived quantity              
+    SF_ratio_err = np.sqrt((SF_num_relerr**2) + (SF_den_relerr**2))*SF_ratio              
+    Q_ratio_err = np.sqrt((Q_num_relerr**2) + (Q_den_relerr**2))*Q_ratio 
 #              
 #    
 ## Now interpolate/extrapolate between these data points
@@ -757,17 +781,17 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
     if project_plot_flag == 0:
         pass
     else:
-        completeness_error = np.zeros(len(SF_midbins))
         # plot Spectroscopic completion correction factors 
         #plt.close()
         fig = plt.figure()
-        #MC.suptitle('Spectroscopic Completeness Correction Factors')
+        string = 'Spec: %s'%z_cutoff[0]+'  Phot: %s'%z_cutoff[1]
+        fig.suptitle(string, fontsize=30)
         ax = fig.add_subplot(1, 1, 1)
         ax.errorbar(SF_ratio_midbins,SF_ratio,yerr=SF_ratio_err, fmt='sb',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
         ax.errorbar(Q_ratio_midbins,Q_ratio,yerr=Q_ratio_err, fmt='sr',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
         ax.plot(SF_ratio_midbins,SF_ratio,'-b', linewidth=1.0, label='Star-forming')
         ax.plot(Q_ratio_midbins,Q_ratio,'-r', linewidth=1.0, label='Quiescent')
-        ax.plot([6,13],[1,1],'--k',linewidth = 0.5)
+        ax.plot([6,13],[1,1],'--k',linewidth = 1.0)
         #ax.scatter(SF_midbins,SF_spec_completeness_correction,c='b', marker='x',linewidth=0.0)
         #ax.scatter(Q_midbins,Q_spec_completeness_correction,c='b', marker='x',linewidth=0.0)
         ax.errorbar(SF_midbins,SF_spec_completeness_correction,yerr=SF_spec_completeness_correction_err,c='b', marker='x',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
@@ -776,9 +800,9 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax.set_xlabel('$log(M/M_{\odot})$',fontsize=30)
         ax.set_ylim=(-0.5,4.1)
         ax.set_ylabel('Correction factor C$_{s}$',fontsize=30)
-        ax.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='on', labelleft='on')
+        ax.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='on', labelleft='on',labelsize=20)
         ax.minorticks_on()
-        ax.grid(b=True, which='major', axis='both', color = 'k', linestyle = ':')
+        ax.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = ':')
         ax.set_xlim((range2[0]-0.1),(range2[1]+0.1))
         #
 #
@@ -1045,9 +1069,200 @@ if smf_error_method == 1:                  # method 1: see above
 #
 #
 elif smf_error_method == 2:                # method 2: boostrap resampling
-    pass
-#
-#
+    #
+    ## set SCALE of cluster to be sampled (i.e. # of galaxies in the 'typical' cluster for which you're bootstrapping)
+    cluster_scale = 10000
+    #
+    ## set number of bootstrap re-samplings to be done
+    num_bootstraps = 100
+    #
+    #
+    #
+    ## I need a list of all galaxies in each bin.
+    ## RECALL: the list that stores all galaxy masses (before the histogram is created) is called "SF_list/Q_list", which stores galaxies by cluster. Collapse these lists into a single list, sort it by mass, and organize the galaxy masses into bins. The SMF list to follow is "SF_raw_smf/Q_raw_smf" (i.e. if the first bin in "SF_raw_smf" has 8 galaxies, than the first 8 galaxies in the ordered "SF_list" array are the members of that bin.
+    #
+    ## Step 1: flatten  & sort the SF/Q lists; and flatten SF/Q_raw_smf
+    SF_list_flat = [item for sublist in SF_list for item in sublist]
+    Q_list_flat = [item for sublist in Q_list for item in sublist]
+    ## sort
+    SF_list_flat = sorted(SF_list_flat)
+    Q_list_flat = sorted(Q_list_flat)
+    ## flatten SMFs
+    SF_raw_smf = SF_raw_smf.reshape(6,12)
+    SF_raw_smf_flat = np.sum(SF_raw_smf,axis=0)
+    Q_raw_smf = Q_raw_smf.reshape(6,12)
+    Q_raw_smf_flat = np.sum(Q_raw_smf,axis=0)
+    #
+    ## Step 2: create a list of lists, each sublist is the galaxies contained within that mass bin of the SMF
+    SF_raw_smf_bins = [ [] for x in range(len(SF_raw_smf_flat))]      # initialize lists
+    Q_raw_smf_bins = [ [] for x in range(len(Q_raw_smf_flat))]
+    #
+    ## now assign galaxy masses to each bin of the smf
+    # SF
+    for ii in range(len(SF_raw_smf_bins)):
+        if ii == 0:
+            index_start = 0
+            index_end = SF_raw_smf_flat[ii]
+        else:
+            index_start = index_end
+            index_end = index_end + SF_raw_smf_flat[ii]
+        for jj in range(index_start,index_end):
+            SF_raw_smf_bins[ii].append(SF_list_flat[jj])
+    # Q
+    for ii in range(len(Q_raw_smf_bins)):
+        if ii == 0:
+            index_start = 0
+            index_end = Q_raw_smf_flat[ii]
+        else:
+            index_start = index_end
+            index_end = index_end + Q_raw_smf_flat[ii]
+        for jj in range(index_start,index_end):
+            Q_raw_smf_bins[ii].append(Q_list_flat[jj])
+    #
+    ## List of galaxies in each bin DONE. Now need to do the bootstrap resampling (100 re-samples for each bin) where the number of galaxies drawn in each re-sampling follow a Poisson distribution with mean equal to the ***CORRECTED & NORMALIZED*** number count in each bin, scaled to a cluster w/ 1000 galaxies. 
+    #
+    ## first scale the FINALIZED smf from a cluster w/ 1 galaxy to a cluster w/ 1000
+    SF_smf_bootstrap = SF_smf * cluster_scale
+    Q_smf_bootstrap = Q_smf * cluster_scale
+    #
+    ## Construct a loop that re-samples the SMF bins one bin at a time. Each bin will be sampled 100 times, with the number of galaxies drawn varying with each re-sample; the distribution of galaxies drawn will follow a Poisson distribution with mean equal to the number count of galaxies for that SMF mass bin
+    # SF
+    SF_error_bootstrap = np.empty_like(SF_midbins)
+    SF_other_bootstrap = np.array([[0]*2]*len(SF_midbins),dtype='float32')
+    #
+    for ii in range(len(SF_raw_smf_bins)):
+        bootstrap_array = np.array(SF_raw_smf_bins[ii])
+        mean = SF_smf_bootstrap[ii]           # this is the mean of the Poisson distribution for how many galaxies to draw
+        if mean == 0:
+            SF_error_bootstrap[ii] = 0
+        else:
+            num_to_draw = np.random.poisson(mean, num_bootstraps)
+            #
+            ## initialize an array to store the result of bootstrapping, & a bootstrapping function for the statistic you want returned
+            bootstrap_result = np.array([[0.0]*3]*num_bootstraps)    # col1= # of gal drawn; col2 = mean; col3= std dev
+            bootstrap_statistic = lambda x: (np.mean(x), np.std(x))
+            #
+            ## now loop through "num_to_draw" one at a time, each time doing a single bootstrap, and storing the result
+            ## add error-handling for poisson samples which are zero - pass; store zeros as result
+            for jj in range(len(num_to_draw)):
+                if num_to_draw[jj] == 0:
+                    bootstrap_result[jj] = [0,0,0]
+                else:
+                    boot = bootstrap(bootstrap_array, 1, samples = num_to_draw[jj], bootfunc=bootstrap_statistic)
+                    boot = boot.reshape(2)
+                    bootstrap_result[jj][0] = num_to_draw[jj]
+                    bootstrap_result[jj][1] = boot[0]
+                    bootstrap_result[jj][2] = boot[-1]
+            # we now have the results of 100 bootstrap re-samples for a single SMF mass bin. save the mean std. dev. as the error on that SMF mass bin point (i.e. the errorbars on the y-values of the SMF). 
+            bootstrap_means = np.mean(bootstrap_result,axis=0)
+            SF_error_bootstrap[ii] = bootstrap_means[-1]         # this is the ERROR
+            SF_other_bootstrap[ii][0] = bootstrap_means[0]       # this is the # of galaxies drawn in the bootstrap re-sample
+            SF_other_bootstrap[ii][1] = bootstrap_means[1]       # this is the mean drawn
+        #
+    SF_error_bootstrap = SF_error_bootstrap.reshape(12)
+    #
+    # Q
+    Q_error_bootstrap = np.empty_like(SF_midbins)
+    Q_other_bootstrap = np.array([[0]*2]*len(SF_midbins),dtype='float32')    #
+    for ii in range(len(Q_raw_smf_bins)):
+        bootstrap_array = np.array(Q_raw_smf_bins[ii])
+        mean = Q_smf_bootstrap[ii]           # this is the mean of the Poisson distribution for how many galaxies to draw
+        if mean == 0:
+            Q_error_bootstrap[ii] = 0
+        else:
+            num_to_draw = np.random.poisson(mean, num_bootstraps)
+            #
+            ## initialize an array to store the result of bootstrapping, & a bootstrapping function for the statistic you want returned
+            bootstrap_result = np.array([[0.0]*3]*num_bootstraps)    # col1= # of gal drawn; col2 = mean; col3= std dev
+            bootstrap_statistic = lambda x: (np.mean(x), np.std(x))
+            #
+            ## now loop through "num_to_draw" one at a time, each time doing a single bootstrap, and storing the result
+            ## add error-handling for poisson samples which are zero - pass; store zeros as result
+            for jj in range(len(num_to_draw)):
+                if num_to_draw[jj] == 0:
+                    bootstrap_result[jj] = [0,0,0]
+                else:
+                    boot = bootstrap(bootstrap_array, 1, samples = num_to_draw[jj], bootfunc=bootstrap_statistic)
+                    boot = boot.reshape(2)
+                    bootstrap_result[jj][0] = num_to_draw[jj]
+                    bootstrap_result[jj][1] = boot[0]
+                    bootstrap_result[jj][2] = boot[-1]
+            # we now have the results of 100 bootstrap re-samples for a single SMF mass bin. save the mean std. dev. as the error on that SMF mass bin point (i.e. the errorbars on the y-values of the SMF). 
+            bootstrap_means = np.mean(bootstrap_result,axis=0)
+            Q_error_bootstrap[ii] = bootstrap_means[-1]         # this is the ERROR
+            Q_other_bootstrap[ii][0] = bootstrap_means[0]       # this is the # of galaxies drawn in the bootstrap re-sample
+            Q_other_bootstrap[ii][1] = bootstrap_means[1]       # this is the mean drawn
+        #
+    Q_error_bootstrap = Q_error_bootstrap.reshape(12)
+    #
+    ## I realized after the fact that I don't actually want the below output. What I'm really interested in is the relative error found from bootstrapping. This may still be useful diagnostic info tho, so change the criteria for the diag_flag if-statement from ==1 to ==99.
+    if (diag_flag_4 == 99 and diag_flag_master == 2) or diag_flag_master == 1:
+        ## We now have errors estimated on an SMF containing 10,000 galaxies. display this information
+        print('\n(scaled) SF SMF for bootstrapping: \n%s'%SF_smf_bootstrap)
+        print('\nSF error from bootstrapping: \n%s'%SF_error_bootstrap)
+        print('\nSF: [# count drawn in bin, mean mass]: \n%s'%SF_other_bootstrap)
+        print('\n(scaled) Q SMF for bootstrapping: \n%s'%Q_smf_bootstrap)
+        print('\nQ error from bootstrapping: \n%s'%Q_error_bootstrap)
+        print('\nQ: [# count drawn in bin, mean mass]: \n%s'%Q_other_bootstrap)
+        
+    #
+    #
+    ## Now compute the relative error, which will be applied to the SMF of arbitrary normalization
+    SF_rel_error = SF_error_bootstrap / SF_smf_bootstrap
+    Q_rel_error = Q_error_bootstrap / Q_smf_bootstrap
+    #
+    if (diag_flag_4 == 1 and diag_flag_master == 2) or diag_flag_master == 1:
+        print('REL SF error from bootstrapping: \n%s'%SF_rel_error)
+        print('REL Q error from bootstrapping: \n%s'%Q_rel_error)
+    #
+    ## compute the error bars on the SMF mass bins
+    SF_error = SF_rel_error * SF_smf
+    Q_error = Q_rel_error * Q_smf
+    total_error = SF_error + Q_error
+    #
+elif smf_error_method == 3:                  # method 3: treat entire SMF as one sample for counting errors
+    # initialize arrays
+    SF_error_rel = np.empty_like(SF_midbins)
+    Q_error_rel = np.empty_like(SF_midbins)
+    SF_error = np.empty_like(SF_midbins)
+    Q__error = np.empty_like(SF_midbins)
+    SF_error_counting_rel = np.empty_like(SF_midbins)
+    Q_error_counting_rel = np.empty_like(SF_midbins)
+    #
+    ## the COUNTING error on the RAW SMF is just sqrt(N), i.e. a Poissonian error
+    SF_error_counting_rel = np.sqrt(np.sum(SF_raw_smf,axis=0)) / np.sum(SF_raw_smf,axis=0)
+    Q_error_counting_rel = np.sqrt(np.sum(Q_raw_smf,axis=0)) / np.sum(Q_raw_smf,axis=0)
+    #
+    ## reshape arrays to match SMF
+    SF_error_counting_rel = SF_error_counting_rel.reshape(len(SF_midbins))
+    Q_error_counting_rel = Q_error_counting_rel.reshape(len(SF_midbins))
+    #
+    ## remove NaNs due to empty bins
+    for ii in range(len(SF_error_counting_rel)):
+        if np.isnan(SF_error_counting_rel[ii])==1:
+            SF_error_counting_rel[ii] = 0
+        if np.isnan(Q_error_counting_rel[ii])==1:
+            Q_error_counting_rel[ii] = 0
+    #
+    ## compute the relative error on the SMF
+    SF_error_rel = np.sqrt(np.transpose((SF_spec_completeness_correction_err/SF_spec_completeness_correction)**2) + (SF_error_counting_rel)**2)
+    Q_error_rel = np.sqrt(np.transpose((Q_spec_completeness_correction_err/Q_spec_completeness_correction)**2) + (Q_error_counting_rel)**2)
+    #
+    ## reshape arrays to match SMF
+    SF_error_rel = SF_error_rel.reshape(len(SF_midbins))
+    Q_error_rel = Q_error_rel.reshape(len(SF_midbins))
+    #
+    ## compute error bars for SMF plot
+    SF_error = SF_error_rel * SF_smf
+    Q_error = Q_error_rel * Q_smf
+    #
+    total_error = SF_error + Q_error
+    #
+    ## reshape arrays to match SMF
+    #SF_error = SF_error.reshape(len(SF_midbins))
+    #Q_error = Q_error.reshape(len(SF_midbins))
+    #total_error = total_error.reshape(len(SF_midbins))
+#####
 #
 #
 #
@@ -1068,6 +1283,8 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
     #
         #plt.close()
         SMF = plt.figure()
+        string = 'Spec: %s'%z_cutoff[0]+'  Phot: %s'%z_cutoff[1]+'  Method: %i'%smf_error_method
+        SMF.suptitle(string, fontsize=30)
         gs = gridspec.GridSpec(2,2, wspace=0, hspace=0, width_ratios=[1,1], height_ratios=[2,1])   #make a tiled-plot like vdB2013 w/ fractions below, this line sets the proporitons of plots in the figure
         #gs = gridspec.GridSpec(2,3, width_ratios=[1,1,1], height_ratios=[2,1])   #make a tiled-plot like vdB2013 w/ fractions below, this line sets the proporitons of plots in the figure
         #
@@ -1094,7 +1311,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
         ax0.set_ylabel('???')
         ax0.set_title('Cluster')
         ax0.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
-        ax0.grid(b=True, which='major', axis='both', color = 'k', linestyle = '--')
+        ax0.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
         #
         ## cluster fraction
         ax2 = plt.subplot(gs[2])    
@@ -1135,7 +1352,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
         ax1.set_ylabel('???')
         ax1.set_title('Field')
         #ax3.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
-        ax1.grid(b=True, which='major', axis='both', color = 'k', linestyle = '--')
+        ax1.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
         #
         ## field fraction
         ax3 = plt.subplot(gs[3])    
