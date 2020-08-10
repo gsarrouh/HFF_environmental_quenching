@@ -163,8 +163,10 @@ else:
     project_diagnostic_flag = 2
     project_plot_flag = 2
     project_master_variational_flag = 0
-    z_cutoff = [0.012,0.06]     # [spec,phot] cutoffs for cluster membership
+    z_cutoff = [0.012,0.055]     # [spec,phot] cutoffs for cluster membership
     z_cutoff_field = [0.05,0.10] 
+    num_bins_SF_pos_neg = [7.36,8.93,10.16,12.3]
+    num_bins_Q_pos_neg = [7.36,9.43,10.11,10.47,12.3]
     limiting_mass_flag = 1
     bin_width = 0.4
     diagnostic_round_flag = 2
@@ -851,9 +853,9 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
                 ##
                 ## MAY NEED TO EDIT: if you change the (# of bins to try) or (# of binning methods to try), you must adjust the indices to drop below. The list is ranked alphabetically (Q,SF), the 1st half for Q, the 2nf half for SF. Drop all rows except the 1st row for each of SF/Q, and update the comment below to record the settings which you just hard-coded.
                 ##
-                ## Now that the binning list is sorted by type, then ranked by Metric of Merit, the lines 1-6 are for Q and 7-18 are for SF (3 binning techniques * 3 different numbers of bins * 2 types (SF/Q). To keep the best binning option for each of (SF/Q), keep the 1st and 10th lines. Save them to a list. 
-                df=df.drop(df.index[4:])
-                df=df.drop(df.index[1:3])
+                ## Now that the binning list is sorted by type, then ranked by Metric of Merit, the lines 1-6 are for Q and 7-12 are for SF (2 binning techniques * 3 different numbers of bins * 2 types (SF/Q). To keep the best binning option for each of (SF/Q), keep the 1st and 10th lines. Save them to a list. 
+                df=df.drop(df.index[7:])
+                df=df.drop(df.index[1:6])
                 #df=df.drop(df.index[10:])        # drop the 11th row through the last
                 #df=df.drop(df.index[1:9])       # drop the 2nd row through the 9th
                 df.reset_index(drop=True, inplace=True)
@@ -909,7 +911,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
         df_result = df_result.sort_values(by=['TOTAL_MoM'], ignore_index=True)       
         #
         ## print the results to a file 
-        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_3_%s'%increment[0]+'_sorted_by_TOTAL_MoM_SYMMETRIC_binning.txt'
+        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_3_%s'%increment[0]+'_sorted_by_TOTAL_MoM_2binningmethods.txt'
         #filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_3_%s'%increment[0]+'_sorted_by_TOTAL_MoM_%s'%F_filter_W+'.txt'
         df_result.to_csv(filename,sep=' ',na_rep='NaN',index=True,header=True)
         #
