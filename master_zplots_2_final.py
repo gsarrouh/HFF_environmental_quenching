@@ -157,7 +157,7 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         #ax1.set_title("$z_{spec} vs. z_{phot}$")
         ax1.legend((memz,outz),('Spec. subsample: %i'%count_mem,'Outliers: %i'%count_outlier),scatterpoints=1,fontsize=15,loc='upper left', frameon=False)
         #plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = ':')
-        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False)
+        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False,labelsize=20)
         ax1.minorticks_on()
         plt.show()
         #
@@ -270,7 +270,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax1.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$',fontsize=35)
         ax1.set_ylim(-0.25,0.25)
         ax1.grid(b=False)
-        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True, labeltop=False,labelbottom=True)
+        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True, labeltop=False,labelbottom=True,labelsize=20)
         ax1.minorticks_on()
         ax1.legend(loc='upper left', frameon=False, fontsize=25, markerscale=2)
         #
@@ -293,7 +293,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax2.yaxis.set_label_position('right')
         ax2.set_ylim(-0.25,0.25)
         ax2.grid(b=False)
-        ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True, labelleft=False, labeltop=False,labelbottom=True)
+        ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True, labelleft=False, labeltop=False,labelbottom=True,labelsize=20)
         ax2.minorticks_on()                        
         #
         #
