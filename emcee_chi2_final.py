@@ -1,13 +1,58 @@
-# the following script runs the "emcee" MCMC sampler, using a chi-squared metric as the cost function: chi^2 = -0.5 * ( (data - model)^2 / error^2 )
+#Created on Thu Aug 13 13:46:51 2020
 #
-## (vi) fit a SCHECHTER function to scatter plot
+#####################  emcee_chi2_final.py  #####################
 #
+#
+### The following script runs the "emcee" MCMC sampler, using a chi-squared metric as the cost function: chi^2 = -0.5 * ( (data - model)^2 / error^2 ) to fit a SCHECHTER function to scatter plot
+#
+#
+### Section summary:
+#
+### PROGRAM START
+#
+### (0)    import modules, define functions; FLAGS
+### (1)    setup lists and DEFINE #DIM, #WALKERS, #STEPS
+### (2)    initialize MCMC guess w/ LEAST-SQUARES estimate
+### (3)    MCMC SIMULATION
+### (4)    Visualize
+### (5)    print to OUTPUT
+#
+### PROGRAM END
+#
+#
+#
+#
+## SECTION (0): import MODULES, DEFINE functions, FLAGS
+#
+## MODULES
 import pandas as pd
 import emcee
 import time
 import scipy.optimize as op
 import scipy.integrate as integrate
 import corner
+#
+#
+#
+# FLAGS: 0 = off (i.e. skip), 1 = on (i.e. execute code)
+#
+#
+#
+SF_flag = 1          # star-forming population
+Q_flag = 0           # Q pop
+T_flag = 0           # total pop
+#
+#
+#
+######
+###### MAY NEED TO EDIT ###### 
+######
+#
+# initialize walkers
+ndim, nwalkers, nsteps = 3, 1000, 100000    # (# of parameters), (#walkers), (#steps/walker)
+#
+#
+## SECTION (1): setup lists
 #
 ### SETUP appropriate lists and convert them to arrays for use in MCMC code:
 ## this first bit replaces 'NaN' entries in SF_error (errors to the SMF) with 1e5. This only applies to pixels for which the SMF count = 0, hence the error (given by sqrt(smf) is NaN. It is done for the purpose of computing chi_squared later on
@@ -52,44 +97,57 @@ SF_error_mcmc = np.array(SF_error_mcmc)
 Q_smf_mcmc = np.array(Q_smf_mcmc)
 Q_error_mcmc = np.array(Q_error_mcmc)
 #
+#
+## define x array to generate points to plot Schechter fit
+x = np.linspace(SF_midbins[0],SF_midbins[len(SF_midbins)-1],num=1000)#
+#
+#
 ### MCMC CODE:
 #
 #
-######
-###### MAY NEED TO EDIT ######
-######
-# FLAGS: 0 = off (i.e. skip), 1 = on (i.e. execute code)
 #
+## SECTION (2): inialize MCMC guess w/ least-squares estimate
 #
-#
-SF_flag = 0          # star-forming population
-Q_flag = 1           # Q pop
-T_flag = 0           # total pop
-#
-#
-#
-######
-######
-######
-#
-#
-#
-#
-######
 # define guesses for initial guesses - SINGLE schechter
-M_star_guess = 10
-phi_guess = 1
+M_star_guess = 10.55
+phi_guess = 0.03
 alpha_guess = -1
 #
 # define guesses for initial guesses - DOUBLE schechter
-M_star_guess = 10
-phi_guess1 = 1
-alpha_guess1 = -1
-phi_guess2 = 1
-alpha_guess2 = -1
+#M_star_guess = 10.5
+#phi_guess1 = 1
+#alpha_guess1 = -1
+#hi_guess2 = 1
+#alpha_guess2 = -1
 #
-
-
+#
+#
+## open a file to print to
+#
+#
+## check it directories to store outputs exist. if not, create them
+output_dir = '/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/smf_fits/binning_method_%i'%membership_correction_binning_flag
+check_folder = os.path.isdir(output_dir)
+#
+## If folder doesn't exist, then create it.
+if not check_folder:
+    os.makedirs(output_dir)
+    if project_diagnostic_flag == 1 or diag_flag_master == 2:
+        print("\nCreated folder : "+output_dir)
+else:
+    pass#print(output_dir, "\nfolder already exists.")
+#
+f = open('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/smf_fits/binning_method_%i'%membership_correction_binning_flag+'/z_spec_%.3f'%z_cutoff[0]+'_phot_cutoff_%.3f'%z_cutoff[1]+'_phot_cutoff_smf_fits.txt','w+')
+#
+#
+## to be used in building strings throughout program
+delim = ','   
+## write a header for the file, start with hashtag to identify comment
+header1 = 'z_spec_cutoff'+delim+'z_phot_cutoff'+delim+'type'+delim+'M_star'+delim+'M_star_sgima'+delim+'phi'+delim+'phi_sigma'+delim+'alpha'+delim+'alpha_sigma\n'
+#
+f.write(header1)
+#
+#
 # define likelihood function for SINGLE schechter function; based on Eq.(2) of VDB 2013 et al
 def lnlike(theta, midbins, smf, smf_error):
     M_star, phi, alpha = theta
@@ -117,14 +175,14 @@ if SF_flag == 1:
 #
 if Q_flag ==1:
     # optimize Q
-    Q_nll = lambda *args: -lnlike2(*args)       # single schechter fit - Q
+    Q_nll = lambda *args: -lnlike(*args)       # single schechter fit - Q
     #
     ## fits to a single curve
-    Qresult = op.minimize(Q_nll,[M_star_guess, phi_guess1, alpha_guess1, phi_guess2, alpha_guess2], args=(Q_midbins_mcmc, Q_smf_mcmc, Q_error_mcmc), method='Nelder-Mead')
-    QM_ml, Qphi1_ml, Qalpha1_ml, Qphi2_ml, Qalpha2_ml = Qresult['x']
+    Qresult = op.minimize(Q_nll,[M_star_guess, phi_guess, alpha_guess], args=(Q_midbins_mcmc, Q_smf_mcmc, Q_error_mcmc), method='Nelder-Mead')
+    QM_ml, Qphi_ml, Qalpha_ml = Qresult['x']
     #
     # full fits
-    Q_model_ml = np.log(10)*np.exp(-10**(x-QM_ml))*((Qphi1_ml*(10**((x-QM_ml)*(1+Qalpha1_ml))))+(Qphi2_ml*(10**((x-QM_ml)*(1+Qalpha2_ml)))))
+    Q_model_ml = np.log(10)*Qphi_ml*(10**((x-QM_ml)*(1+Qalpha_ml)))*np.exp(-10**(x-QM_ml))
 #
 #
 if T_flag ==1:
@@ -132,7 +190,7 @@ if T_flag ==1:
     T_nll = lambda *args: -lnlike(*args)       # single schechter fit - total
     #
     ## fits to a single curve
-    Tresult = op.minimize(T_nll,[M_star_guess, phi_guess, alpha_guess], args=(SF_midbins, total_smf, total_error), method='Nelder-Mead')
+    Tresult = op.minimize(T_nll,[M_star_guess, phi_guess, alpha_guess], args=(Q_midbins_mcmc, total_smf, total_error), method='Nelder-Mead')
     TM_ml, Tphi_ml, Talpha_ml = Tresult['x']
     #
     # full fits
@@ -173,19 +231,18 @@ def lnprob(theta, midbins, smf, error):
     else:
         return lp + lnlike(theta, midbins, smf,error)
 #
-# combine with lnlike to write a function for the probability function - DOUBLE schechter:
-def lnprob2(theta, midbins, smf, error):
-    lp = lnprior2(theta)
-    if not np.isfinite(lp):
-        return -np.inf
-    else:
-        return lp + lnlike2(theta, midbins, smf,error)
+###### combine with lnlike to write a function for the probability function - DOUBLE schechter:
+#####def lnprob2(theta, midbins, smf, error):
+#####    lp = lnprior2(theta)
+#####    if not np.isfinite(lp):
+#####        return -np.inf
+#####    else:
+#####        return lp + lnlike2(theta, midbins, smf,error)
 #
 #
 ## STAR-FORMING LOOP
 if SF_flag ==1:
-    # initialize walkers
-    ndim, nwalkers, nsteps = 3, 100, 500000
+    #
     print('Starting SF loop for ',nwalkers,' walkers and ',nsteps,' steps...')
 #
     t0 = time.time()       # start timer to run emcee.EnsembleSampler()
@@ -229,6 +286,13 @@ if SF_flag ==1:
     #
     SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = SFsamples.mean(axis=0)
     #
+    #
+    #
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(np.round(SFM_star_mcmc,decimals=3))+delim+str(np.round(SFresult_sigmas[0],decimals=3))+delim+str(np.round(SFphi_mcmc,decimals=3))+delim+str(np.round(SFresult_sigmas[1],decimals=3))+delim+str(np.round(SFalpha_mcmc,decimals=3))+delim+str(np.round(SFresult_sigmas[2],decimals=3))
+    writer = '%s'%str(bin_entry1)+'\n'
+    f.write(writer)
+    #
+    #
     t1 = time.time()       # stop timer
     total_time3 = t1-t0     # calculate time elapsed
     hours = total_time3 / 3600
@@ -242,14 +306,14 @@ if SF_flag ==1:
 ## Q LOOP
 if Q_flag ==1:
     # initialize walkers
-    ndim, nwalkers, nsteps = 5, 10000, 200
+    #ndim, nwalkers, nsteps = 5, 10000, 200
     print('Starting Q loop for ',nwalkers,' walkers and ',nsteps,' steps...')
 #
     t0 = time.time()       # start timer to run emcee.EnsembleSampler()
     ## setup initial positions of walkers in a Guassian ball around the least-squares position    
     Qpos = Qresult['x'] + 1e-4*np.random.randn(nwalkers, ndim)
     # setup the emcee sampler
-    Qsampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob2, args=(Q_midbins_mcmc, Q_smf_mcmc,Q_error_mcmc))
+    Qsampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(Q_midbins_mcmc, Q_smf_mcmc,Q_error_mcmc))
     Qsampler.run_mcmc(Qpos, nsteps)  #run sampler from initial position "pos" for "nsteps" steps
     #
     t1 = time.time()       # stop timer
@@ -284,7 +348,13 @@ if Q_flag ==1:
     print('Means: ',Qresult_means)
     print('Sigmas: ',Qresult_sigmas)
     #
-    QM_star_mcmc, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = Qsamples.mean(axis=0)
+    QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = Qsamples.mean(axis=0)
+    #
+    ## print OUTPUT to file
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(np.round(QM_star_mcmc,decimals=3))+delim+str(np.round(Qresult_sigmas[0],decimals=3))+delim+str(np.round(Qphi_mcmc,decimals=3))+delim+str(np.round(Qresult_sigmas[1],decimals=3))+delim+str(np.round(Qalpha_mcmc,decimals=3))+delim+str(np.round(Qresult_sigmas[2],decimals=3))
+    writer = '%s'%str(bin_entry1)+'\n'
+    f.write(writer)
+    #
     #
     t1 = time.time()       # stop timer
     total_time3 = t1-t0     # calculate time elapsed
@@ -299,7 +369,7 @@ if Q_flag ==1:
 ## TOTAL POPULATION LOOP
 if T_flag ==1:
     # initialize walkers
-    ndim, nwalkers, nsteps = 3, 100, 200000
+    #ndim, nwalkers, nsteps = 3, 1000, 2000
     print('Starting Total loop for ',nwalkers,' walkers and ',nsteps,' steps...')
 #
     t0 = time.time()       # start timer to run emcee.EnsembleSampler()
@@ -343,6 +413,13 @@ if T_flag ==1:
     #
     TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = Tsamples.mean(axis=0)
     #
+    #
+    ## print OUTPUT to file
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Total'+delim+str(np.round(TM_star_mcmc,decimals=3))+delim+str(np.round(Tresult_sigmas[0],decimals=3))+delim+str(np.round(Tphi_mcmc,decimals=3))+delim+str(np.round(Tresult_sigmas[1],decimals=3))+delim+str(np.round(Talpha_mcmc,decimals=3))+delim+str(np.round(Tresult_sigmas[2],decimals=3))
+    writer = '%s'%str(bin_entry1)+'\n'
+    f.write(writer)
+    #
+    #
     t1 = time.time()       # stop timer
     total_time3 = t1-t0     # calculate time elapsed
     hours = total_time3 / 3600
@@ -352,89 +429,17 @@ if T_flag ==1:
     total_run_time = total_time1 + total_time2 + total_time3
     hours = total_run_time / 3600
     print('Total run time: ', total_run_time, ' seconds, or: ',hours, ' hours.') # display time to run
-#    
-#
-#
-#                                   
-#################
-#################  END  #################
-#################
+#  
 #
 #
 #
 #
-### visualize the paths of the walkers
-###
-#fig, axes = plt.subplots(3, figsize=(10, 7), sharex=True)
-#samples = SFsampler.chain             # returns a nwalkers x nsteps x ndim array, showing the position of each walker at each step
-#labels = ["M_star", "phi", "alpha"]
-#for i in range(ndim):
-#    ax = axes[i]
-#    ax.plot(samples[:, :, i], "k", alpha=0.3)
-#    ax.set_xlim(0, nsteps)
-#    ax.set_ylabel(labels[i])
-#    ax.yaxis.set_label_coords(-0.1, 0.5)
-#
-#axes[-1].set_xlabel("step number");
-#
-#################
-## get values for all parameters:
-#####SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(SFsamples, [68, 95, 99.7],axis=0)))
-#
-# print result
-#from IPython.display import display, Math
-#
-
-
-
-# 
-
-
-
-
-
-
-
-#
-#for i in range(ndim):
-#    mcmc = np.percentile(SFsamples[:, i], [68, 95, 99.7])
-#    q = np.diff(mcmc)
-#    txt = "\mathrm{{{3}}} = {0:.3f}_{{-{1:.3f}}}^{{{2:.3f}}}"
-#    txt = txt.format(mcmc[1], q[0], q[1], labels[i])
-#    display(Math(txt))
+## close the file       
+f.close()
 #
 #
-## build a model for plotting
-#SF_model_mcmc = np.log(10)*SFphi_mcmc*(10**((x-SFM_star_mcmc)*(1+SFalpha_mcmc)))*np.exp(-10**(x-SFM_star_mcmc))
-#Q_model_mcmc = np.log(10)*Qphi_mcmc*(10**((x-QM_star_mcmc)*(1+Qalpha_mcmc)))*np.exp(-10**(x-QM_star_mcmc))
-#T_model_mcmc = np.log(10)*Tphi_mcmc*(10**((x-TM_star_mcmc)*(1+Talpha_mcmc)))*np.exp(-10**(x-TM_star_mcmc))
+print('\n\n"emcee_chi2*.py"  terminated successfully.\n')
 #
-# create arrays for plotting purposes to display values down to a y_min = 1
-#SF_model_ml_plot = []
-#SF_model_mcmc_plot = []
-#x_plot_SF = []
-#for ii in range(len(SF_model_ml)):
-#    if SF_model_ml[ii] > 1:
-#        SF_model_ml_plot.append(SF_model_ml[ii])
-#        SF_model_mcmc_plot.append(SF_model_mcmc[ii])
-#        x_plot_SF.append(x[ii])
-# do same for Q pop
-#Q_model_ml_plot = []
-#Q_model_mcmc_plot = []
-#x_plot_Q = []
-#for ii in range(len(Q_model_ml)):
-#    if Q_model_ml[ii] > 1:
-#        Q_model_ml_plot.append(Q_model_ml[ii])
-#        Q_model_mcmc_plot.append(Q_model_mcmc[ii])
-#        x_plot_Q.append(x[ii])
 #
-# do same for total pop
-#T_model_ml_plot = []
-#T_model_mcmc_plot = []
-#x_plot_T = []
-#for ii in range(len(T_model_ml)):
-#    if T_model_ml[ii] > 1:
-#        T_model_ml_plot.append(T_model_ml[ii])
-#        T_model_mcmc_plot.append(T_model_mcmc[ii])
-#        x_plot_T.append(x[ii])
-#
+#                        
+###################     PROGRAM END     ###################
