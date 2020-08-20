@@ -44,7 +44,7 @@ mass_threshold = [9,range2[1]]                        # mass threshold in units 
 ## SECTION (0): set PLOT_FLAGS    # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
 ### MAY NEED TO EDIT ### plot_flag_*/time_flag_*/diag_flag_*
 #
-plot_flag_1 = 1           # Fig.1 - UVJ diagram; colorbar = mass
+plot_flag_1 = 0           # Fig.1 - UVJ diagram; colorbar = mass
 plot_flag_2 = 0           # Fig.2-4 - diagnostic plots in greyscale;  0=off;  1=on, plot above log_10(Msol) >/< threshold;  2=on, plot everything; 
 plot_flag_3 = 1           # Fig.1 - UVJ diagram; color = spec/phot
 #
@@ -445,24 +445,24 @@ if (plot_flag_3 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         print('Field: %s'%counting_array[0],'\nSpec members: %s'%counting_array_sub[0],'\nPhot members: %s'%counting_array_sub[1],'\nOther than member/field: %s'%counting_array[4])
         #
         #
-        ax.scatter(field_array[0],field_array[1],s=50,c='grey', marker='s', alpha=0.3, linewidths=0)
-        ax.scatter(field_array_par[0],field_array_par[1],s=50,c='grey', marker='s', alpha=0.3, linewidths=0)
+        ax.scatter(field_array[0],field_array[1],s=50,c='grey', marker='s', alpha=0.2, linewidths=0)
+        ax.scatter(field_array_par[0],field_array_par[1],s=50,c='grey', marker='s', alpha=0.2, linewidths=0)
         ax.scatter(phot_array[0],phot_array[1],s=60,c='firebrick', marker='.', alpha=0.8, linewidths=0)
-        ax.scatter(spec_array[0],spec_array[1],s=60,c='goldenrod', marker='.', alpha=0.8, linewidths=0)
+        ax.scatter(spec_array[0],spec_array[1],s=90,c='limegreen', marker='.', alpha=1.0, linewidths=0)
         #
         if lines_flag == 1:
             ax.plot([-5,0.75],[1.3,1.3],'-k',[0.75,3],[1.3,3],'-k', linewidth=1) #overlay boundary cutoff for SF/Passive
         #
-        ax.set_xlabel('$(V-J)_{rest}$',fontsize=30)
+        ax.set_xlabel('$(V-J)_{rest}$',fontsize=35)
         ax.set_xlim(-1.5,2)
-        ax.set_ylabel('$(U-V)_{rest}$', fontsize=30)
+        ax.set_ylabel('$(U-V)_{rest}$', fontsize=35)
         ax.set_ylim(0,2.5)
         ax.grid(b=False)
         ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True,labelsize=20)
         ax.minorticks_on()
         #
-        ax.set_title('~0.25 < z < ~0.6',fontsize=20)
-        ax.text(-1.3,2.3,'Spec: %s'%counting_array_sub[0],c='k',fontsize=25,color='goldenrod')
+        ax.set_title('~0.25 < z < ~0.6',fontsize=35)
+        ax.text(-1.3,2.3,'Spec: %s'%counting_array_sub[0],c='k',fontsize=25,color='limegreen')
         ax.text(-1.3,2.15,'Phot: %s'%counting_array_sub[1],c='k',fontsize=25,color='firebrick')
         ax.text(-1.3,2.0,'Field (clu+par): %s'%(counting_array_uvj[0]+counting_array_par[0]),c='k',fontsize=25,color='grey')
         #
