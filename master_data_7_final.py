@@ -5,8 +5,7 @@
 #
 #
 ### WHAT THIS PROGRAM DOES:
-### This script reads in all data for the Hubble Frontier Fields images and prepares data for plotting and analysis. Key information is summarized in the tables: 
-###     **"sub_stats","type_stats","SF_spec_stats","Q_spec_stats","SF_phot_stats","Q_phot_stats"**
+### This script reads in all data for the Hubble Frontier Fields images and prepares data for plotting and analysis. Key information is summarized in the tables enabled by activating "adams_flag == 1"
 #
 ### Data is organized in a single catalogue ("master_cat"), and objects are identified through applying a series of "FILTERS" to designate key populations using a numerical designation for ease of writing code.
 #
@@ -74,12 +73,6 @@
 ### (6)    setup lists for SF/Q field sample; 
 ### (7)    check for brightest Cluster Galaxies (bCGs) in the catalogue; 
 ###        add DIAG_FLAG_7: report # of bCGs identified/removed/added
-#
-#########
-#########  **** CONFIRM W/ AM WHETHER THESE NEED TO BE TAKEN OUT OF CATALOAGUE OR INCLUDED    ****
-#########  **** Update: no bCGs in catalogue, but they NNED TO BE ADDED BACK. track them down ****
-#########  ****                 DELETE THESE COMMENTS ONCE DONE!!!!!                          ****
-#########
 #
 ### PROGRAM END
 #
@@ -170,13 +163,16 @@ else:
     limiting_mass_flag = 1
     bin_width = 0.4
     diagnostic_round_flag = 2
+    mcmc_flag = 0
 #
 if 'adams_flag' in locals():
     pass
 else:
     adams_flag = 1
 #
-# Read in ALL data from WORKING DIRECTORY: NSERC17/HFFtoAdam/working_data
+# Read in ALL data from WORKING DIRECTORY: NSERC17/HFFtoAdam/working_data/HFF_environmental_quenching
+#
+#
 #
 ##SECTION 1: import all data from HFF team, convert flux to luminosity & gather full 
 #
@@ -853,14 +849,14 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
                 ##
                 ## MAY NEED TO EDIT: if you change the (# of bins to try) or (# of binning methods to try), you must adjust the indices to drop below. The list is ranked alphabetically (Q,SF), the 1st half for Q, the 2nf half for SF. Drop all rows except the 1st row for each of SF/Q, and update the comment below to record the settings which you just hard-coded.
                 ##
-                ## Now that the binning list is sorted by type, then ranked by Metric of Merit, the lines 1-6 are for Q and 7-12 are for SF (2 binning techniques * 3 different numbers of bins * 2 types (SF/Q). To keep the best binning option for each of (SF/Q), keep the 1st and 10th lines. Save them to a list. 
-                df=df.drop(df.index[7:])
+                ## Now that the binning list is sorted by type, then ranked by Metric of Merit, the lines 1-9 are for Q and 10-18 are for SF (3 binning techniques * 3 different numbers of bins * 2 types (SF/Q). To keep the best binning option for each of (SF/Q), keep the 1st and 10th lines. Save them to a list. 
+                df=df.drop(df.index[7:])         # for 2 methods, 3 bins, 2 types
                 df=df.drop(df.index[1:6])
                 #df=df.drop(df.index[10:])        # drop the 11th row through the last
                 #df=df.drop(df.index[1:9])       # drop the 2nd row through the 9th
                 df.reset_index(drop=True, inplace=True)
-                df['TOTAL_MoM'][0] = df['MoM'][0] + df['MoM'][1]
-                df['TOTAL_MoM'][1] = df['MoM'][0] + df['MoM'][1]
+                TOTAL_MoM = df['MoM'][0] + df['MoM'][1]
+                df.insert(5, 'TOTAL_MoM', [TOTAL_MoM,TOTAL_MoM], True) 
                 df_list.append(df)
     #
     ## 
@@ -911,7 +907,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
         df_result = df_result.sort_values(by=['TOTAL_MoM'], ignore_index=True)       
         #
         ## print the results to a file 
-        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_3_%s'%increment[0]+'_sorted_by_TOTAL_MoM_2binningmethods.txt'
+        filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_3_%s'%increment[0]+'_sorted_by_TOTAL_MoM_ASYMMETRIC_binning_count.txt'
         #filename ='/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/variational_analysis_ROUND_3_%s'%increment[0]+'_sorted_by_TOTAL_MoM_%s'%F_filter_W+'.txt'
         df_result.to_csv(filename,sep=' ',na_rep='NaN',index=True,header=True)
         #
@@ -1143,7 +1139,7 @@ print('Difference: %s'%(np.sum([field_phot,field_spec])-np.sum(counting_array_fi
 #                        
 ## SECTION (7): BCGs. Brightest Cluster Galaxies (BCGs) need to be taken out of the cluster sample as they are unique to overly dense environments and so lack a counterpart in the field against which to make a fair comparison. as such, we remove them from our sample before making the SMF
 #
-print('\n"master_data*.py" Section 6: search for BCGs beginning...')
+print('\n"master_data*.py" Section 7: search for BCGs beginning...')
 #
 #
 ## TIME_FLAG_6 START
