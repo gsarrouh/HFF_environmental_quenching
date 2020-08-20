@@ -278,8 +278,8 @@ for number in range(len(num_bins_to_try)):
     #
     #
     ## SECIONT (6): prepare what to WRITE to file - (this is copied&pasted from below for formatting consistency)
-    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
-    bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
+    bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
     writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
     f.write(writer)
     #
@@ -287,7 +287,7 @@ for number in range(len(num_bins_to_try)):
 #
 ## ASYMMETRIC BINNING START
 #
-method_designations = [99]#[2,3]
+method_designations = [2]#[2,3]
 #
 ##
 for m in range(len(method_designations)):
@@ -357,12 +357,12 @@ for m in range(len(method_designations)):
             #
             exec(open('spec_asymmetric_binning_metric.py').read())
             #
-            #
-            if np.sum([np.isnan(SF_var),np.isnan(Q_var)]) == 0:
-                tot_var = SF_var + Q_var
-            else:
-                tot_var = float('NaN')
-            #
+            ######
+            #####if np.sum([np.isnan(SF_var),np.isnan(Q_var)]) == 0:
+            #####    tot_var = SF_var + Q_var
+            #####else:
+            #####    tot_var = float('NaN')
+            ######
             #
             ## SECIONT (3.1): prepare what to WRITE to file
             bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
@@ -521,16 +521,16 @@ for m in range(len(method_designations)):
             #
             exec(open('spec_asymmetric_binning_metric.py').read())
             #
-            #
-            if np.sum([np.isnan(SF_var),np.isnan(Q_var)]) == 0:
-                tot_var = SF_var + Q_var
-            else:
-                tot_var = float('NaN')
-            #
+            ######
+            #####if np.sum([np.isnan(SF_var),np.isnan(Q_var)]) == 0:
+            #####    tot_var = SF_var + Q_var
+            #####else:
+            #####    tot_var = float('NaN')
+            ######
             #
             ## SECIONT (4.1): prepare what to WRITE to file
-            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
-            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
+            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
+            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
             writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
             f.write(writer)
             #
