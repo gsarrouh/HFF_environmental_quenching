@@ -220,8 +220,8 @@ normalization_flag = 3
 #
 #
 ## MAY NEED TO EDIT: choose the method to CALCULATE ERRORS
-smf_error_method = 3             #   1 = propagate errors;   2 = bootstrap resampling
-spec_completeness_error_flag = 2     # 1 = sum of rel. errors; 2 = (rel. error of numerator)^2 + (rel. error of denom.)^2
+smf_error_method = 1             #   1 = propagate errors;   2 = bootstrap resampling
+spec_completeness_error_flag = 2     # 1 = sum of rel. errors (DEPRECATED - incorrect); 2 = (rel. error of numerator)^2 + (rel. error of denom.)^2 (THIS FLAG SHOULD ALWAYS BE SET TO =2 )
 #
 #
 ## MASTER DIAGNOSTIC FLAG: allows you to "turn off" all diagnostics at once (if equals 0), "turn on" all flags (if equal to 1), or set diagnostic flags individually (equal to 2 - search "MAY NEED TO EDIT" to find flags)
@@ -784,23 +784,23 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         # plot Spectroscopic completion correction factors 
         #plt.close()
         fig = plt.figure()
-        string = 'Spec: %s'%z_cutoff[0]+'  Phot: %s'%z_cutoff[1]
+        string = 'Spec: %s'%z_cutoff[0]+'  Phot: %s'%z_cutoff[1]+'  Method: %i'%membership_correction_binning_flag
         fig.suptitle(string, fontsize=30)
         ax = fig.add_subplot(1, 1, 1)
-        ax.errorbar(SF_ratio_midbins,SF_ratio,yerr=SF_ratio_err, fmt='sb',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
-        ax.errorbar(Q_ratio_midbins,Q_ratio,yerr=Q_ratio_err, fmt='sr',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
-        ax.plot(SF_ratio_midbins,SF_ratio,'-b', linewidth=1.0, label='Star-forming')
-        ax.plot(Q_ratio_midbins,Q_ratio,'-r', linewidth=1.0, label='Quiescent')
-        ax.plot([6,13],[1,1],'--k',linewidth = 1.0)
+        ax.errorbar(SF_ratio_midbins,SF_ratio,yerr=SF_ratio_err, fmt='sb',lolims=False, uplims=False, linewidth=0.0, elinewidth=2, mfc='b', ms=20)
+        ax.errorbar(Q_ratio_midbins,Q_ratio,yerr=Q_ratio_err, fmt='sr',lolims=False, uplims=False, linewidth=0.0, elinewidth=2, mfc='r', ms=20)
+        ax.plot(SF_ratio_midbins,SF_ratio,'-b', linewidth=2.0, label='Star-forming')
+        ax.plot(Q_ratio_midbins,Q_ratio,'-r', linewidth=2.0, label='Quiescent')
+        ax.plot([6,13],[1,1],'--k',linewidth = 2.0)
         #ax.scatter(SF_midbins,SF_spec_completeness_correction,c='b', marker='x',linewidth=0.0)
         #ax.scatter(Q_midbins,Q_spec_completeness_correction,c='b', marker='x',linewidth=0.0)
-        ax.errorbar(SF_midbins,SF_spec_completeness_correction,yerr=SF_spec_completeness_correction_err,c='b', marker='x',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
-        ax.errorbar(Q_midbins,Q_spec_completeness_correction,yerr=Q_spec_completeness_correction_err,c='r', marker='x',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.8, mfc='none')
+        ax.errorbar(SF_midbins,SF_spec_completeness_correction,yerr=SF_spec_completeness_correction_err,c='b', marker='x',lolims=False, uplims=False, linewidth=0.0, elinewidth=2, mfc='none',ms=20)
+        ax.errorbar(Q_midbins,Q_spec_completeness_correction,yerr=Q_spec_completeness_correction_err,c='r', marker='x',lolims=False, uplims=False, linewidth=0.0, elinewidth=2, mfc='none',ms=20)
         ax.legend(loc='upper right', frameon=False,fontsize=25)
         ax.set_xlabel('$log(M/M_{\odot})$',fontsize=30)
         ax.set_ylim=(-0.5,4.1)
         ax.set_ylabel('Correction factor C$_{s}$',fontsize=30)
-        ax.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='on', labelleft='on',labelsize=20)
+        ax.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='on', labelleft='on',labelsize=25)
         ax.minorticks_on()
         ax.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = ':')
         ax.set_xlim((range2[0]-0.1),(range2[1]+0.1))
@@ -1047,13 +1047,30 @@ if smf_error_method == 1:                  # method 1: see above
     SF_phot_error_rel = np.sqrt(np.transpose((SF_spec_completeness_correction_err/SF_spec_completeness_correction)**2) + (SF_phot_error_counting_rel)**2)
     Q_phot_error_rel = np.sqrt(np.transpose((Q_spec_completeness_correction_err/Q_spec_completeness_correction)**2) + (Q_phot_error_counting_rel)**2)
     #
+    ## compute the weight factor for spec/phot; weight_spec = (# of spec members) / (total # of raw members); weight_phot = 1 - weight_spec
+    error_weight_SF = np.array([[0.0]*len(SF_midbins)]*2)  # row1=spec;  row2=phot
+    error_weight_Q = np.array([[0.0]*len(SF_midbins)]*2)
+    #
+    error_weight_SF[0] = np.sum(SF_spec_smf,axis=0) / np.sum(SF_raw_smf,axis=0)
+    error_weight_Q[0] = np.sum(SF_spec_smf,axis=0) / np.sum(Q_raw_smf,axis=0)
+    #
+    ## remove NaNs due to empty bins
+    for ii in range(len(error_weight_SF[0])):
+        if np.isnan(error_weight_SF[0][ii])==1:
+            error_weight_SF[0][ii] = 0
+        if np.isnan(error_weight_Q[0][ii])==1:
+            error_weight_Q[0][ii] = 0
+    #
+    error_weight_SF[1] = 1 - error_weight_SF[0]
+    error_weight_Q[1] = 1 - error_weight_Q[0]
+    #
     ## reshape arrays to match SMF
     SF_phot_error_rel = SF_phot_error_rel.reshape(len(SF_midbins))
     Q_phot_error_rel = Q_phot_error_rel.reshape(len(SF_midbins))
     #
     ## now put it all together: total relative error (squared) = sum of relative errors (squared)
-    SF_error_rel = np.sqrt( SF_spec_error_rel**2 + SF_phot_error_rel**2 )
-    Q_error_rel = np.sqrt( Q_spec_error_rel**2 + Q_phot_error_rel**2 )
+    SF_error_rel = np.sqrt( error_weight_SF[0]*SF_spec_error_rel**2 + error_weight_SF[1]*SF_phot_error_rel**2 )
+    Q_error_rel = np.sqrt( error_weight_Q[0]*Q_spec_error_rel**2 + error_weight_Q[1]*Q_phot_error_rel**2 )
     #
     ## compute error bars for SMF plot
     SF_error = SF_error_rel * SF_smf
@@ -1267,6 +1284,50 @@ elif smf_error_method == 3:                  # method 3: treat entire SMF as one
 #
 #
 #
+## SECTION (5)    EMCEE simulation; see emcee_chi2_final.py;
+#
+######## This section has been broken out into its own program, called "emcee_chi2", which uses chi-squared as the cost function and is the code to be implemented in the final run for this project 
+#
+#
+if mcmc_flag == 1:
+    #
+    #
+    #
+    ## Call "spec_membership_selection.py" to determine the preliminary spectroscopic sample
+    #
+    #
+    exec(open('emcee_chi2_final.py').read()) 
+    #
+    #
+    print('\n"master_smfz*.py" Section 5 MCMC complete for binning method %i .\n\nPROGRAM SHOULD EXIT AFTER PRINTING THIS STATEMENT'%membership_correction_binning_flag)
+    sys.exit()
+    print('PROGRAM SHOULD HAVE EXITED BEFORE PRINTING THIS STATEMENT') 
+    #
+    #
+    #
+    #
+#
+#
+else:
+## The following summarizes the result of the MCMC simulation and sets up the appropriate arrays for plotting
+    #
+    SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [10.14499598,0.02096564,-1.2720757]     # 100 walkers, 500,000 steps
+    SFM_star_sigma, SFphi_sigma, SFalpha_sigma = [0.57568334,0.00589964,0.03997277]
+    #single-schechter Q pop
+    QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.76047713,0.05031532,-0.94764447]     # 100 walkers, 200,000 steps
+    QM_star_sigma, Qphi_sigma, Qalpha_sigma = [0.04034471,0.00262553,0.01046056]
+    #double-schechter Q pop
+    #QM_star_mcmc, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [7.4296233,-15.09718791,-19.94457933,2.81944241,-2.9740897]     # 100 walkers, 200,000 steps
+    #QM_star_sigma, Qphi1_sigma, Qalpha1_sigma, Qphi2_sigma, Qalpha2_sigma = [0.00010148,0.00010006,0.00010002,0.00010189,0.00010069]
+    #
+    TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [10.88441285,0.03862147,-1.17262005]
+    TM_star_sigma, Tphi_sigma, Talpha_sigma = [0.04220442,0.00251507,0.00934645]
+    #
+#
+#    
+#
+#
+#
 #
 #
 #
@@ -1275,6 +1336,9 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
     if project_plot_flag == 0:
         pass
     else:
+        SF_field_smf = np.zeros_like(SF_smf)
+        Q_field_smf = np.zeros_like(Q_smf)
+        total_field_smf = np.zeros_like(total_smf)
         SF_field_error = np.zeros_like(SF_smf)
         Q_field_error = np.zeros_like(Q_smf)
         total_field_error = np.zeros_like(total_smf)
@@ -1283,33 +1347,33 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
     #
         #plt.close()
         SMF = plt.figure()
-        string = 'Spec: %s'%z_cutoff[0]+'  Phot: %s'%z_cutoff[1]+'  Method: %i'%smf_error_method
-        SMF.suptitle(string, fontsize=30)
+        string = 'Spec: %s'%z_cutoff[0]+'  Phot: %s'%z_cutoff[1]+'  Method: %i'%membership_correction_binning_flag
+        SMF.suptitle(string, fontsize=40)
         gs = gridspec.GridSpec(2,2, wspace=0, hspace=0, width_ratios=[1,1], height_ratios=[2,1])   #make a tiled-plot like vdB2013 w/ fractions below, this line sets the proporitons of plots in the figure
         #gs = gridspec.GridSpec(2,3, width_ratios=[1,1,1], height_ratios=[2,1])   #make a tiled-plot like vdB2013 w/ fractions below, this line sets the proporitons of plots in the figure
         #
         ## CLUSTER
         ax0 = plt.subplot(gs[0])      
-        ax0.errorbar(SF_midbins,SF_smf,yerr=SF_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5, label='Star-forming')#yerr=SF_error,
-        ax0.errorbar(Q_midbins,Q_smf,yerr=Q_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5,label='Quiescent')
-        ax0.errorbar(SF_midbins,total_smf,yerr=total_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5,label='Total')
+        ax0.errorbar(SF_midbins,SF_smf,yerr=SF_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
+        ax0.errorbar(Q_midbins,Q_smf,yerr=Q_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
+        ax0.errorbar(SF_midbins,total_smf,yerr=total_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
         ## Plot Schechter fits:  (uncomment 5 hashtags when fits complete)
         ######plt.plot(x_plot_Q,Q_model_ml_plot, ':r')
         #####plt.plot(x_plot_Q,Q_model_mcmc_plot, '--r')
         ######plt.plot(x_plot_SF,SF_model_ml_plot, ':c', label = 'Max. Likelihood', linewidth = 0.5)
         #####plt.plot(x_plot_SF,SF_model_mcmc_plot, '--b', label = 'MCMC', linewidth = 0.5)
         #####plt.plot(x_plot_T,T_model_mcmc_plot, 'k')
-        ax0.set_xlabel('$log(M/M_{\odot})$')
+        ax0.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
         ax0.set_xscale('linear')
         ax0.minorticks_on()
         ax0.set_xlim(7,12.5)
         ax0.set_yscale('log')
         ax0.set_ylim(6e-5,0.5)
         ax0.minorticks_on()
-        ax0.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False,labelbottom=False,grid_alpha=0.4,grid_linestyle=':')
+        ax0.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=False,labelsize=18)
         ax0.yaxis.set_label_position("left")
-        ax0.set_ylabel('???')
-        ax0.set_title('Cluster')
+        ax0.set_ylabel('???',fontsize=20)
+        ax0.set_title('Cluster',fontsize=30)
         ax0.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
         ax0.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
         #
@@ -1317,56 +1381,56 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
         ax2 = plt.subplot(gs[2])    
         #plt.plot(SF_midbins,frac_smf[0],'.b',linewidth=0.5)
         #plt.plot(SF_midbins,frac_smf[1],'.r',linewidth=0.5)
-        ax2.errorbar(SF_midbins,quenched_fraction[0],yerr=quenched_err, fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+        ax2.errorbar(SF_midbins,quenched_fraction[0],yerr=quenched_err, fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5, ms=15)
         #ax2.errorbar(SF_midbins,frac_smf[1],yerr=frac_error[1], fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
         ax2.set_xscale('linear')
-        ax2.set_xlabel('$log(M/M_{\odot})$')
+        ax2.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
         ax2.set_xlim(7,12.5)
         ax2.set_yscale('linear')
         ax2.set_ylim(-0.1,1.1)
         ax2.minorticks_on()
-        ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False)
+        ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False,labelsize=18)
         ax2.yaxis.set_label_position("left")
-        ax2.set_ylabel('Quenched fraction')
+        ax2.set_ylabel('Quenched fraction',fontsize=20)
         #
         ## FIELD
         ax1 = plt.subplot(gs[1])      
-        ax1.errorbar(SF_midbins,SF_field_smf,yerr=SF_field_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5, label='Star-forming')#yerr=SF_error,
-        ax1.errorbar(Q_midbins,Q_field_smf,yerr=Q_field_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5,label='Quiescent')
-        ax1.errorbar(SF_midbins,total_field_smf,yerr=total_field_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5,label='Total')
+        ax1.errorbar(SF_midbins,SF_field_smf,yerr=SF_field_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
+        ax1.errorbar(Q_midbins,Q_field_smf,yerr=Q_field_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
+        ax1.errorbar(SF_midbins,total_field_smf,yerr=total_field_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
         ## Plot Schechter fits:  (uncomment 5 hashtags when fits complete)
         ######plt.plot(x_plot_Q,Q_model_ml_plot, ':r')
         #####plt.plot(x_plot_Q,Q_model_mcmc_plot, '--r')
         ######plt.plot(x_plot_SF,SF_model_ml_plot, ':c', label = 'Max. Likelihood', linewidth = 0.5)
         #####plt.plot(x_plot_SF,SF_model_mcmc_plot, '--b', label = 'MCMC', linewidth = 0.5)
         #####plt.plot(x_plot_T,T_model_mcmc_plot, 'k')
-        ax1.set_xlabel('$log(M/M_{\odot})$')
+        ax1.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
         ax1.set_xscale('linear')
         ax1.minorticks_on()
         ax1.set_xlim(7,12.5)
         ax1.set_yscale('log')
         ax1.set_ylim(6e-5,0.5)
         ax1.minorticks_on()
-        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True,labelleft=False,labelbottom=False,grid_alpha=0.4,grid_linestyle=':')
+        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True,labelleft=False,labelbottom=False,labelsize=18)
         ax1.yaxis.set_label_position("right")
-        ax1.set_ylabel('???')
-        ax1.set_title('Field')
+        ax1.set_ylabel('???',fontsize=25)
+        ax1.set_title('Field',fontsize=30)
         #ax3.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
         ax1.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
         #
         ## field fraction
         ax3 = plt.subplot(gs[3])    
-        ax3.errorbar(SF_midbins,quenched_fraction[1],yerr=quenched_err, fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+        #ax3.errorbar(SF_midbins,quenched_fraction[1],yerr=quenched_err, fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
         #ax2.errorbar(SF_midbins,frac_smf[1],yerr=frac_error[1], fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
         ax3.set_xscale('linear')
-        ax3.set_xlabel('$log(M/M_{\odot})$')
+        ax3.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
         ax3.set_xlim(7,12.5)
         ax3.set_yscale('linear')
         ax3.set_ylim(-0.1,1.1)
         ax3.minorticks_on()
-        ax3.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True)
+        ax3.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelleft=False,labelright=True,labelsize=18)
         ax3.yaxis.set_label_position("right")
-        ax3.set_ylabel('Quenched fraction')
+        ax3.set_ylabel('Quenched fraction',fontsize=20)
         #
         plt.show()
 #
@@ -1382,44 +1446,19 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
 ################
 #
 #
+########################
+########################
+#
+#
+# BREAK    
+#
+#
+########################
+########################
+#
 #
 #
 if where_im_at_flag == 1:
-    #
-    ########################
-    ########################
-    #
-    #
-    # BREAK    
-    #
-    #
-    ########################
-    ########################
-    #
-    #
-    #
-    ## SECTION (5)    EMCEE simulation; see emcee_chi2_final.py;
-    #
-    ######## This section has been broken out into its own program, called "emcee_chi2", which uses chi-squared as the cost function and is the code to be implemented in the final run for this project 
-    #
-    #
-    #
-    ## The following summarizes the result of the MCMC simulation and sets up the appropriate arrays for plotting
-    #
-    SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [10.14499598,0.02096564,-1.2720757]     # 100 walkers, 500,000 steps
-    SFM_star_sigma, SFphi_sigma, SFalpha_sigma = [0.57568334,0.00589964,0.03997277]
-    #single-schechter Q pop
-    QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.76047713,0.05031532,-0.94764447]     # 100 walkers, 200,000 steps
-    QM_star_sigma, Qphi_sigma, Qalpha_sigma = [0.04034471,0.00262553,0.01046056]
-    #double-schechter Q pop
-    #QM_star_mcmc, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [7.4296233,-15.09718791,-19.94457933,2.81944241,-2.9740897]     # 100 walkers, 200,000 steps
-    #QM_star_sigma, Qphi1_sigma, Qalpha1_sigma, Qphi2_sigma, Qalpha2_sigma = [0.00010148,0.00010006,0.00010002,0.00010189,0.00010069]
-    #
-    TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [10.88441285,0.03862147,-1.17262005]
-    TM_star_sigma, Tphi_sigma, Talpha_sigma = [0.04220442,0.00251507,0.00934645]
-    #
-    #
-    #    
     #
     #
     #
