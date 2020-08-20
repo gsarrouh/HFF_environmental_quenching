@@ -30,7 +30,7 @@
 ###        delz_hist_diagnostic.py, bcg_hist_diagnostic.py,
 ###        spec_asymmetric_binning.py (VAR),; 
 #
-### (2):   by and large a copy of master_data*.py, imports and anlyzes 
+### (2):   PARALLEL FIELDS: by and large a copy of master_data*.py, imports and anlyzes 
 ###        the field sample from the Hubble Parallel Fields ; 
 ###        MAIN program: masterparallel_2.py;
 #
@@ -40,10 +40,13 @@
 ###        ANALYZING the QUALITY of the data set; 
 ###        MAIN program: master_zplots_2_final.py;
 #
-### (5):   determine SCALE RADIUS and MASS "r_200" & "M_200" of each cluster
+### (5):   UVJ Figures; diagnostic & publication quality 
+###        MAIN program: UVJ_plots.py;
+#
+### (6):   determine SCALE RADIUS and MASS "r_200" & "M_200" of each cluster
 ###        MAIN program: velocity_dispersion.py
 #
-### (6):   produce Stellar Mass Function (SMF); ;
+### (7):   produce Stellar Mass Function (SMF); ;
 ###        MAIN program: master_smfz_9_final.py;
 #
 #
@@ -84,11 +87,30 @@ if project_time_flag == 1:
 ## USER INPUTS
 ## MAY NEED TO EDIT: hard code the cluster membership definition cuts if not running Variational Analysis
 #
-z_cutoff = [0.012,0.055]#1st try[0.02,0.06]     # [spec,phot] cutoffs for cluster membership
-z_cutoff_field = [0.08,0.15]    # same but for definition of "field" galaxies
+z_cutoff_field = [0.05,0.1]    # same but for definition of "field" galaxies
 bin_width = 0.4  # of the SMF, in dex
-num_bins_SF_pos_neg = [6.64,8.527,10.413 ,12.3]#[6.6,9.05,10.13,12.3]   # bin edges of the false pos/neg SF histogram, in units of log10(mass); METHOD = 1
-num_bins_Q_pos_neg = [6.64,8.527, 10.413,12.3]#1st try -[7.05,10.11,12.3]  # bin edges of the false pos/neg Q histogram;    METHOD = 2
+#
+#
+## choose your binning method for calculating membership correction (i.e. false pos/neg ratios)
+## 1 = symmetric binning;   2 = asymmetric binning by # count;   3 = asymmetric binning by mass;   4 = best of all methods
+membership_correction_binning_flag = 1
+#
+if membership_correction_binning_flag == 1:    # symmetric
+    z_cutoff = [0.012,0.060]
+    num_bins_SF_pos_neg = [7.36,9.007,10.653,12.3]  #2nd try
+    num_bins_Q_pos_neg = [7.36,8.348,9.336,10.324,11.312,12.3] 
+elif membership_correction_binning_flag == 2:     # asymmetric by # count
+    z_cutoff = [0.012,0.055]
+    num_bins_SF_pos_neg = [7.36,8.77,9.5,10.18,12.3]   #1st try
+    num_bins_Q_pos_neg = [7.36,9.41,10.41,12.3]
+elif membership_correction_binning_flag == 3:     # asymmetric by mass
+    z_cutoff = [0.012,0.055]
+    num_bins_SF_pos_neg = [7.36,8.93,10.16,12.3]   #1st try
+    num_bins_Q_pos_neg = [7.36,9.43,10.11,10.47,12.3]
+elif membership_correction_binning_flag == 4:     # best of all 3 methods
+    z_cutoff = [0.012,0.055]
+    num_bins_SF_pos_neg = [7.36,8.93,10.16,12.3]   #1st try
+    num_bins_Q_pos_neg = [7.36,9.41,10.41,12.3]
 #
 #
 #
@@ -105,7 +127,7 @@ project_diagnostic_flag = 2        # 0=off, turn OFF ALL diagnostic flags in all
 #
 ## PROJECT VARIATIONAL ANALYSIS FLAG
 project_master_variational_flag = 0        # 0=off, don't perform variational analaysis;  1=on, do it. the analysis may also be turned on/off within "master_data*.py"
-diagnostic_round_flag = 2                  # variational analysis performed in 2 rounds: 1st round (flag==1), try all possible cuts; 2nd round (flag==2), compare the top 6 (3 best SF/Q)
+diagnostic_round_flag = 2                  # variational analysis performed in 2 rounds: 1st round (flag==1) DEPRECATED; 2nd round (flag==2), compare sort results as you like
 #
 #
 ## PROJECT PLOT FLAG
@@ -116,16 +138,21 @@ project_plot_flag = 2        # 0=off, make no figures;  1=on, make all figures; 
 #
 #
 section_1_flag = 1                 # cluster catalogue data prep
-section_2_flag = 1                 # parallel field catalogue data prep# z plots
+section_2_flag = 1                 # parallel field catalogue data prep
 section_3_flag = 1                 # limiting mass
-section_4_flag = 0                 # z-plots
-section_5_flag = 1                 # UVJ diagram
-section_6_flag = 0                 # velocity dispersion, r_200, M_200 calculation
-section_7_flag = 0                 # SMF
+section_4_flag = 1                 # import UltraVISTA catalogue for Field SMF   
+section_5_flag = 0                 # z-plots
+section_6_flag = 0                 # UVJ diagram
+section_7_flag = 0                 # velocity dispersion, r_200, M_200 calculation
+section_8_flag = 0                 # SMF
 #    
+## Update the user on what this program will run
 #
 ## MAY NEED TO EDIT: choose the filter in which to determine limiting mass
 limiting_mass_flag = 1             #   1 = F160W;   2 = F814W
+#
+## MAY NEED TO EDIT: choose whether to enter the MCMC simulation
+mcmc_flag = 0             #   0 = off - skip sim;   1 = on - perform MCMC sim & Exit program;
 ## Update the user on what this program will run
 #
 print('"main_project_file.py" will run the following:')
@@ -144,19 +171,25 @@ if section_3_flag == 1:
         print('Limiting mass calculated in F814W.')
 #
 if section_4_flag == 1:
-    print('Section 4: Prepare redshift FIGURES ("master_zplots*.py")')
-
+    print('Section 4: Import & prepare Field SMF data from UltraVISTA catalogue ("UVC_master_data.py")')
+#
 #
 if section_5_flag == 1:
-    print('Section 5: Prepare UVJ diagram(s) ("UVJ_plots.py")')
+    print('Section 5: Prepare redshift FIGURES ("master_zplots*.py")')
 #
 #
 if section_6_flag == 1:
-    print('Section 6: Calculate Velocity Dispersion, r_200, M_200 ("velocity_dispersion.py")')
+    print('Section 6: Prepare UVJ diagram(s) ("UVJ_plots.py")')
 #
 #
 if section_7_flag == 1:
-    print('Section 7: Produce SMF ("master_smf*.py")')
+    print('Section 7: Calculate Velocity Dispersion, r_200, M_200 ("velocity_dispersion.py")')
+#
+#
+if section_8_flag == 1:
+    print('Section 8: Produce SMF ("master_smf*.py")')
+    if mcmc_flag == 1:
+        print('MCMC simulation will be performed, and then Exit.')
 #
 ## SECTION (1): main DATA preparation file; imports raw data, sorts it by data type (i.e. photometric/spectroscopic data, stars, etc...), and classifies all galaxies with good photometric redshift estimates as Star-Forming (SF) or Quiescent (Q); it then runs a VARIATIONAL ANALYSIS to determine optimal redshift definitions (redshift "cuts") for cluster membership, based on which cuts yield an equal number of false positives/negatives in each mass bin; executes redshift cuts, classifies SF/Q galaxies as either cluster members, false pos/neg, or field galaxy; and finally, checks the catalogue for Brightest Cluster Galaxies (bCGs); MAIN program: master_data_7_final.py; SUB-programs: spec_completeness_binning.py, correction_factors.py;
 
@@ -209,44 +242,58 @@ if section_3_flag == 1:
 #
 #
 #
-## SECTION (4): SF/Q classification & spec. subsample selection FIGURES
+## SECTION (4): import UltraVISTA catalogue and sort SF/Q, and select galaxies for Field SMF above 10^9
 #
 ## Call and execute the "master_zplots*.py" file, to create plots assessing the quality of the data and visualizes galaxy classification (i.e. SF/Q).  Fig. 1: z_phot v z_spec;  Fig. 2: cluster members/field/false pos/false neg;  Fig. 3: UVJ diagram
 #
 #
 #
 if section_4_flag == 1:
+    print('\nBeginning "UVC_master_data.py"')
+    exec(open('UVC_master_data.py').read())      #opens and executes the script 
+#
+#
+#
+#
+#
+## SECTION (5): SF/Q classification & spec. subsample selection FIGURES
+#
+## Call and execute the "master_zplots*.py" file, to create plots assessing the quality of the data and visualizes galaxy classification (i.e. SF/Q).  Fig. 1: z_phot v z_spec;  Fig. 2: cluster members/field/false pos/false neg;  Fig. 3: UVJ diagram
+#
+#
+#
+if section_5_flag == 1:
     print('\nBeginning "master_zplots*.py"')
     exec(open('master_zplots_2_final.py').read())      #opens and executes the script 
 #
 #
 #
 #
-## SECTION (5): UVJ Diagram(s)
+## SECTION (6): UVJ Diagram(s)
 #
 #
 #
-if section_5_flag == 1:
+if section_6_flag == 1:
     print('\nBeginning "UVJ_plots.py"')
     exec(open('UVJ_plots.py').read())      #opens and executes the script 
 #
 #
 #
 #
-## SECTION (6): VELOCITY DISPERSION
+## SECTION (7): VELOCITY DISPERSION
 #
 #
 #
-if section_6_flag == 1:
+if section_7_flag == 1:
     print('\nBeginning "velocity_dispersion.py"')
     exec(open('velocity_dispersion.py').read())      #opens and executes the script 
 #
 #
 #
 #
-## SECTION (7): SMF 
+## SECTION (8): SMF 
 #
-if section_7_flag == 1:
+if section_8_flag == 1:
     print('\nBeginning "master_smfz*.py"')
     exec(open('master_smfz_9_final.py').read())      #opens and executes the script 
 #
@@ -262,7 +309,7 @@ if project_time_flag == 1:
 #
 #
 #
-print('\n\nProgram terminated successfully.')
+print('\n\nProgram "main_project_file.py" terminated successfully.')
 #
 #
 #
