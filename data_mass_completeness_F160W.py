@@ -27,6 +27,7 @@
 ### (4)    REMOVE all galaxies below limiting mass from prelimenary cluster member sample (i.e. reclassify 
 ### (4.1)   prepare SUMMARY TABLES
 #
+### PROGRAM END
 #
 #
 ### NOTE: if DIAG_FLAG_1 IS NOT TURNED ON, THIS PROGRAM WILL NOT COMPUTE LIMITING MASSES. This is a pretty big design flaw on my part. 
