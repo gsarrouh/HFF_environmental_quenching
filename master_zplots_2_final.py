@@ -57,7 +57,7 @@ def delz_bound(x):
 ## SECTION (0): set PLOT_FLAGS    # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
 ### MAY NEED TO EDIT ### plot_flag_*/time_flag_*/diag_flag_*
 #
-plot_flag_1 = 1           # Fig.1 - z_spec v z_phot plot
+plot_flag_1 = 0           # Fig.1 - z_spec v z_phot plot
 plot_flag_2 = 1           # Fig.2 - del_z plot
 #
 time_flag_1 = 0
@@ -254,46 +254,46 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         fig.subplots_adjust(wspace=0,hspace=0)
         ## SF plot
         ## scatter the points
-        ax1.scatter(SF_poss[0],SF_poss[1],s=100,c='firebrick', marker='X',alpha=0.4, linewidths = 0, label='False pos.')
-        ax1.scatter(SF_negs[0],SF_negs[1],s=100,c='darkviolet', marker='X',alpha=0.4, linewidths = 0, label='False neg.')
-        ax1.scatter(SF_members[0],SF_members[1],s=100,c='g', marker='P',alpha=0.4, linewidths = 0, label='Member')
-        ax1.scatter(SF_fields[0],SF_fields[1],s=100,c='b', marker='P',alpha=0.4, linewidths = 0, label='Field')
+        ax1.scatter(SF_poss[0],SF_poss[1],s=230,c='firebrick', marker='X',alpha=0.4, linewidths = 0, label='False pos.')
+        ax1.scatter(SF_negs[0],SF_negs[1],s=230,c='darkviolet', marker='X',alpha=0.4, linewidths = 0, label='False neg.')
+        ax1.scatter(SF_members[0],SF_members[1],s=230,c='g', marker='P',alpha=0.4, linewidths = 0, label='Member')
+        ax1.scatter(SF_fields[0],SF_fields[1],s=230,c='b', marker='P',alpha=0.4, linewidths = 0, label='Field')
         # add z_cutoff limits
         ax1.plot([-0.5,1],[z_cutoff[1],z_cutoff[1]],':k', linewidth=3)  # horizontal cuts (phot)
         ax1.plot([-0.5,1],[-z_cutoff[1],-z_cutoff[1]],':k', linewidth=3)
         ax1.plot([-z_cutoff[0],-z_cutoff[0]],[-0.5,1],':k', linewidth=3)  #vertical cuts
         ax1.plot([z_cutoff[0],z_cutoff[0]],[-0.5,1],':k', linewidth=3)  
         # add details
-        ax1.set_title('Star-forming',fontsize=40)
-        ax1.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$',fontsize=35)
+        ax1.set_title('Star-forming',fontsize=45)
+        ax1.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$',fontsize=40)
         ax1.set_xlim(-0.25,0.25)
-        ax1.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$',fontsize=35)
+        ax1.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$',fontsize=40)
         ax1.set_ylim(-0.25,0.25)
         ax1.grid(b=False)
-        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True, labeltop=False,labelbottom=True,labelsize=20)
+        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True, labeltop=False,labelbottom=True,labelsize=25)
         ax1.minorticks_on()
         ax1.legend(loc='upper left', frameon=False, fontsize=25, markerscale=2)
         #
         ## now do the Q plot
         ## scatter the points
-        ax2.scatter(Q_members[0],Q_members[1],s=100,c='g', marker='P',alpha=0.4, linewidths = 0)
-        ax2.scatter(Q_fields[0],Q_fields[1],s=100,c='b', marker='P',alpha=0.4, linewidths = 0)
-        ax2.scatter(Q_poss[0],Q_poss[1],s=100,c='firebrick', marker='X',alpha=0.4, linewidths = 0)
-        ax2.scatter(Q_negs[0],Q_negs[1],s=100,c='darkviolet', marker='X',alpha=0.4, linewidths = 0)
+        ax2.scatter(Q_members[0],Q_members[1],s=230,c='g', marker='P',alpha=0.4, linewidths = 0)
+        ax2.scatter(Q_fields[0],Q_fields[1],s=230,c='b', marker='P',alpha=0.4, linewidths = 0)
+        ax2.scatter(Q_poss[0],Q_poss[1],s=230,c='firebrick', marker='X',alpha=0.4, linewidths = 0)
+        ax2.scatter(Q_negs[0],Q_negs[1],s=230,c='darkviolet', marker='X',alpha=0.4, linewidths = 0)
         # add z_cutoff limits
         ax2.plot([-0.5,1],[z_cutoff[1],z_cutoff[1]],':k', linewidth=3)  # horizontal cuts (phot)
         ax2.plot([-0.5,1],[-z_cutoff[1],-z_cutoff[1]],':k', linewidth=3)
         ax2.plot([-z_cutoff[0],-z_cutoff[0]],[-0.5,1],':k', linewidth=3)  #vertical cuts
         ax2.plot([z_cutoff[0],z_cutoff[0]],[-0.5,1],':k', linewidth=3)  
         # add details
-        ax2.set_title('Quiescent',fontsize=40)
-        ax2.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$',fontsize=35)
+        ax2.set_title('Quiescent',fontsize=45)
+        ax2.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$',fontsize=40)
         ax2.set_xlim(-0.25,0.25)
-        ax2.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$',fontsize=35)
+        ax2.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$',fontsize=40)
         ax2.yaxis.set_label_position('right')
         ax2.set_ylim(-0.25,0.25)
         ax2.grid(b=False)
-        ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True, labelleft=False, labeltop=False,labelbottom=True,labelsize=20)
+        ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True, labelleft=False, labeltop=False,labelbottom=True,labelsize=25)
         ax2.minorticks_on()                        
         #
         #
