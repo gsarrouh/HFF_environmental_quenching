@@ -1327,6 +1327,30 @@ else:
 #    
 #
 #
+SF_field_error = np.zeros_like(SF_smf)
+Q_field_error = np.zeros_like(Q_smf)
+total_field_error = np.zeros_like(total_smf)
+#
+#
+fig = plt.figure()
+string = 'HFF field SMF: %s'%np.round(z_field_bounds[0],decimals=2),' < z < %s'%np.round(z_field_bounds[1],decimals=2)
+fig.suptitle(string, fontsize=30)
+ax = fig.add_subplot(1, 1, 1)
+ax.errorbar(SF_midbins,SF_field_smf,yerr=SF_field_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
+ax.errorbar(Q_midbins,Q_field_smf,yerr=Q_field_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
+ax.errorbar(SF_midbins,total_field_smf,yerr=total_field_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
+ax.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
+ax.set_xscale('linear')
+ax.minorticks_on()
+ax.set_xlim(7,12.5)
+ax.set_yscale('log')
+ax.set_ylim(6e-5,0.5)
+ax.minorticks_on()
+ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=False,labelsize=18)
+ax.yaxis.set_label_position("left")
+ax.set_ylabel('???',fontsize=20)
+ax.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
+ax.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
 #
 #
 #
@@ -1374,7 +1398,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
         ax0.yaxis.set_label_position("left")
         ax0.set_ylabel('???',fontsize=20)
         ax0.set_title('Cluster',fontsize=30)
-        ax0.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
+        ax0.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'small')
         ax0.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
         #
         ## cluster fraction
@@ -1433,6 +1457,35 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
         ax3.set_ylabel('Quenched fraction',fontsize=20)
         #
         plt.show()
+#
+#
+SF_uvc, mass_bins = np.histogram(SF_field_uvc_list, bins=num_bins,range=range2)
+Q_uvc, mass_bins = np.histogram(Q_field_uvc_list, bins=num_bins,range=range2)
+total_uvc = SF_uvc + Q_uvc
+#
+SF_uvc_error = np.sqrt(SF_uvc)
+Q_uvc_error = np.sqrt(Q_uvc)
+total_uvc_error = np.sqrt(total_uvc)
+#
+fig = plt.figure()
+string = 'UltraVISTA field SMF: %s'%np.round(z_field_bounds[0],decimals=2),' < z < %s'%np.round(z_field_bounds[1],decimals=2)
+fig.suptitle(string, fontsize=30)
+ax = fig.add_subplot(1, 1, 1)
+ax.errorbar(SF_midbins,SF_uvc,yerr=SF_uvc_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
+ax.errorbar(Q_midbins,Q_uvc,yerr=Q_uvc_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
+ax.errorbar(SF_midbins,total_uvc,yerr=total_uvc_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
+ax.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
+ax.set_xscale('linear')
+ax.minorticks_on()
+ax.set_xlim(7,12.5)
+ax.set_yscale('log')
+#ax.set_ylim(6e-5,0.5)
+ax.minorticks_on()
+ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=True,labelsize=18)
+ax.yaxis.set_label_position("left")
+ax.set_ylabel('???',fontsize=20)
+ax.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
+ax.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
 #
 #
 #
