@@ -38,8 +38,8 @@ import corner
 #
 #
 #
-SF_flag = 1          # star-forming population
-Q_flag = 0           # Q pop
+SF_flag = 0          # star-forming population
+Q_flag = 1           # Q pop
 T_flag = 0           # total pop
 #
 #
