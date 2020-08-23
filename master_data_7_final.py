@@ -188,20 +188,20 @@ if time_flag_1 == 1 and time_flag == 2:
 ## import catalogues into single table "master_cat"; separate objects for which there is no redshift data (both photo & spec) as "nodata"
 #
 ##create table from EAZY output redshift ".zout" file
-z_macs0416 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0416clu_catalogs/macs0416clu_v3.9.zout',format='ascii')
-z_macs1149 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs1149clu_catalogs/macs1149clu_v3.9.zout',format='ascii')
-z_macs0717 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0717clu_catalogs/macs0717clu_v3.9.zout',format='ascii')
-z_abell370 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell370clu_catalogs/abell370clu_v3.9.zout',format='ascii')
-z_abell1063 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell1063clu_catalogs/abell1063clu_v3.9.zout',format='ascii')   
-z_abell2744 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell2744clu_catalogs/abell2744clu_v3.9.zout',format='ascii') 
+z_macs0416 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0416clu_catalogs/macs0416clu_v3.9.zout',format='ascii')
+z_macs1149 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs1149clu_catalogs/macs1149clu_v3.9.zout',format='ascii')
+z_macs0717 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0717clu_catalogs/macs0717clu_v3.9.zout',format='ascii')
+z_abell370 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell370clu_catalogs/abell370clu_v3.9.zout',format='ascii')
+z_abell1063 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell1063clu_catalogs/abell1063clu_v3.9.zout',format='ascii')   
+z_abell2744 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell2744clu_catalogs/abell2744clu_v3.9.zout',format='ascii') 
 #   
 #create table from FAST ".fout" file (contains mass estimates)
-f_macs0416 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0416clu_catalogs/macs0416clu_v3.9.fout',format='ascii')
-f_macs1149 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs1149clu_catalogs/macs1149clu_v3.9.fout',format='ascii')
-f_macs0717 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0717clu_catalogs/macs0717clu_v3.9.fout',format='ascii')
-f_abell370 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell370clu_catalogs/abell370clu_v3.9.fout',format='ascii')
-f_abell1063 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell1063clu_catalogs/abell1063clu_v3.9.fout',format='ascii')
-f_abell2744 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell2744clu_catalogs/abell2744clu_v3.9.fout',format='ascii')
+f_macs0416 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0416clu_catalogs/macs0416clu_v3.9.fout',format='ascii')
+f_macs1149 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs1149clu_catalogs/macs1149clu_v3.9.fout',format='ascii')
+f_macs0717 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0717clu_catalogs/macs0717clu_v3.9.fout',format='ascii')
+f_abell370 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell370clu_catalogs/abell370clu_v3.9.fout',format='ascii')
+f_abell1063 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell1063clu_catalogs/abell1063clu_v3.9.fout',format='ascii')
+f_abell2744 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell2744clu_catalogs/abell2744clu_v3.9.fout',format='ascii')
 #
 # rename columns of the .fout files because for some reason the column names didn't register
 col_names_old = ['col1','col2','col3','col4','col5','col6','col7','col8','col9','col10','col11']
@@ -215,38 +215,38 @@ for ii in range(len(col_names_new)):
     f_abell2744.rename_column(col_names_old[ii],col_names_new[ii])
 #
 ##read in the whole bloody catalogue
-cat_macs0416 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0416clu_catalogs/hffds_macs0416clu_v3.9.cat',format='ascii')
-cat_macs1149 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs1149clu_catalogs/hffds_macs1149clu_v3.9.cat',format='ascii')
-cat_macs0717 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0717clu_catalogs/hffds_macs0717clu_v3.9.cat',format='ascii')
-cat_abell370 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell370clu_catalogs/hffds_abell370clu_v3.9.cat',format='ascii')
-cat_abell1063 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell1063clu_catalogs/hffds_abell1063clu_v3.9.cat',format='ascii')
-cat_abell2744 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell2744clu_catalogs/hffds_abell2744clu_v3.9.cat',format='ascii')
+cat_macs0416 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0416clu_catalogs/hffds_macs0416clu_v3.9.cat',format='ascii')
+cat_macs1149 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs1149clu_catalogs/hffds_macs1149clu_v3.9.cat',format='ascii')
+cat_macs0717 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0717clu_catalogs/hffds_macs0717clu_v3.9.cat',format='ascii')
+cat_abell370 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell370clu_catalogs/hffds_abell370clu_v3.9.cat',format='ascii')
+cat_abell1063 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell1063clu_catalogs/hffds_abell1063clu_v3.9.cat',format='ascii')
+cat_abell2744 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell2744clu_catalogs/hffds_abell2744clu_v3.9.cat',format='ascii')
 #
 ##creat table for colours
 #macs0416
-F0416_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0416clu_catalogs/macs0416clu_v3.9.153.rf',format='ascii')
-F0416_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0416clu_catalogs/macs0416clu_v3.9.155.rf',format='ascii')
-F0416_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0416clu_catalogs/macs0416clu_v3.9.161.rf',format='ascii')
+F0416_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0416clu_catalogs/macs0416clu_v3.9.153.rf',format='ascii')
+F0416_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0416clu_catalogs/macs0416clu_v3.9.155.rf',format='ascii')
+F0416_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0416clu_catalogs/macs0416clu_v3.9.161.rf',format='ascii')
 #macs1149
-F1149_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs1149clu_catalogs/macs1149clu_v3.9.153.rf',format='ascii')
-F1149_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs1149clu_catalogs/macs1149clu_v3.9.155.rf',format='ascii')
-F1149_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs1149clu_catalogs/macs1149clu_v3.9.161.rf',format='ascii')
+F1149_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs1149clu_catalogs/macs1149clu_v3.9.153.rf',format='ascii')
+F1149_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs1149clu_catalogs/macs1149clu_v3.9.155.rf',format='ascii')
+F1149_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs1149clu_catalogs/macs1149clu_v3.9.161.rf',format='ascii')
 #macs0717
-F0717_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0717clu_catalogs/macs0717clu_v3.9.153.rf',format='ascii')
-F0717_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0717clu_catalogs/macs0717clu_v3.9.155.rf',format='ascii')   
-F0717_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/macs0717clu_catalogs/macs0717clu_v3.9.161.rf',format='ascii')
+F0717_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0717clu_catalogs/macs0717clu_v3.9.153.rf',format='ascii')
+F0717_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0717clu_catalogs/macs0717clu_v3.9.155.rf',format='ascii')   
+F0717_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0717clu_catalogs/macs0717clu_v3.9.161.rf',format='ascii')
 #abell370
-F370_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell370clu_catalogs/abell370clu_v3.9.153.rf',format='ascii')
-F370_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell370clu_catalogs/abell370clu_v3.9.155.rf',format='ascii')
-F370_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell370clu_catalogs/abell370clu_v3.9.161.rf',format='ascii')
+F370_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell370clu_catalogs/abell370clu_v3.9.153.rf',format='ascii')
+F370_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell370clu_catalogs/abell370clu_v3.9.155.rf',format='ascii')
+F370_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell370clu_catalogs/abell370clu_v3.9.161.rf',format='ascii')
 #abell1063
-F1063_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell1063clu_catalogs/abell1063clu_v3.9.153.rf',format='ascii')
-F1063_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell1063clu_catalogs/abell1063clu_v3.9.155.rf',format='ascii')
-F1063_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell1063clu_catalogs/abell1063clu_v3.9.161.rf',format='ascii')
+F1063_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell1063clu_catalogs/abell1063clu_v3.9.153.rf',format='ascii')
+F1063_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell1063clu_catalogs/abell1063clu_v3.9.155.rf',format='ascii')
+F1063_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell1063clu_catalogs/abell1063clu_v3.9.161.rf',format='ascii')
 #abell2744
-F2744_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell2744clu_catalogs/abell2744clu_v3.9.153.rf',format='ascii')
-F2744_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell2744clu_catalogs/abell2744clu_v3.9.155.rf',format='ascii')
-F2744_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/abell2744clu_catalogs/abell2744clu_v3.9.161.rf',format='ascii')
+F2744_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell2744clu_catalogs/abell2744clu_v3.9.153.rf',format='ascii')
+F2744_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell2744clu_catalogs/abell2744clu_v3.9.155.rf',format='ascii')
+F2744_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell2744clu_catalogs/abell2744clu_v3.9.161.rf',format='ascii')
 ##aggregate into a single table
 macs0416 = Table([z_macs0416['id'],z_macs0416['z_peak'],z_macs0416['z_spec'],F0416_u['L153'],F0416_v['L155'],F0416_j['L161'],F0416_u['DM'],f_macs0416['lmass'],f_macs0416['lsfr'],f_macs0416['lssfr'],cat_macs0416['flux_radius'],cat_macs0416['star_flag'],cat_macs0416['use_phot'],cat_macs0416['f_F160W'],cat_macs0416['e_F160W'],cat_macs0416['flag_F160W'],cat_macs0416['f_F814W'],cat_macs0416['flag_F814W'],cat_macs0416['bandtotal'],cat_macs0416['f_F435W'],cat_macs0416['f_F606W'],cat_macs0416['f_F105W'],cat_macs0416['f_F125W'],cat_macs0416['f_F140W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W'))
 macs1149 = Table([z_macs1149['id'],z_macs1149['z_peak'],z_macs1149['z_spec'],F1149_u['L153'],F1149_v['L155'],F1149_j['L161'],F1149_u['DM'],f_macs1149['lmass'],f_macs1149['lsfr'],f_macs1149['lssfr'],cat_macs1149['flux_radius'],cat_macs1149['star_flag'],cat_macs1149['use_phot'],cat_macs1149['f_F160W'],cat_macs1149['e_F160W'],cat_macs1149['flag_F160W'],cat_macs1149['f_F814W'],cat_macs1149['flag_F814W'],cat_macs1149['bandtotal'],cat_macs1149['f_F435W'],cat_macs1149['f_F606W'],cat_macs1149['f_F105W'],cat_macs1149['f_F125W'],cat_macs1149['f_F140W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W'))
