@@ -36,17 +36,20 @@
 #
 ### (3):   determine LIMITING MASS - self-explanatory; MAIN program: ******.py 
 #
-### (4):   REDSHIFT plots; executes a file which produces figures 
+### (4):   import COSMOS/UltraVISTA catalogue and select FIELD SAMPLE
+###        MAIN program: UVC_master_data.py;
+#
+### (5):   REDSHIFT plots; executes a file which produces figures 
 ###        ANALYZING the QUALITY of the data set; 
 ###        MAIN program: master_zplots_2_final.py;
 #
-### (5):   UVJ Figures; diagnostic & publication quality 
+### (6):   UVJ Figures; diagnostic & publication quality 
 ###        MAIN program: UVJ_plots.py;
 #
-### (6):   determine SCALE RADIUS and MASS "r_200" & "M_200" of each cluster
+### (7):   determine SCALE RADIUS and MASS "r_200" & "M_200" of each cluster
 ###        MAIN program: velocity_dispersion.py
 #
-### (7):   produce Stellar Mass Function (SMF); ;
+### (8):   produce Stellar Mass Function (SMF); ;
 ###        MAIN program: master_smfz_9_final.py;
 #
 #
@@ -144,7 +147,7 @@ section_4_flag = 1                 # import UltraVISTA catalogue for Field SMF
 section_5_flag = 0                 # z-plots
 section_6_flag = 0                 # UVJ diagram
 section_7_flag = 0                 # velocity dispersion, r_200, M_200 calculation
-section_8_flag = 0                 # SMF
+section_8_flag = 1                 # SMF
 #    
 ## Update the user on what this program will run
 #
