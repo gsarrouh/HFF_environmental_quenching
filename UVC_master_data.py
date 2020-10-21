@@ -28,7 +28,7 @@
 ### PROGRAM END
 #
 #
-### NOTE: To find a section, search "SECTION (*)" in all caps, where * is the section number you want. To find fields which require user input, search "MAY NEED TO EDIT" in all caps. Some of these fields may direct you to manually enter input into a sub-program. 
+### NOTE: To find a section, search "SECTION (*)" in all caps, where * is the section number you want. To find fields which require user input, search "MAY NEED TO EDIT" in all caps. Some of these fields may direct you to manually enter input into a sub-program.
 #
 #
 #
@@ -69,7 +69,7 @@ if time_flag == 1:
 ## DEFINITIONS
 #
 ## MAY NEED TO EDIT
-limiting_mass_uvc = 9
+limiting_mass_uvc = 9.5
 #
 ## FLAGS !!!
 ## MAY NEED TO EDIT
@@ -80,9 +80,9 @@ summary_flag_1 = 1          # S1.2: display diagnostic summary table, describes 
 summary_flag_2 = 1          # S2: display outlier fractions & UVJ table
 summary_flag_3 = 1          # S3: display TYPE filter summary table (SF/Q)
 ## diagnostic flags:
-diag_flag_1 = 0             # S2: histograms of del_z spec/phot     
-diag_flag_2 = 0 
-diag_flag_3 = 0       
+diag_flag_1 = 0             # S2: histograms of del_z spec/phot
+diag_flag_2 = 0
+diag_flag_3 = 0
 #
 #
 if 'project_diagnostic_flag' in locals():
@@ -92,7 +92,7 @@ else:
     project_plot_flag = 2
     project_master_variational_flag = 0
     z_cutoff = [0.012,0.055]     # [spec,phot] cutoffs for cluster membership
-    z_cutoff_field = [0.05,0.10] 
+    z_cutoff_field = [0.05,0.10]
     z_cluster = [0.396,0.543,0.545,0.375,0.348,0.308]
     num_bins_SF_pos_neg = [7.36,8.93,10.16,12.3]
     num_bins_Q_pos_neg = [7.36,9.43,10.11,10.47,12.3]
@@ -110,17 +110,17 @@ else:
 #
 #
 #
-##SECTION 1: import all data from HFF team, convert flux to luminosity & gather full 
+##SECTION 1: import all data from HFF team, convert flux to luminosity & gather full
 #
 print('"UVC_master_data.py" Section 1: import data beginning...')
-#  
+#
 ## import catalogues into single table "master_cat_uvc"; separate objects for which there is no redshift data (both photo & spec) as "nodata"
 #
 ##create table from EAZY output redshift ".zout" file
-z_uvc = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/UltraVISTA/UVISTA_final_v4.1.zout',format='ascii')
-#   
+z_uvc = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/UltraVISTA_catalgoues/UVISTA_final_v4.1.zout',format='ascii')
+#
 #create table from FAST ".fout" file (contains mass estimates)
-f_uvc = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/UltraVISTA/UVISTA_final_BC03_v4.1.fout',format='ascii')
+f_uvc = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/UltraVISTA_catalgoues/UVISTA_final_BC03_v4.1.fout',format='ascii')
 #
 # rename columns of the .fout files because for some reason the column names didn't register
 col_names_old = ['col1','col2','col3','col4','col5','col6','col7','col8','col9','col10','col11']
@@ -129,11 +129,11 @@ for ii in range(len(col_names_new)):
     f_uvc.rename_column(col_names_old[ii],col_names_new[ii])
 #
 ##read in the whole bloody catalogue
-cat_uvc = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/UltraVISTA/UVISTA_final_v4.1.cat',format='ascii')
+cat_uvc = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/UltraVISTA_catalgoues/UVISTA_final_v4.1.cat',format='ascii')
 #
 ##creat table for colours
-UV_uvc = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/UltraVISTA/UVISTA_final_v4.1.153-155.rf',format='ascii')
-VJ_uvc = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/UltraVISTA/UVISTA_final_v4.1.155-161.rf',format='ascii')
+UV_uvc = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/UltraVISTA_catalgoues/UVISTA_final_v4.1.153-155.rf',format='ascii')
+VJ_uvc = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/UltraVISTA_catalgoues/UVISTA_final_v4.1.155-161.rf',format='ascii')
 ##aggregate into a single table
 #
 global master_cat_uvc
@@ -204,7 +204,7 @@ print('"UVC_master_data.py" Section 1 complete.\n')
 #
 print('\n"UVC_master_data.py" Section 2: classifying galaxy TYPE as star-forming or quiescent...')
 #
-#  
+#
 counting_array3 = np.array([0]*6)
 SF_type_uvc = 0
 Q_type_uvc = 0
@@ -213,23 +213,23 @@ for counter in range(len(master_cat_uvc)):
     if master_cat_uvc['USE'][counter] == 1:          # identifies "good" galaxies
         counting_array3[0]+=1
         if master_cat_uvc['vj'][counter] < 0.75:
-            if master_cat_uvc['uv'][counter] < 1.3: 
-                master_cat_uvc['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1 
+            if master_cat_uvc['uv'][counter] < 1.3:
+                master_cat_uvc['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1
                 SF_type_uvc+=1
             else:
                 master_cat_uvc['type'][counter] = 2             # identify passive (QUIESCENT) galaxies, type=2
                 Q_type_uvc+=1
                 #
         elif master_cat_uvc['vj'][counter] >= 0.75:
-            if master_cat_uvc['uv'][counter] < ( (0.8 * master_cat_uvc['vj'][counter]) + 0.7 ): 
-                master_cat_par['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1 
+            if master_cat_uvc['uv'][counter] < ( (0.8 * master_cat_uvc['vj'][counter]) + 0.7 ):
+                master_cat_uvc['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1
                 SF_type_uvc+=1
             else:
-                master_cat_par['type'][counter] = 2             # identify passive (QUIESCENT) galaxies, type=2
+                master_cat_uvc['type'][counter] = 2             # identify passive (QUIESCENT) galaxies, type=2
                 Q_type_uvc+=1
             #
     #
-#        
+#
 #
 ## SECTION (2.1): SUMMARY table
 ##  summarize data TYPE population as segregated above, and display in a table
@@ -264,16 +264,17 @@ Q_field_uvc_list = []
 ## isolate all galaxies (SF & Q) in the redshift range ~0.3 < z < ~0.55, for the field sample of the SMF
 for counter in range(len(master_cat_uvc)):
     if master_cat_uvc['USE'][counter] == 1:
+        counting_array4[0]+=1
         if master_cat_uvc['z_peak'][counter] < z_field_bounds[1] and master_cat_uvc['z_peak'][counter] > z_field_bounds[0]:
             master_cat_uvc['member'][counter] = 1                                   # member=1: preliminary member of FIELD SAMPLE
-            counting_array4[0]+=1     # count field sample
-            if master_cat_uvc['lmass'][counter] > 9:
-                counting_array4[1]+=1      #count above limiting mass
+            counting_array4[1]+=1     # count field sample
+            if master_cat_uvc['lmass'][counter] > limiting_mass_uvc:
+                counting_array4[2]+=1      #count above limiting mass
                 if master_cat_uvc['type'][counter] == 1:
-                    counting_array4[2]+=1     # count SF
+                    counting_array4[3]+=1     # count SF
                     SF_field_uvc_list.append(master_cat_uvc['lmass'][counter])
                 elif master_cat_uvc['type'][counter] == 2:
-                    counting_array4[3]+=1     # count Q
+                    counting_array4[4]+=1     # count Q
                     Q_field_uvc_list.append(master_cat_uvc['lmass'][counter])
             #
             #######
@@ -290,7 +291,7 @@ for counter in range(len(master_cat_uvc)):
 if summary_flag_3 == 1 or adams_flag == 1:
     ## Summarize initial data stats in table
     mem_uvc_names = Column(['Total (USE==1)','Total field sample (all masses)','Total w/ mass > 10^9','SF','Q'],name='Property')
-    mem_uvc0 = Column([counting_array4[0],counting_array4[0]],name='Total')  # total column
+    mem_uvc0 = Column([counting_array4[0],counting_array4[1],counting_array4[2],counting_array4[3],counting_array4[4]],name='Total')  # total column
     mem_uvc_stats = Table([mem_uvc_names,mem_uvc0])
     #
     print('\nSummary Table 3 - Catalogue by MEMBER (UVC):\n%s'%mem_uvc_stats,'\n\nNOTE: name of lists to be made into histograms for Field SMF are "SF/Q_field_uvc_list"')
@@ -303,8 +304,11 @@ print('\n"UVC_master_data.py" Section 3 complete.')
 #
 #
 #
+### TEMPORARY
 #
-#
+num_points = int((round((range2[1]-range2[0])/bin_width))+1)       # compute # of data points;  bin_width set in "main_project_file.py"
+num_bins = np.linspace(range2[0],range2[1],num_points)#
+
 #
 ## TIME_FLAG END
 #
@@ -312,13 +316,13 @@ if time_flag == 1:
     if project_time_flag == 1:
         pass
     else:
-        print('Program "master_data*.py" took: %s seconds to run.\n\n' % (time.time() - start_time))
+        print('Program "UVC_master_data.py" took: %s seconds to run.\n\n' % (time.time() - start_time))
 #
 #
 #
 print('\n\n"UVC_master_data.py"  terminated successfully.\n')
 #
 #
-#                        
+#
 ###################     PROGRAM END     ###################
 #
