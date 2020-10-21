@@ -1,7 +1,7 @@
 # Created on Wed Jun 24 10:23:11 2020
 #
 #### UPDATE 07/09/20 ####
-## The previous versions of this file all used HFF DR v3.5, a preliminary data release from the summer of 2017. The paper Shipley et al. 2018 (which I reference extensively in my work) corresponds to the finished data release, v3.9. That final, most up-tp-date data release is what is implemented in the following work. 
+## The previous versions of this file all used HFF DR v3.5, a preliminary data release from the summer of 2017. The paper Shipley et al. 2018 (which I reference extensively in my work) corresponds to the finished data release, v3.9. That final, most up-tp-date data release is what is implemented in the following work.
 #
 #
 ### WHAT THIS PROGRAM DOES:
@@ -10,7 +10,7 @@
 ### Data is organized in a single catalogue ("master_cat_par"), and objects are identified through applying a series of "FILTERS" to designate key populations using a numerical designation for ease of writing code.
 #
 #
-## FILTER 1 - 'cluster':  parallel field catalogues are designated as follows: 
+## FILTER 1 - 'cluster':  parallel field catalogues are designated as follows:
 ## 1: macs0416
 ## 2: macs1149
 ## 3: macs0717
@@ -21,21 +21,21 @@
 ## FILTER 2 - 'sub': :   identifies sub-type of data each object has
 ## 0: no data (no photometry or spectroscopy)
 ## 1: spectroscopy & photometry
-## 2: photometry only 
-## 3: spectroscopy only  
+## 2: photometry only
+## 3: spectroscopy only
 ## 4: star
-## 
+##
 ## FILTER 3 - 'type': :   identifies type of data each object has
 ## 0: star
 ## 1: star-forming (SF)
-## 2: quiescent (Q)  
+## 2: quiescent (Q)
 ## 3: outliers (defined as |del_z\ > 0.15)
 #
 ## FILTER 4 - 'member': :   identifies type of data each object has
 ## NOTE: this designation is for objects with phot only (sub =2) and spec&phot (sub=1) only, as membership determinaion requires a good 'z_phot' estimate; "member=0" is reserved for galaxies with 0.3 < z < 0.55; "member=1" for all others
 ## 0: available
 ## 1: secure field sample member         <-- this comprises the sample of field of the SMF
-## 2: redshift outside field sample range    
+## 2: redshift outside field sample range
 ## 3: redshift within range, but galaxy below limiting mass of parallel field
 #
 #
@@ -44,14 +44,14 @@
 ### PROGRAM START
 #
 ### (0)    import modules, define functions;
-### (1)    import data into single table, creating KEY TABLE: "master_cat" 
-### (1.1)  add filter ("sieves") columns, apply SUB-TYPE FILTER in each 
-###        cluster ["nodata", "phot_only","spec_only","both"], 
+### (1)    import data into single table, creating KEY TABLE: "master_cat"
+### (1.1)  add filter ("sieves") columns, apply SUB-TYPE FILTER in each
+###        cluster ["nodata", "phot_only","spec_only","both"],
 ### (1.2)  add DIAG_FLAG_1: summarize in table "sub_stats"
 ### (1.3)  convert flux to mag.,
-### (2)    calculate various del_z's, 
+### (2)    calculate various del_z's,
 ### (2.1)  identify outliers; add DIAG_FLAG_2: summarize outliers
-### (2.2)  compute & DISPLAY OUTLIER FRACTION, SCATTER (i.e. std dev), 
+### (2.2)  compute & DISPLAY OUTLIER FRACTION, SCATTER (i.e. std dev),
 ###        and MEAN of |del_z|.
 ### (3)    distinguish b/w SF/Q: apply TYPE FILTER
 ### (3.1)  add DIAG_FLAG_3: summarize in table "type_stats"
@@ -63,7 +63,7 @@
 ### PROGRAM END
 #
 #
-### NOTE: To find a section, search "SECTION (*)" in all caps, where * is the section number you want. To find fields which require user input, search "MAY NEED TO EDIT" in all caps. Some of these fields may direct you to manually enter input into a sub-program. 
+### NOTE: To find a section, search "SECTION (*)" in all caps, where * is the section number you want. To find fields which require user input, search "MAY NEED TO EDIT" in all caps. Some of these fields may direct you to manually enter input into a sub-program.
 #
 #
 #
@@ -112,18 +112,18 @@ diag_flag_master = 1
 summary_flag_1 = 1          # S1.2: display diagnostic summary table, describes SUB-type filter
 summary_flag_2 = 1          # S2: display outlier fractions & UVJ table
 summary_flag_3 = 1          # S3: display TYPE filter summary table (SF/Q)
-summary_flag_4 = 1          # S4: MEMBER-filter classification 
-summary_flag_5 = 1          # S4: MEMBER-filter classification, post-limiting mass calculation 
+summary_flag_4 = 1          # S4: MEMBER-filter classification
+summary_flag_5 = 1          # S4: MEMBER-filter classification, post-limiting mass calculation
 #
 ## diagnostic flags:
-diag_flag_1 = 1             # S2: histograms of del_z spec/phot     
-diag_flag_2 = 1 
-diag_flag_3 = 1    
-diag_flag_4 = 0             
+diag_flag_1 = 1             # S2: histograms of del_z spec/phot
+diag_flag_2 = 1
+diag_flag_3 = 1
+diag_flag_4 = 0
 minor_diag_flag_4 = 1
-diag_flag_5 = 1             
-diag_flag_6 = 1             
-diag_flag_7 = 1             
+diag_flag_5 = 1
+diag_flag_6 = 1
+diag_flag_7 = 1
 #
 #
 if 'project_diagnostic_flag' in locals():
@@ -133,7 +133,7 @@ else:
     project_diagnostic_flag = 2
     project_master_variational_flag = 0
     z_cutoff = [0.012,0.055]     # [spec,phot] cutoffs for cluster membership
-    z_cutoff_field = [0.08,0.15] 
+    z_cutoff_field = [0.08,0.15]
     limiting_mass_flag = 1
     bin_width = 0.4
     diagnostic_round_flag = 2
@@ -145,28 +145,28 @@ else:
 #
 # Read in ALL data from WORKING DIRECTORY: NSERC17/HFFtoAdam/working_data
 #
-##SECTION 1: import all data from HFF team, convert flux to luminosity & gather full 
+##SECTION 1: import all data from HFF team, convert flux to luminosity & gather full
 #
 print('"master_parallel*.py" Section 1: import data beginning...')
 #
-#  
+#
 ## import catalogues into single table "master_cat"; separate objects for which there is no redshift data (both photo & spec) as "nodata"
 #
 ##create table from EAZY output redshift ".zout" file
-z_macs0416 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0416par_catalogs/macs0416par_v3.9.zout',format='ascii')
-z_macs1149 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs1149par_catalogs/macs1149par_v3.9.zout',format='ascii')
-z_macs0717 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0717par_catalogs/macs0717par_v3.9.zout',format='ascii')
-z_abell370 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell370par_catalogs/abell370par_v3.9.zout',format='ascii')
-z_abell1063 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell1063par_catalogs/abell1063par_v3.9.zout',format='ascii')   
-z_abell2744 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell2744par_catalogs/abell2744par_v3.9.zout',format='ascii') 
-#   
+z_macs0416 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs0416par_catalogs/macs0416par_v3.9.zout',format='ascii')
+z_macs1149 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs1149par_catalogs/macs1149par_v3.9.zout',format='ascii')
+z_macs0717 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs0717par_catalogs/macs0717par_v3.9.zout',format='ascii')
+z_abell370 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell370par_catalogs/abell370par_v3.9.zout',format='ascii')
+z_abell1063 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell1063par_catalogs/abell1063par_v3.9.zout',format='ascii')
+z_abell2744 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell2744par_catalogs/abell2744par_v3.9.zout',format='ascii')
+#
 #create table from FAST ".fout" file (contains mass estimates)
-f_macs0416 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0416par_catalogs/macs0416par_v3.9.fout',format='ascii')
-f_macs1149 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs1149par_catalogs/macs1149par_v3.9.fout',format='ascii')
-f_macs0717 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0717par_catalogs/macs0717par_v3.9.fout',format='ascii')
-f_abell370 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell370par_catalogs/abell370par_v3.9.fout',format='ascii')
-f_abell1063 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell1063par_catalogs/abell1063par_v3.9.fout',format='ascii')
-f_abell2744 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell2744par_catalogs/abell2744par_v3.9.fout',format='ascii')
+f_macs0416 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs0416par_catalogs/macs0416par_v3.9.fout',format='ascii')
+f_macs1149 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs1149par_catalogs/macs1149par_v3.9.fout',format='ascii')
+f_macs0717 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs0717par_catalogs/macs0717par_v3.9.fout',format='ascii')
+f_abell370 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell370par_catalogs/abell370par_v3.9.fout',format='ascii')
+f_abell1063 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell1063par_catalogs/abell1063par_v3.9.fout',format='ascii')
+f_abell2744 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell2744par_catalogs/abell2744par_v3.9.fout',format='ascii')
 #
 # rename columns of the .fout files because for some reason the column names didn't register
 col_names_old = ['col1','col2','col3','col4','col5','col6','col7','col8','col9','col10','col11']
@@ -180,38 +180,38 @@ for ii in range(len(col_names_new)):
     f_abell2744.rename_column(col_names_old[ii],col_names_new[ii])
 #
 ##read in the whole bloody catalogue
-cat_macs0416 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0416par_catalogs/hffds_macs0416par_v3.9.cat',format='ascii')
-cat_macs1149 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs1149par_catalogs/hffds_macs1149par_v3.9.cat',format='ascii')
-cat_macs0717 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0717par_catalogs/hffds_macs0717par_v3.9.cat',format='ascii')
-cat_abell370 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell370par_catalogs/hffds_abell370par_v3.9.cat',format='ascii')
-cat_abell1063 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell1063par_catalogs/hffds_abell1063par_v3.9.cat',format='ascii')
-cat_abell2744 = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell2744par_catalogs/hffds_abell2744par_v3.9.cat',format='ascii')
+cat_macs0416 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs0416par_catalogs/hffds_macs0416par_v3.9.cat',format='ascii')
+cat_macs1149 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs1149par_catalogs/hffds_macs1149par_v3.9.cat',format='ascii')
+cat_macs0717 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs0717par_catalogs/hffds_macs0717par_v3.9.cat',format='ascii')
+cat_abell370 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell370par_catalogs/hffds_abell370par_v3.9.cat',format='ascii')
+cat_abell1063 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell1063par_catalogs/hffds_abell1063par_v3.9.cat',format='ascii')
+cat_abell2744 = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell2744par_catalogs/hffds_abell2744par_v3.9.cat',format='ascii')
 #
 ##creat table for colours
 #macs0416
-F0416_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0416par_catalogs/macs0416par_v3.9.153.rf',format='ascii')
-F0416_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0416par_catalogs/macs0416par_v3.9.155.rf',format='ascii')
-F0416_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0416par_catalogs/macs0416par_v3.9.161.rf',format='ascii')
+F0416_u = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs0416par_catalogs/macs0416par_v3.9.153.rf',format='ascii')
+F0416_v = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs0416par_catalogs/macs0416par_v3.9.155.rf',format='ascii')
+F0416_j = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs0416par_catalogs/macs0416par_v3.9.161.rf',format='ascii')
 #macs1149
-F1149_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs1149par_catalogs/macs1149par_v3.9.153.rf',format='ascii')
-F1149_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs1149par_catalogs/macs1149par_v3.9.155.rf',format='ascii')
-F1149_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs1149par_catalogs/macs1149par_v3.9.161.rf',format='ascii')
+F1149_u = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs1149par_catalogs/macs1149par_v3.9.153.rf',format='ascii')
+F1149_v = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs1149par_catalogs/macs1149par_v3.9.155.rf',format='ascii')
+F1149_j = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs1149par_catalogs/macs1149par_v3.9.161.rf',format='ascii')
 #macs0717
-F0717_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0717par_catalogs/macs0717par_v3.9.153.rf',format='ascii')
-F0717_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0717par_catalogs/macs0717par_v3.9.155.rf',format='ascii')   
-F0717_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/macs0717par_catalogs/macs0717par_v3.9.161.rf',format='ascii')
+F0717_u = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs0717par_catalogs/macs0717par_v3.9.153.rf',format='ascii')
+F0717_v = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs0717par_catalogs/macs0717par_v3.9.155.rf',format='ascii')
+F0717_j = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/macs0717par_catalogs/macs0717par_v3.9.161.rf',format='ascii')
 #abell370
-F370_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell370par_catalogs/abell370par_v3.9.153.rf',format='ascii')
-F370_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell370par_catalogs/abell370par_v3.9.155.rf',format='ascii')
-F370_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell370par_catalogs/abell370par_v3.9.161.rf',format='ascii')
+F370_u = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell370par_catalogs/abell370par_v3.9.153.rf',format='ascii')
+F370_v = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell370par_catalogs/abell370par_v3.9.155.rf',format='ascii')
+F370_j = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell370par_catalogs/abell370par_v3.9.161.rf',format='ascii')
 #abell1063
-F1063_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell1063par_catalogs/abell1063par_v3.9.153.rf',format='ascii')
-F1063_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell1063par_catalogs/abell1063par_v3.9.155.rf',format='ascii')
-F1063_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell1063par_catalogs/abell1063par_v3.9.161.rf',format='ascii')
+F1063_u = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell1063par_catalogs/abell1063par_v3.9.153.rf',format='ascii')
+F1063_v = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell1063par_catalogs/abell1063par_v3.9.155.rf',format='ascii')
+F1063_j = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell1063par_catalogs/abell1063par_v3.9.161.rf',format='ascii')
 #abell2744
-F2744_u = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell2744par_catalogs/abell2744par_v3.9.153.rf',format='ascii')
-F2744_v = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell2744par_catalogs/abell2744par_v3.9.155.rf',format='ascii')
-F2744_j = Table.read('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/HFF_catalgoues/abell2744par_catalogs/abell2744par_v3.9.161.rf',format='ascii')
+F2744_u = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell2744par_catalogs/abell2744par_v3.9.153.rf',format='ascii')
+F2744_v = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell2744par_catalogs/abell2744par_v3.9.155.rf',format='ascii')
+F2744_j = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell2744par_catalogs/abell2744par_v3.9.161.rf',format='ascii')
 ##aggregate into a single table
 macs0416 = Table([z_macs0416['id'],z_macs0416['z_peak'],z_macs0416['z_spec'],F0416_u['L153'],F0416_v['L155'],F0416_j['L161'],F0416_u['DM'],f_macs0416['lmass'],f_macs0416['lsfr'],f_macs0416['lssfr'],cat_macs0416['flux_radius'],cat_macs0416['star_flag'],cat_macs0416['use_phot'],cat_macs0416['f_F160W'],cat_macs0416['e_F160W'],cat_macs0416['flag_F160W'],cat_macs0416['f_F814W'],cat_macs0416['flag_F814W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W'))
 macs1149 = Table([z_macs1149['id'],z_macs1149['z_peak'],z_macs1149['z_spec'],F1149_u['L153'],F1149_v['L155'],F1149_j['L161'],F1149_u['DM'],f_macs1149['lmass'],f_macs1149['lsfr'],f_macs1149['lssfr'],cat_macs1149['flux_radius'],cat_macs1149['star_flag'],cat_macs1149['use_phot'],cat_macs1149['f_F160W'],cat_macs1149['e_F160W'],cat_macs1149['flag_F160W'],cat_macs1149['f_F814W'],cat_macs1149['flag_F814W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W'))
@@ -223,8 +223,8 @@ abell2744 = Table([z_abell2744['id'],z_abell2744['z_peak'],z_abell2744['z_spec']
 #
 ## NOTE: cat_*['flag_F160W'] identifies BCGs IN EACH FILTER. ***** CONFIRM w/ AM ***** that I'm using the right filter; BCGs are identified as ['flag_F160W']==4, see Shipley et al 2018. Section 3.9
 #
-## create columns and append to master_cat to identify sub-sample, type, 
-## and fraction for catalogue: 
+## create columns and append to master_cat to identify sub-sample, type,
+## and fraction for catalogue:
 ##   type: 0 = stars,  1 = SF,  2 = Q
 ##   member:  0 = not in spec sub-sample,  1 = secure in cluster,  2 = secure in field
 ##            3 = false positive,  4 = false negative
@@ -237,7 +237,7 @@ D4 = Column([4]*len(abell370),name='cluster')
 D5 = Column([5]*len(abell1063),name='cluster')
 D6 = Column([6]*len(abell2744),name='cluster')
 #
-macs0416.add_column(D1)       
+macs0416.add_column(D1)
 macs1149.add_column(D2)
 macs0717.add_column(D3)
 abell370.add_column(D4)
@@ -339,7 +339,7 @@ for counter in range(len(master_cat_par)):
         for jj in range(len(both_par)):
             if master_cat_par['cluster'][counter] == (jj+1):
                 use_phot_par[0][jj]+=1
-    else: 
+    else:
         for jj in range(len(both_par)):
             if master_cat_par['cluster'][counter] == (jj+1):
                 use_phot_par[1][jj]+=1
@@ -400,7 +400,7 @@ for counter in range(len(master_cat_par)):
 
     else:
         for jj in range(len(use_phot_par[1])):
-            if master_cat_par['cluster'][counter] == (jj+1):     
+            if master_cat_par['cluster'][counter] == (jj+1):
                 use_phot_par[1][jj]+=1
 #################
 #
@@ -470,7 +470,7 @@ for counter in range(len(master_cat_par)):
 #########
 #
 #
-## SECTION (2.1): separate OUTLIERS from both phot & spec sub-sample, defined as |del_z| < 0.15. apply FILTER TYPE = 3 for outliers;   
+## SECTION (2.1): separate OUTLIERS from both phot & spec sub-sample, defined as |del_z| < 0.15. apply FILTER TYPE = 3 for outliers;
 #
 outliers_par = np.array([0]*6)      # initialize array to track outliers by cluster, for computing outlier fraction later
 sum_delz_par = []                   # for computing mean |del_z|
@@ -509,7 +509,7 @@ if summary_flag_2 == 1 or adams_flag == 1:
 #
 #
 print('"master_parallel*.py" Section 2 complete.\n')
-#  
+#
 #
 #
 #
@@ -519,33 +519,33 @@ print('"master_parallel*.py" Section 2 complete.\n')
 #
 print('\n"master_parallel*.py" Section 3: classifying galaxy TYPE as star-forming or quiescent...')
 #
-#  
+#
 SF_type_par = np.array([[0]*6]*2)                         # initialize arrays;  row1=spec;  row2=phot
 Q_type_par = np.array([[0]*6]*2)
 stars_type_par = np.array([0]*6)                          # count # of stars by cluster
-lost_type_par = np.array([0]*6)                           # objects lost due no data (sub=0), spec only (sub=3), 
+lost_type_par = np.array([0]*6)                           # objects lost due no data (sub=0), spec only (sub=3),
 stars_outliers_par = np.array([0]*6)
 #
 for counter in range(len(master_cat_par)):
     if master_cat_par['star_flag'][counter] == 1:          # identify STARS, filter type=0
-        master_cat_par['type'][counter] = 0              
+        master_cat_par['type'][counter] = 0
         for ii in range(len(stars_type_par)):
             if master_cat_par['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
                 stars_type_par[ii]+=1
     elif master_cat_par['sub'][counter]==1 or master_cat_par['sub'][counter]==2:    # sub=1 for (spec & phot) subsample, sub=2 for phot subsample; i.e. look at all objects with photometry   <-- THIS IS THE LINE THAT MATTERS!
         if master_cat_par['vj'][counter] < 0.75:
-            if master_cat_par['uv'][counter] < 1.3: 
+            if master_cat_par['uv'][counter] < 1.3:
                 if master_cat_par['type'][counter] ==3 or master_cat_par['type'][counter] ==0:        # skip outliers & stars
                     for ii in range(len(stars_outliers_par)):
                         if master_cat_par['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
                             if master_cat_par['sub'][counter] == 1:
                                 stars_outliers_par[ii]+=1
                 else:
-                    master_cat_par['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1 
+                    master_cat_par['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1
                     for ii in range(len(SF_type_par[0])):
                         if master_cat_par['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
                             if master_cat_par['sub'][counter] == 1:
-                                SF_type_par[0][ii]+=1               # track spec 
+                                SF_type_par[0][ii]+=1               # track spec
                             else: SF_type_par[1][ii]+=1             # track phot
             else:
                 if master_cat_par['type'][counter] ==3 or master_cat_par['type'][counter] ==0:        # skip outliers & stars
@@ -556,20 +556,20 @@ for counter in range(len(master_cat_par)):
                 else:
                     master_cat_par['type'][counter] = 2             # identify passive (QUIESCENT) galaxies, type=2
                     for ii in range(len(Q_type_par[0])):
-                        if master_cat_par['cluster'][counter] == (ii+1):   # keep 
+                        if master_cat_par['cluster'][counter] == (ii+1):   # keep
                             if master_cat_par['sub'][counter] == 1:
-                                Q_type_par[0][ii]+=1               # track spec 
+                                Q_type_par[0][ii]+=1               # track spec
                             else:
                                 Q_type_par[1][ii]+=1               # track phot
         elif master_cat_par['vj'][counter] >= 0.75:
-            if master_cat_par['uv'][counter] < ( (0.8 * master_cat_par['vj'][counter]) + 0.7 ): 
+            if master_cat_par['uv'][counter] < ( (0.8 * master_cat_par['vj'][counter]) + 0.7 ):
                 if master_cat_par['type'][counter] ==3 or master_cat_par['type'][counter] ==0:        # skip outliers & stars
                     for ii in range(len(stars_outliers_par)):
                         if master_cat_par['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
                             if master_cat_par['sub'][counter] == 1:
                                 stars_outliers_par[ii]+=1
                 else:
-                    master_cat_par['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1 
+                    master_cat_par['type'][counter] = 1             # identify STAR-FORMING galaxies, type=1
                     for ii in range(len(Q_type_par[0])):
                         if master_cat_par['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
                             if master_cat_par['sub'][counter] == 1:
@@ -584,16 +584,16 @@ for counter in range(len(master_cat_par)):
                 else:
                     master_cat_par['type'][counter] = 2             # identify passive (QUIESCENT) galaxies, type=2
                     for ii in range(len(SF_type_par[0])):
-                        if master_cat_par['cluster'][counter] == (ii+1):   # keep 
+                        if master_cat_par['cluster'][counter] == (ii+1):   # keep
                             if master_cat_par['sub'][counter] == 1:
                                 Q_type_par[0][ii]+=1               # track spec vs phot
                             else:
-                                Q_type_par[1][ii]+=1    
+                                Q_type_par[1][ii]+=1
     else:
         for ii in range(len(lost_type_par)):
             if master_cat_par['cluster'][counter] == (ii+1):   # keep stars of outliers by cluster
-                lost_type_par[ii]+=1      # objects lost due to spec only (sub=3),no data (sub=0), and possibly outliers (type=3) 
-#        
+                lost_type_par[ii]+=1      # objects lost due to spec only (sub=3),no data (sub=0), and possibly outliers (type=3)
+#
 #
 ## SECTION (3.1): SUMMARY table
 ##  summarize data TYPE population as segregated above, and display in a table
@@ -695,7 +695,7 @@ print('\n"master_parallel*.py" Section 4 complete.')
 print('\nBeginning "data_mass_completeness*_par.py"')
 #
 if limiting_mass_flag == 1:
-    exec(open('data_mass_completeness_F160W_par.py').read())      #opens and executes the script 
+    exec(open('data_mass_completeness_F160W_par.py').read())      #opens and executes the script
 elif limiting_mass_flag == 2:
     exec(open('data_mass_completeness_F814W_par.py').read())      #opens and executes the script
 #
@@ -720,13 +720,13 @@ counting_array = np.array([0]*10)
 for counter in range(len(master_cat_par)):
     counting_array[0]+=1
     if master_cat_par['sub'][counter] == 1 or master_cat_par['sub'][counter] == 2:
-        if master_cat_par['member'][counter] == 1:                 # member=1: preliminary member of FIELD SAMPLE    
+        if master_cat_par['member'][counter] == 1:                 # member=1: preliminary member of FIELD SAMPLE
             counting_array[1]+=1
             for cluster in range(len(count_field_sample_type[0])):
                 if master_cat_par['cluster'][counter] == (cluster+1):                    # by cluster
                     counting_array[2]+=1
                     if master_cat_par['lmass'][counter] >= limiting_mass_par[cluster]:
-                        if master_cat_par['type'][counter] == 1:      
+                        if master_cat_par['type'][counter] == 1:
                             counting_array[3]+=1# SF
                             SF_field_par_list[cluster].append(master_cat_par['lmass'][counter])
                             count_field_sample_mem[0][cluster]+=1
@@ -797,5 +797,5 @@ if time_flag == 1:
 print('\n\n"master_parallel*.py"  terminated successfully.\n')
 #
 #
-#                        
+#
 ###################     PROGRAM END     ###################

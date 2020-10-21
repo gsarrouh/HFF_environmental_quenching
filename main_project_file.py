@@ -4,10 +4,10 @@
 #
 #
 ### WHAT THIS PROGRAM IS:
-### This is the main wrapper program for the project "HFF_environmental_quenching", which is a study of the Hubble Frontier Fields Stellar Mass Function (SMF). It is mostly comments, with little code. It calls other programs one at a time to execute section by section the analysis detailed below. 
+### This is the main wrapper program for the project "HFF_environmental_quenching", which is a study of the Hubble Frontier Fields Stellar Mass Function (SMF). It is mostly comments, with little code. It calls other programs one at a time to execute section by section the analysis detailed below.
 #
 ### HOW THIS PROGRAM WORKS:
-### Each section calls a program file (i.e. *.py script file) which accomplishes a task. Some programs call other programs. They are all listed in the Section summary which follows. This program provides the main organizational framework for the project. 
+### Each section calls a program file (i.e. *.py script file) which accomplishes a task. Some programs call other programs. They are all listed in the Section summary which follows. This program provides the main organizational framework for the project.
 #
 #
 #
@@ -20,30 +20,30 @@
 ### (0.1)  FLAGS
 #
 ### (1)    main DATA preparation file; imports raw data, sorts it, and
-###        determines cluster membership; it also performs a variational 
-###        analysis (VAR) to determine the optimal memebrship cut which yields 
-###        the spec. completeness correction factors closest to 1 in each 
+###        determines cluster membership; it also performs a variational
+###        analysis (VAR) to determine the optimal memebrship cut which yields
+###        the spec. completeness correction factors closest to 1 in each
 ###        mass bin
-###        MAIN program: master_data_7_final.py;  
-###        SUB-programs: spec_completeness_binning.py, phot_completeness_binning.py, 
+###        MAIN program: master_data_7_final.py;
+###        SUB-programs: spec_completeness_binning.py, phot_completeness_binning.py,
 ###        spec_correction_factors.py (VAR), data_mass_completeness*.py (VAR),
 ###        delz_hist_diagnostic.py, bcg_hist_diagnostic.py,
-###        spec_asymmetric_binning.py (VAR),; 
+###        spec_asymmetric_binning.py (VAR),;
 #
-### (2):   PARALLEL FIELDS: by and large a copy of master_data*.py, imports and anlyzes 
-###        the field sample from the Hubble Parallel Fields ; 
+### (2):   PARALLEL FIELDS: by and large a copy of master_data*.py, imports and anlyzes
+###        the field sample from the Hubble Parallel Fields ;
 ###        MAIN program: masterparallel_2.py;
 #
-### (3):   determine LIMITING MASS - self-explanatory; MAIN program: ******.py 
+### (3):   determine LIMITING MASS - self-explanatory; MAIN program: ******.py
 #
 ### (4):   import COSMOS/UltraVISTA catalogue and select FIELD SAMPLE
 ###        MAIN program: UVC_master_data.py;
 #
-### (5):   REDSHIFT plots; executes a file which produces figures 
-###        ANALYZING the QUALITY of the data set; 
+### (5):   REDSHIFT plots; executes a file which produces figures
+###        ANALYZING the QUALITY of the data set;
 ###        MAIN program: master_zplots_2_final.py;
 #
-### (6):   UVJ Figures; diagnostic & publication quality 
+### (6):   UVJ Figures; diagnostic & publication quality
 ###        MAIN program: UVJ_plots.py;
 #
 ### (7):   determine SCALE RADIUS and MASS "r_200" & "M_200" of each cluster
@@ -57,7 +57,7 @@
 #
 #
 #
-### NOTE: To find a section, search "SECTION (*)" in all caps, where * is the section number you want. To find fields which require user input, search "MAY NEED TO EDIT" in all caps. Some of these fields may direct you to manually enter input into a sub-program. 
+### NOTE: To find a section, search "SECTION (*)" in all caps, where * is the section number you want. To find fields which require user input, search "MAY NEED TO EDIT" in all caps. Some of these fields may direct you to manually enter input into a sub-program.
 #
 #
 #
@@ -96,12 +96,12 @@ bin_width = 0.4  # of the SMF, in dex
 #
 ## choose your binning method for calculating membership correction (i.e. false pos/neg ratios)
 ## 1 = symmetric binning;   2 = asymmetric binning by # count;   3 = asymmetric binning by mass;   4 = best of all methods
-membership_correction_binning_flag = 1
+membership_correction_binning_flag = 4
 #
 if membership_correction_binning_flag == 1:    # symmetric
     z_cutoff = [0.012,0.060]
     num_bins_SF_pos_neg = [7.36,9.007,10.653,12.3]  #2nd try
-    num_bins_Q_pos_neg = [7.36,8.348,9.336,10.324,11.312,12.3] 
+    num_bins_Q_pos_neg = [7.36,8.348,9.336,10.324,11.312,12.3]
 elif membership_correction_binning_flag == 2:     # asymmetric by # count
     z_cutoff = [0.012,0.055]
     num_bins_SF_pos_neg = [7.36,8.77,9.5,10.18,12.3]   #1st try
@@ -140,22 +140,22 @@ project_plot_flag = 2        # 0=off, make no figures;  1=on, make all figures; 
 ##       0=off, skip section;     1=on, execute section
 #
 #
-section_1_flag = 1                 # cluster catalogue data prep
-section_2_flag = 1                 # parallel field catalogue data prep
+section_1_flag = 1                 # HFF cluster catalogue data prep
+section_2_flag = 1                 # HFF parallel field catalogue data prep
 section_3_flag = 1                 # limiting mass
-section_4_flag = 1                 # import UltraVISTA catalogue for Field SMF   
+section_4_flag = 1                 # import UltraVISTA catalogue for Field SMF
 section_5_flag = 0                 # z-plots
 section_6_flag = 0                 # UVJ diagram
-section_7_flag = 0                 # velocity dispersion, r_200, M_200 calculation
+section_7_flag = 0                 # velocity dispersion, r_200, M_200 calculation - DEPRECATED; should always be set to ==0
 section_8_flag = 1                 # SMF
-#    
+#
 ## Update the user on what this program will run
 #
 ## MAY NEED TO EDIT: choose the filter in which to determine limiting mass
-limiting_mass_flag = 1             #   1 = F160W;   2 = F814W
+limiting_mass_flag = 1             #   1 = F160W+F814W;   2 = F814W
 #
 ## MAY NEED TO EDIT: choose whether to enter the MCMC simulation
-mcmc_flag = 0             #   0 = off - skip sim;   1 = on - perform MCMC sim & Exit program;
+mcmc_flag = 1             #   0 = off - skip sim;   1 = on - perform MCMC sim & Exit program;
 ## Update the user on what this program will run
 #
 print('"main_project_file.py" will run the following:')
@@ -198,7 +198,7 @@ if section_8_flag == 1:
 
 # by data type, and classifies them as SF/Q; runs a VARIATIONAL ANALYSIS to determine optimal definition of cluster membership; executes redshift cuts, classifies SF/Q galaxies as cluster members; finally, checks the catalogue for Brightest Cluster Galaxies (bCGs);
 #
-## Call and execute the "master_data*.py" file, to import and classify data 
+## Call and execute the "master_data*.py" file, to import and classify data
 #
 #
 #
@@ -206,7 +206,7 @@ if section_1_flag == 1:
     print('\nBeginning "master_data*.py"')
     if project_master_variational_flag == 1:
         print('"master_data*.py" will perform the Variational Analysis, then Exit.')
-    exec(open('master_data_7_final.py').read())      #opens and executes the script 
+    exec(open('master_data_7_final.py').read())      #opens and executes the script
 #
 if project_master_variational_flag == 1:
     #
@@ -225,7 +225,7 @@ if project_master_variational_flag == 1:
 if section_2_flag == 1:
     print('\nBeginning "master_parallel*.py"')
     #
-    exec(open('master_parallel_2.py').read())      #opens and executes the script 
+    exec(open('master_parallel_2.py').read())      #opens and executes the script
 #
 #
 #
@@ -238,7 +238,7 @@ if section_3_flag == 1:
     print('\nBeginning "data_mass_completeness*.py"')
     #
     if limiting_mass_flag == 1:
-        exec(open('data_mass_completeness_F160W.py').read())      #opens and executes the script 
+        exec(open('data_mass_completeness_F160W.py').read())      #opens and executes the script
     elif limiting_mass_flag == 2:
         exec(open('data_mass_completeness_F814W.py').read())      #opens and executes the script
 #
@@ -253,7 +253,7 @@ if section_3_flag == 1:
 #
 if section_4_flag == 1:
     print('\nBeginning "UVC_master_data.py"')
-    exec(open('UVC_master_data.py').read())      #opens and executes the script 
+    exec(open('UVC_master_data.py').read())      #opens and executes the script
 #
 #
 #
@@ -267,7 +267,7 @@ if section_4_flag == 1:
 #
 if section_5_flag == 1:
     print('\nBeginning "master_zplots*.py"')
-    exec(open('master_zplots_2_final.py').read())      #opens and executes the script 
+    exec(open('master_zplots_2_final.py').read())      #opens and executes the script
 #
 #
 #
@@ -278,7 +278,7 @@ if section_5_flag == 1:
 #
 if section_6_flag == 1:
     print('\nBeginning "UVJ_plots.py"')
-    exec(open('UVJ_plots.py').read())      #opens and executes the script 
+    exec(open('UVJ_plots.py').read())      #opens and executes the script
 #
 #
 #
@@ -289,16 +289,16 @@ if section_6_flag == 1:
 #
 if section_7_flag == 1:
     print('\nBeginning "velocity_dispersion.py"')
-    exec(open('velocity_dispersion.py').read())      #opens and executes the script 
+    exec(open('velocity_dispersion.py').read())      #opens and executes the script
 #
 #
 #
 #
-## SECTION (8): SMF 
+## SECTION (8): SMF
 #
 if section_8_flag == 1:
     print('\nBeginning "master_smfz*.py"')
-    exec(open('master_smfz_9_final.py').read())      #opens and executes the script 
+    exec(open('master_smfz_9_final.py').read())      #opens and executes the script
 #
 #
 #
