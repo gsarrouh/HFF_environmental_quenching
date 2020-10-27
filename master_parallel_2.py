@@ -653,7 +653,7 @@ for counter in range(len(master_cat_par)):
         ####
     #####
         elif master_cat_par['z_peak'][counter] > z_field_bounds[1] or master_cat_par['z_peak'][counter] < z_field_bounds[0]:
-            master_cat_par['member'][counter] = 2                                   # member=1: redshift outside of field sample
+            master_cat_par['member'][counter] = 2                                   # member=2: redshift outside of field sample
             for ii in range(len(count_not_in_field_sample)):
                 if master_cat_par['cluster'][counter] == (ii+1):                    # by cluster
                     count_not_in_field_sample[ii]+=1
