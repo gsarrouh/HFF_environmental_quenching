@@ -37,20 +37,35 @@ import corner
 ## FLAGS: 0 = off (i.e. skip), 1 = on (i.e. execute code)
 #
 #
+######
+###### MAY NEED TO EDIT ######
+######
 #
 SF_flag = 1          # star-forming population
 Q_flag = 1           # Q pop
 T_flag = 1           # total pop
 #
+field_flag = 1              # 0 = off, fit CLUSTER SMFs; 1 = on, fit FIELD SMFs
 #
+#
+#### MISCELANEOUS Section: if fitting the field population, rename the arrays so you don't have to change the rest of the coded
+if field_flag == 1:
+    SF_smf = SF_field_smf
+    SF_error = SF_field_error
+    Q_smf = Q_field_smf
+    Q_error = Q_field_error
+    total_smf = total_field_smf
+    total_error = total_field_error
 #
 ######
 ###### MAY NEED TO EDIT ######
 ######
 #
 # initialize walkers
-ndim, nwalkers, max_nsteps = 3, 5000, 100000    # (# of parameters), (#walkers), (#steps/walker)
+ndim, nwalkers, max_nsteps = 3, 100, 5000    # (# of parameters), (#walkers), (#steps/walker)
 #
+#
+labels = ["M*","phi","alpha"]
 ## FUNCTIONS
 #
 #
@@ -60,7 +75,7 @@ def lnlike(theta, midbins, smf, smf_error):
     midbins = np.array(midbins)
     smf = np.array(smf)
     smf_error = np.array(smf_error)
-    model = np.array(np.log(10)*phi*(10**((midbins-M_star)*(1+alpha)))*np.exp(-10**(midbins-M_star)))
+    model = np.array( np.log(10) * phi * (10**((midbins-M_star)*(1+alpha))) * np.exp(-10**(midbins-M_star)) )
     return -0.5*np.sum( ( (smf - model) / smf_error)**2 )
 #
 ## define likelihood function for DOUBLE schechter function; based on Eq.(11) of Weigel et al 2016
@@ -73,7 +88,7 @@ def lnlike(theta, midbins, smf, smf_error):
 # define "prior" function - SINGLE schechter
 def lnprior(theta):
     M_star, phi, alpha = theta
-    if (9.5 < M_star < 15) and (-20 < phi < 30) and (-2 < alpha < -0.1):
+    if (9.5 < M_star < 14) and (-50 < phi < 50) and (-5 < alpha < 2):
         return 0.0
     else:
         return -np.inf
@@ -107,19 +122,6 @@ def lnprob(theta, midbins, smf, smf_error):
 #
 ### SETUP appropriate lists and convert them to arrays for use in MCMC code:
 ## this first bit replaces 'NaN' entries in SF_error (errors to the SMF) with 1e5. This only applies to pixels for which the SMF count = 0, hence the error (given by sqrt(smf) is NaN. It is done for the purpose of computing chi_squared later on
-#for ii in range(len(SF_error)):
-#    if np.isnan(SF_error[ii]) == 1:
-#        SF_error[ii] = 1e5
-#
-## this first bit drops all 'NaN' entries in SF_error, shortening the length of the array
-#SF_midbins_mcmc = []
-#SF_smf_mcmc = []
-#SF_error_mcmc = []
-#for ii in range(len(SF_error)):
-#    if np.isnan(SF_error[ii]) == 0:
-#        SF_midbins_mcmc.append(SF_midbins[ii])
-#        SF_smf_mcmc.append(SF_smf[ii])
-#        SF_error_mcmc.append(SF_error[ii])
 #
 ## this does the exact same as above, but drops all zero-values in SF_smf
 SF_midbins_mcmc = []
@@ -153,19 +155,15 @@ Q_smf_mcmc = np.array(Q_smf_mcmc)
 Q_error_mcmc = np.array(Q_error_mcmc)
 Q_midbins_mcmc = np.array(Q_midbins_mcmc)
 #
+## Re-shape arrays
 SF_midbins_mcmc = SF_midbins_mcmc.reshape(len(SF_midbins_mcmc))
 Q_midbins_mcmc = Q_midbins_mcmc.reshape(len(Q_midbins_mcmc))
 #
-## Re-shape arrays
-
-#
-## define x array to generate points to plot Schechter fit
-#x = np.linspace(SF_midbins[0],SF_midbins[len(SF_midbins)-1],num=1000)#
 #
 #
 ### MCMC CODE:
 #
-## PT 1: intialize guess randomly, then with maximum-likelihood (ML) method
+## PT 1: intialize guess randomly (user-defined), then with maximum-likelihood (ML) method
 #
 #
 ## SECTION (2): inialize MCMC guess w/ least-squares estimate
@@ -180,7 +178,7 @@ theta_guess = [M_star_guess,phi_guess,alpha_guess]
 #M_star_guess = 10.5
 #phi_guess1 = 1
 #alpha_guess1 = -1
-#hi_guess2 = 1
+#phi_guess2 = 1
 #alpha_guess2 = -1
 #
 #
@@ -200,7 +198,10 @@ if not check_folder:
 else:
     pass#print(output_dir, "\nfolder already exists.")
 #
-f = open('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/smf_fits/binning_method_%i'%membership_correction_binning_flag+'/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_smf_fits.txt','w+')
+if field_flag == 0:
+    f = open('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/smf_fits/binning_method_%i'%membership_correction_binning_flag+'/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_smf_fits.txt','w+')
+elif field_flag == 1:
+    f = open('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/smf_fits/binning_method_%i'%membership_correction_binning_flag+'/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_field_smf_fits.txt','w+')
 #
 #
 ## to be used in building strings throughout program
@@ -233,7 +234,7 @@ if Q_flag ==1:
     Qresult = op.minimize(Q_nll,[M_star_guess, phi_guess, alpha_guess], args=(Q_midbins_mcmc, Q_smf_mcmc, Q_error_mcmc))#, method='Nelder-Mead')
     QM_ml, Qphi_ml, Qalpha_ml = Qresult['x']
     #
-    print("QResult - max. likelihood:")
+    print("\nQResult - max. likelihood:")
     print(Qresult['x'])
     #
     # full fits
@@ -248,7 +249,7 @@ if T_flag ==1:
     Tresult = op.minimize(T_nll,[M_star_guess, phi_guess, alpha_guess], args=(Q_midbins_mcmc, total_smf, total_error))#, method='Nelder-Mead')
     TM_ml, Tphi_ml, Talpha_ml = Tresult['x']
     #
-    print("TResult - max. likelihood:")
+    print("\nTResult - max. likelihood:")
     print(Tresult['x'])
     #
     # full fits
@@ -269,7 +270,7 @@ if T_flag ==1:
 ## STAR-FORMING LOOP
 if SF_flag ==1:
     #
-    print('Starting SF loop for ',nwalkers,' walkers and ',max_nsteps,' steps...')
+    print('\nStarting SF loop for ',nwalkers,' walkers and ',max_nsteps,' steps...')
 #
     t0 = time.time()       # start timer to run emcee.EnsembleSampler()
     ## setup initial positions of walkers in a Guassian ball around the least-squares position
@@ -338,7 +339,10 @@ if SF_flag ==1:
     ## create corner plots
     SFfig = corner.corner(SFsamples, labels=["$M^*$", "$\phi^*$", "alpha"])#  SF
     SFfig.suptitle('Star-forming')
-    plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_SF_corner.png')
+    if field_flag == 0:
+        plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_SF_corner.png')
+    elif field_flag == 1:
+        plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_SF_field_corner.png')
     #
     # initialize result arrays
     SFresult_means = np.array([0]*ndim)
@@ -353,7 +357,15 @@ if SF_flag ==1:
     #
     SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = SFsamples.mean(axis=0)
     #
+    ## display result w/ 1-sigma uncertainty (16th, 50th, 86th percentiles)
+    from IPython.display import display, Math
     #
+    for i in range(ndim):
+        mcmc = np.percentile(SFsamples[:, i], [16, 50, 84])
+        q = np.diff(mcmc)
+        txt = "\mathrm{{{3}}} = {0:.7f}_{{-{1:.7f}}}^{{{2:.7f}}}"
+        txt = txt.format(mcmc[1], q[0], q[1], labels[i])
+        display(Math(txt))
     #
     bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(np.round(SFM_star_mcmc,decimals=3))+delim+str(np.round(SFresult_sigmas[0],decimals=3))+delim+str(np.round(SFphi_mcmc,decimals=3))+delim+str(np.round(SFresult_sigmas[1],decimals=3))+delim+str(np.round(SFalpha_mcmc,decimals=3))+delim+str(np.round(SFresult_sigmas[2],decimals=3))
     writer = '%s'%str(bin_entry1)+'\n'
@@ -374,7 +386,7 @@ if SF_flag ==1:
 if Q_flag ==1:
     # initialize walkers
     #ndim, nwalkers, max_nsteps = 5, 10000, 200
-    print('Starting Q loop for ',nwalkers,' walkers and ',max_nsteps,' steps...')
+    print('\nStarting Q loop for ',nwalkers,' walkers and ',max_nsteps,' steps...')
 #
     t0 = time.time()       # start timer to run emcee.EnsembleSampler()
     ## setup initial positions of walkers in a Guassian ball around the least-squares position
@@ -441,9 +453,13 @@ if Q_flag ==1:
     print('Creating corner plot & displaying results...')
     t0 = time.time()       # start timer to create corner plot
     ## create corner plots
-    Qfig = corner.corner(Qsamples, labels=["$M^*$", "$\phi^*_1$", "$\alpha_1$", "$\phi^*_2$", "$\alpha_2$"])#  Q
+    Qfig = corner.corner(Qsamples, labels=["$M^*$", "$\phi$", "alpha"])#, "$\phi^*_2$", "$\alpha_2$"])#  Q
     Qfig.suptitle('Quiescent')
-    plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_Q_corner.png')
+    #
+    if field_flag == 0:
+        plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_Q_corner.png')
+    elif field_flag == 1:
+        plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_Q_field_corner.png')
     #
     # initialize result arrays
     Qresult_means = np.array([0]*ndim)
@@ -457,6 +473,28 @@ if Q_flag ==1:
     print('Sigmas: ',Qresult_sigmas)
     #
     QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = Qsamples.mean(axis=0)
+    #
+    #
+    ## display result w/ 1-sigma uncertainty (16th, 50th, 86th percentiles)
+    from IPython.display import display, Math
+    #
+    for i in range(ndim):
+        mcmc = np.percentile(Qsamples[:, i], [16, 50, 84])
+        q = np.diff(mcmc)
+        txt = "\mathrm{{{3}}} = {0:.7f}_{{-{1:.7f}}}^{{{2:.7f}}}"
+        txt = txt.format(mcmc[1], q[0], q[1], labels[i])
+        display(Math(txt))
+    #
+    #
+    ## investigate movement of walkers
+    plt.figure()
+    plt.plot(Tsampler.get_chain()[:, 0, 0], "k", lw=0.5)
+    #plt.xlim(0, 5000)
+    #plt.ylim(-5.5, 5.5)
+    plt.title("move: StretchMove", fontsize=14)
+    plt.xlabel("step number")
+    plt.ylabel("x");
+    #
     #
     ## print OUTPUT to file
     bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(np.round(QM_star_mcmc,decimals=3))+delim+str(np.round(Qresult_sigmas[0],decimals=3))+delim+str(np.round(Qphi_mcmc,decimals=3))+delim+str(np.round(Qresult_sigmas[1],decimals=3))+delim+str(np.round(Qalpha_mcmc,decimals=3))+delim+str(np.round(Qresult_sigmas[2],decimals=3))
@@ -478,7 +516,7 @@ if Q_flag ==1:
 if T_flag ==1:
     # initialize walkers
     #ndim, nwalkers, max_nsteps = 3, 1000, 2000
-    print('Starting TOTAL loop for ',nwalkers,' walkers and ',max_nsteps,' steps...')
+    print('\nStarting TOTAL loop for ',nwalkers,' walkers and ',max_nsteps,' steps...')
 #
     t0 = time.time()       # start timer to run emcee.EnsembleSampler()
     ## setup initial positions of walkers in a Guassian ball around the least-squares position
@@ -492,7 +530,7 @@ if T_flag ==1:
     backend.reset(nwalkers, ndim)
     #
     # setup the emcee sampler
-    Tsampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(SF_midbins, total_smf, total_error), backend=backend)
+    Tsampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(Q_midbins_mcmc, total_smf, total_error), backend=backend)
     #
     # We'll track how the average autocorrelation time estimate changes
     index = 0
@@ -543,9 +581,14 @@ if T_flag ==1:
     print('Creating corner plot & displaying results...')
     t0 = time.time()       # start timer to create corner plot
     ## create corner plots
-    Tfig = corner.corner(Tsamples, labels=["$M^*$", "$\phi^*$", "alpha"])#  SF
+    Tfig = corner.corner(Tsamples, labels=["$M^*$", "$\phi^*$", "alpha"])#  total
     Tfig.suptitle('Total')
-    plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_Total_corner.png')
+    #
+    if field_flag == 0:
+        plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_total_corner.png')
+    elif field_flag == 1:
+        plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_total_field_corner.png')
+    #
     #
     # initialize result arrays
     Tresult_means = np.array([0]*ndim)
@@ -559,6 +602,27 @@ if T_flag ==1:
     print('Sigmas: ',Tresult_sigmas)
     #
     TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = Tsamples.mean(axis=0)
+    #
+    #
+    ## display result w/ 1-sigma uncertainty (16th, 50th, 86th percentiles)
+    from IPython.display import display, Math
+    #
+    for i in range(ndim):
+        mcmc = np.percentile(Tsamples[:, i], [16, 50, 84])
+        q = np.diff(mcmc)
+        txt = "\mathrm{{{3}}} = {0:.7f}_{{-{1:.7f}}}^{{{2:.7f}}}"
+        txt = txt.format(mcmc[1], q[0], q[1], labels[i])
+        display(Math(txt))
+    #
+    #
+    ## investigate movement of walkers
+    plt.figure()
+    plt.plot(Tsampler.get_chain()[:, 0, 0], "k", lw=0.5)
+    #plt.xlim(0, 5000)
+    #plt.ylim(-5.5, 5.5)
+    plt.title("move: StretchMove", fontsize=14)
+    plt.xlabel("step number")
+    plt.ylabel("x");
     #
     #
     ## print OUTPUT to file
