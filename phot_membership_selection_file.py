@@ -2,8 +2,19 @@
 #
 ####
 #
-### This used to Section (5) of "master_data*.py", but I needed to use it in the Variational Analysis loop as well, so instead of copying & pasting the code I put it in this script, which "master_data*.py" calls twice. 
+### This used to Section (5) of "master_data*.py", but I needed to use it in the Variational Analysis loop as well, so instead of copying & pasting the code I put it in this script, which "master_data*.py" calls twice.
 #
+## FILTER 4 - 'member': :   identifies type of data each object has
+## NOTE: this designation is for objects with phot only (sub =2) and spec&phot (sub=1) only, as membership determinaion requires a good 'z_phot' estimate. as such, member=2 & =3 are for spec&phot (sub=1) subsample only, as only they can be classified as false pos/neg
+## 0: secure cluster member
+## 1: secure field    <-- this comprises the sample of field galaxies to be
+##                        compared with cluster, at similar redshifts
+## 2: false positive
+## 3: false negative
+## 4: FAR field       <-- this comprises galaxies well outside the allowable redshift range of our study
+## 5: BCGs            <-- identified in the last section of the program, over-writing MEMBER assignment from section 4
+## 6: cluster MEMBERS lost BELOW limiting mass
+##
 #
 ###################     PROGRAM START     ###################
 #
@@ -30,7 +41,7 @@ for counter in range(len(master_cat)):
         n_phot_only+=1
         if master_cat[counter]['type'] == 0 or master_cat[counter]['type'] ==3: #skip stars and outliers
             stars_outliers+=1               # this cut does nothing
-            pass       
+            pass
         elif master_cat[counter]['type'] ==1:       # type=1 identifies SF
             n_SF+=1
             if abs(master_cat[counter]['z_clusterphot']) > z_cutoff_field[1]:     # identify field galaxies
@@ -81,7 +92,7 @@ for counter in range(len(master_cat)):
                 for ii in range(len(lost_due_to_buffer_phot[1])):
                     if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
                         lost_due_to_buffer_phot[1][ii]+=1
-    else: 
+    else:
         other_phot+=1
 #
 #
