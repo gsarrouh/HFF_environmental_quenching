@@ -694,7 +694,7 @@ else:
 print('\n"master_data*.py" Section 4: spectroscopic membership cuts and classifying cluster members, field, false pos/neg...')
 ## CRITERIA:
 #
-## SF: cluster = 0: abs(z_clusterspec) < 0.01 & abs(z_cluster phot) < 0.03;
+## SF: cluster = 0: abs(z_clusterspec) < z_cutoff[0] & abs(z_cluster phot) < z_cutoff[1];  ignore numbers below, cutoff stored in z_cutoff
 ##      field = 1: abs(z_clusterspec) > 0.02 & abs(z_cluster phot) > 0.1;
 ## false pos = 2: abs(z_clusterspec) > 0.01 & abs(z_cluster phot) < 0.03;
 ## false neg = 3: abs(z_clusterspec) < 0.01 & abs(z_cluster phot) > 0.03;
