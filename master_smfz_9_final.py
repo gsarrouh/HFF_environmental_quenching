@@ -46,8 +46,8 @@
 ###         corrections for different bin #s; add DIAG_FLAG_5: # of false pos/neg check
 ###         & display spec correction factors;
 ### (3.3)  NORMALIZE; add DIAG_FLAG_6: check normalization result
-### (3.4)  compute QUENCHED FRACTION (i.e. # Q galaxies / (total # SF+Q galaxies) in each mass bin
 ### (4)    add ERROR BARS for scatter plot;
+### (4.1)  compute QUENCHED FRACTION (i.e. # Q galaxies / (total # SF+Q galaxies) in each mass bin
 ### (5)    EMCEE simulation; see emcee_chi2_final.py;
 ### (6)    build SCHECTER best-fit models;
 ### (7)    PLOT that shit - SMF (CLUSTER v FIELD);
@@ -71,6 +71,7 @@ if time_flag == 1:
 #
 # Import modules
 import numpy as np
+import math
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -117,7 +118,8 @@ def mass_completeness_correction_function(mass_bin_edges,limiting_masses):
         for jj in range(len(limiting_masses)):
             if limiting_masses[jj] <= mass_bin_edges[ii]:    # count # of clusters complete at each mass bin
                 mass_completeness_correction_factors[ii]+=1
-    mass_completeness_correction_factors = np.transpose(6/mass_completeness_correction_factors) # take recipricol for multiplicative factors
+    # print(mass_completeness_correction_factors)
+    mass_completeness_correction_factors = np.transpose(len(limiting_masses)/mass_completeness_correction_factors) # take recipricol for multiplicative factors
     return mass_completeness_correction_factors
 #
 ## define a function to take in a list of 6 SMFs, normalize them all by MASS to a total mass of 1 per SMF, and then combines them into a single SMF and divides by 6, effectively taking the average SMF, whose area-under-the-curve (i.e. total mass) has been normalized to 1; see Section (3.3)
@@ -210,7 +212,7 @@ def interpolate_errors(ratios,ratios_err,correction_factors,ratio_bins,mass_bins
 #
 #
 #
-### TEMPORARY WRITING FLAG - comments all code past the point where the flag is invoked
+### TEMPORARY WRITING FLAG - comments all code past the point where the flag is invoked; should be set to ==0
 where_im_at_flag = 0
 #
 #
@@ -240,6 +242,10 @@ summary_flag_2 = 1
 #
 plot_flag_1 = 1            # spec completeness correction factors
 plot_flag_2 = 1           # SMF
+cluster_only_plot_flag = 0  # create a plot of just the cluster data alone
+field_only_plot_flag = 1  # create a plot of just the field data alone
+field_construction_flag = 0 # create plots of HFF field and UVC field separately, and then the combined plot
+
 #
 ## SECTION (1): collect objects above limiting mass by cluster into a single array in order to plot
 ## SF_*/Q_*, and track sublists of objects which have spec vs those which only have phot, separately for SF/Q; creates list of samples to be binned & plotted as histogram/scatterplot
@@ -428,6 +434,7 @@ if summary_flag_1 == 1 or adams_flag == 1:
 max_SF = nested_list_max(SF_list)
 max_Q = nested_list_max(Q_list)
 range2 = [range2[0],max(max_SF,max_Q)]
+# range2 = [7.3,12.2]             # bin edges hard-coded. lowest/hightest mass objects are 7.36/12.18
 #
 num_points = int((round((range2[1]-range2[0])/bin_width))+1)       # compute # of data points;  bin_width set in "main_project_file.py"
 num_bins = np.linspace(range2[0],range2[1],num_points)
@@ -443,12 +450,12 @@ Q_field_raw_smf = [[],[],[],[],[],[]]
 Q_field_par_raw_smf = [[],[],[],[],[],[]]
 #
 for ii in range(len(SF_list)):
-    SF_field_raw, mass_bins = np.histogram(SF_field_list[ii], bins=num_bins,range=range2)
-    SF_field_par_raw, mass_bins = np.histogram(SF_field_par_list[ii], bins=num_bins,range=range2)
-    Q_field_raw, mass_bins = np.histogram(Q_field_list[ii], bins=num_bins,range=range2)
-    Q_field_par_raw, mass_bins = np.histogram(Q_field_par_list[ii], bins=num_bins,range=range2)
-    SF_raw, mass_bins = np.histogram(SF_list[ii], bins=num_bins,range=range2)
-    Q_raw, mass_bins = np.histogram(Q_list[ii], bins=num_bins,range=range2)
+    SF_field_raw, mass_bins = np.histogram(SF_field_list[ii], bins=num_bins)#,range=range2)
+    SF_field_par_raw, mass_bins = np.histogram(SF_field_par_list[ii], bins=num_bins)#,range=range2)
+    Q_field_raw, mass_bins = np.histogram(Q_field_list[ii], bins=num_bins)#,range=range2)
+    Q_field_par_raw, mass_bins = np.histogram(Q_field_par_list[ii], bins=num_bins)#,range=range2)
+    SF_raw, mass_bins = np.histogram(SF_list[ii], bins=num_bins)#,range=range2)
+    Q_raw, mass_bins = np.histogram(Q_list[ii], bins=num_bins)#,range=range2)
     ## cluster
     SF_raw_smf[ii].append(SF_raw)
     Q_raw_smf[ii].append(Q_raw)
@@ -496,10 +503,10 @@ Q_phot_smf = [[],[],[],[],[],[]]
 Q_spec_smf = [[],[],[],[],[],[]]
 #
 for ii in range(len(SF_spec_list)):
-    SF_spec, mass_bins = np.histogram(SF_spec_list[ii], bins=num_bins,range=range2)
-    SF_phot, mass_bins = np.histogram(SF_phot_list[ii], bins=num_bins,range=range2)
-    Q_spec, mass_bins = np.histogram(Q_spec_list[ii], bins=num_bins,range=range2)
-    Q_phot, mass_bins = np.histogram(Q_phot_list[ii], bins=num_bins,range=range2)
+    SF_spec, mass_bins = np.histogram(SF_spec_list[ii], bins=num_bins)#,range=range2)
+    SF_phot, mass_bins = np.histogram(SF_phot_list[ii], bins=num_bins)#,range=range2)
+    Q_spec, mass_bins = np.histogram(Q_spec_list[ii], bins=num_bins)#,range=range2)
+    Q_phot, mass_bins = np.histogram(Q_phot_list[ii], bins=num_bins)#,range=range2)
     SF_spec_smf[ii].append(SF_spec)
     SF_phot_smf[ii].append(SF_phot)
     Q_spec_smf[ii].append(Q_spec)
@@ -524,7 +531,7 @@ if (diag_flag_2 == 1 and diag_flag_master == 2) or diag_flag_master == 1:
     SF_diff = np.array([[0]*len(SF_midbins)]*6)        # initialize array to store difference between sample & sub-samples, by cluster
     Q_diff = np.array([[0]*len(SF_midbins)]*6)
     #
-    print('Section 2.1: Differences between raw cluster count and (spec + phot) subsamples, by cluster')
+    print('\nSection 2.1: Differences between raw cluster count and (spec + phot) subsamples, by cluster')
     for ii in range(len(SF_raw_smf)):
         SF_diff[ii] = SF_raw_smf[ii] - (SF_phot_smf[ii] + SF_spec_smf[ii])
         Q_diff[ii] = Q_raw_smf[ii] - (Q_phot_smf[ii] + Q_spec_smf[ii])
@@ -556,13 +563,20 @@ if (diag_flag_2 == 1 and diag_flag_master == 2) or diag_flag_master == 1:
 #            mass_completeness_correction[ii]+=1
 #mass_completeness_correction = np.transpose(6/mass_completeness_correction)  # the correction factor is: (total # of clusters) / (# of clusters complete at that mass bin); return as a row vector
 #
-## field
-## cluster & "cluster field sample" limiting mass corrections (b/c they are from the same fields, have the same completeness limits, so get the same completeness correction factors
+##
+## cluster  limiting mass corrections
 mass_completeness_correction = mass_completeness_correction_function(mass_bins,limiting_mass)   # function is the same as steps taken above, but now in function form
 #
-## Parallel "field sample"
-mass_completeness_correction_par = mass_completeness_correction_function(mass_bins,limiting_mass_par)
+## field limiting mass corrections: UPDATE
+## the field sample is taken across all 12 images (6 cluster fields, 6 parallel fields). The completeness correction then needs to be applied to the full HFF field SMF (i.e. the cluster_field_smf + parallel_field_smf), and computed on the basis of how many images of the 12 are complete at each mass bin
 #
+## first, compute the mass_completeness_correction_field factors. you need to combine limiting_mass array with limiting_mass_par array into a single array of length 12
+limiting_mass_field = np.concatenate([limiting_mass,limiting_mass_par])
+mass_completeness_correction_field = mass_completeness_correction_function(mass_bins,limiting_mass_field)
+## first, combine the cluster_field_smf + parallel_field_smf to obtain the full HFF RAW smf
+SF_field_raw_smf_HFF = SF_field_raw_smf + SF_field_par_raw_smf
+Q_field_raw_smf_HFF = Q_field_raw_smf + Q_field_par_raw_smf
+total_field_raw_smf_HFF = SF_field_raw_smf_HFF + Q_field_raw_smf_HFF
 #
 #
 #
@@ -573,23 +587,27 @@ total_mass_completeness_diff = correction_difference(total_raw_smf,mass_complete
 #
 ## fields
 ## cluster field
-SF_field_mass_completeness_diff = correction_difference(SF_field_raw_smf,mass_completeness_correction)
-Q_field_mass_completeness_diff = correction_difference(Q_field_raw_smf,mass_completeness_correction)
-## parallel field
-SF_field_par_mass_completeness_diff = correction_difference(SF_field_par_raw_smf,mass_completeness_correction_par)
-Q_field_par_mass_completeness_diff = correction_difference(Q_field_par_raw_smf,mass_completeness_correction_par)
+SF_field_mass_completeness_diff = correction_difference(SF_field_raw_smf_HFF,mass_completeness_correction_field)
+Q_field_mass_completeness_diff = correction_difference(Q_field_raw_smf_HFF,mass_completeness_correction_field)
+total_field_mass_completeness_diff = SF_field_mass_completeness_diff + Q_field_mass_completeness_diff
 #
 ### MAY NEED TO EDIT: diag_flag_3
 #
 if (diag_flag_3 == 1 and diag_flag_master == 2) or diag_flag_master == 1:
 # Display correction factors
-    print('/nSection 3.1: Mass completeness correction factors by bin\nCluster: ',str(mass_completeness_correction),'\nParallel field: %s'%mass_completeness_correction_par)
+    print('/nSection 3.1: Mass completeness correction factors by bin\nCLUSTER SMF: ',str(mass_completeness_correction),'\nFIELD SMF: %s'%mass_completeness_correction_field)
     #
     # Display some data for total, SF, Q:
-    print('Section 3.1: Galaxies added due to MASS COMPLETENESS correction')
-    print('SF: ',str(np.sum(SF_mass_completeness_diff,axis=0)),'\nTotal: %s'%np.sum(SF_mass_completeness_diff),', or ',str((np.sum(SF_mass_completeness_diff)/np.sum(SF_raw_smf))*100),'%\n')
-    print('Q: ',str(np.sum(Q_mass_completeness_diff,axis=0)),'\nTotal: %s'%np.sum(Q_mass_completeness_diff),', or ',str((np.sum(Q_mass_completeness_diff)/np.sum(Q_raw_smf))*100),'%\n')
-    print('Total: ',str(np.sum(total_mass_completeness_diff,axis=0)),'\nTotal: %s'%np.sum(total_mass_completeness_diff),', or ',str((np.sum(total_mass_completeness_diff)/np.sum(total_raw_smf))*100),'%\n')
+    print('Section 3.1: Galaxies added due to MASS COMPLETENESS correction - CLUSTER')
+    print('CLUSTER SF: ',str(np.sum(SF_mass_completeness_diff,axis=0)),'\nTotal: %s'%np.sum(SF_mass_completeness_diff),', or ',str((np.sum(SF_mass_completeness_diff)/np.sum(SF_raw_smf))*100),'%\n')
+    print('CLUSTER Q: ',str(np.sum(Q_mass_completeness_diff,axis=0)),'\nTotal: %s'%np.sum(Q_mass_completeness_diff),', or ',str((np.sum(Q_mass_completeness_diff)/np.sum(Q_raw_smf))*100),'%\n')
+    print('CLUSTER Total: ',str(np.sum(total_mass_completeness_diff,axis=0)),'\nTotal: %s'%np.sum(total_mass_completeness_diff),', or ',str((np.sum(total_mass_completeness_diff)/np.sum(total_raw_smf))*100),'%\n')
+    #
+    # Display some data for total, SF, Q:
+    print('Section 3.1: Galaxies added due to MASS COMPLETENESS correction - FIELD')
+    print('FIELD SF: ',str(np.sum(SF_field_mass_completeness_diff,axis=0)),'\nTotal: %s'%np.sum(SF_field_mass_completeness_diff),', or ',str((np.sum(SF_field_mass_completeness_diff)/np.sum(SF_field_raw_smf_HFF))*100),'%\n')
+    print('FIELD Q: ',str(np.sum(Q_field_mass_completeness_diff,axis=0)),'\nTotal: %s'%np.sum(Q_field_mass_completeness_diff),', or ',str((np.sum(Q_field_mass_completeness_diff)/np.sum(Q_field_raw_smf_HFF))*100),'%\n')
+    print('FIELD Total: ',str(np.sum(total_field_mass_completeness_diff,axis=0)),'\nTotal: %s'%np.sum(total_field_mass_completeness_diff),', or ',str((np.sum(total_field_mass_completeness_diff)/np.sum(total_field_raw_smf_HFF))*100),'%\n')
 else:
     print('Section 3.1: Galaxies added due to MASS COMPLETENESS correction\nSF: %s'%np.sum(SF_mass_completeness_diff),'\nQ: %s'%np.sum(Q_mass_completeness_diff),'\nTotal: %s'%np.sum(total_mass_completeness_diff))
 #
@@ -838,11 +856,9 @@ else:
 SF_corrected_smf = SF_raw_smf + SF_mass_completeness_diff + SF_spec_completeness_diff
 Q_corrected_smf = Q_raw_smf + Q_mass_completeness_diff + Q_spec_completeness_diff
 #
-## Fields
-SF_field_corrected_smf = SF_field_raw_smf + SF_field_mass_completeness_diff
-Q_field_corrected_smf = Q_field_raw_smf + Q_field_mass_completeness_diff
-SF_field_par_corrected_smf = SF_field_par_raw_smf + SF_field_par_mass_completeness_diff
-Q_field_par_corrected_smf = Q_field_par_raw_smf + Q_field_par_mass_completeness_diff
+# ## Fields
+SF_field_corrected_smf_HFF = SF_field_raw_smf_HFF + SF_field_mass_completeness_diff
+Q_field_corrected_smf_HFF = Q_field_raw_smf_HFF + Q_field_mass_completeness_diff
 #
 #
 ## The below calculation has been broken out into a separate function "normalize_smf_mass()" in SECTION (0). We maintain the below work for diagnostic information and summary tables, but we forgo this information for the "cluster field sample" and "parallel field sample", since we're only interested in the result obtained: a normalized SMF.
@@ -851,11 +867,13 @@ Q_field_par_corrected_smf = Q_field_par_raw_smf + Q_field_par_mass_completeness_
 ## fix the shape of these arrays to be [6 clusters ,# of midbins in SMF], i.e. an array with 6 rows, each row containing an array with (#of midbins) data points
 SF_corrected_smf = SF_corrected_smf.reshape((6,len(SF_midbins)))
 Q_corrected_smf = Q_corrected_smf.reshape((6,len(SF_midbins)))
-SF_field_corrected_smf = SF_field_corrected_smf.reshape((6,len(SF_midbins)))
-Q_field_corrected_smf = Q_field_corrected_smf.reshape((6,len(SF_midbins)))
-SF_field_par_corrected_smf = SF_field_par_corrected_smf.reshape((6,len(SF_midbins)))
-Q_field_par_corrected_smf = Q_field_par_corrected_smf.reshape((6,len(SF_midbins)))
-#total_corrected_smf = SF_corrected_smf + Q_corrected_smf
+SF_field_corrected_smf_HFF = SF_field_corrected_smf_HFF.reshape((6,len(SF_midbins)))
+Q_field_corrected_smf_HFF = Q_field_corrected_smf_HFF.reshape((6,len(SF_midbins)))
+# SF_field_par_corrected_smf = SF_field_par_corrected_smf.reshape((6,len(SF_midbins)))
+# Q_field_par_corrected_smf = Q_field_par_corrected_smf.reshape((6,len(SF_midbins)))
+total_corrected_smf = SF_corrected_smf + Q_corrected_smf
+total_field_corrected_smf_HFF = SF_field_corrected_smf_HFF + Q_field_corrected_smf_HFF
+#
 #
 N,M = SF_corrected_smf.shape      # store dimensions of raw_smf lists
 #
@@ -933,9 +951,9 @@ if normalization_flag == 1:
     #
 elif normalization_flag == 2:       # normalize by VOLUME
     #
-    pass        # TO BE WRITTEN
+    pass        # USED ONLY FOR FIELD SAMPLE - see program "field_normalization.py"
     #
-elif normalization_flag == 3:       # normalize by NUMBER COUNT
+elif normalization_flag == 3:       # normalize by NUMBER COUNT: UPDATE: THIS IS HOW WE DO IT! flag should be set always to ==3
         #
     #
     ###  CALL THE NORMALIZATION FUNCTION HERE
@@ -954,17 +972,19 @@ elif normalization_flag == 3:       # normalize by NUMBER COUNT
 #
 #
 ## combine into a single SMF
-SF_field_smf_HFF = (np.sum(SF_field_corrected_smf,axis=0) + np.sum(SF_field_par_corrected_smf,axis=0))/2
-Q_field_smf_HFF = (np.sum(Q_field_corrected_smf,axis=0) + np.sum(Q_field_par_corrected_smf,axis=0))/2
+SF_field_smf_HFF = ( np.sum(SF_field_corrected_smf_HFF,axis=0) )
+Q_field_smf_HFF = ( np.sum(Q_field_corrected_smf_HFF,axis=0) )
 #
 ## make UVC lists into histograms
-SF_field_smf_UVC, mass_bins = np.histogram(SF_field_uvc_list, bins=num_bins,range=range2)
-Q_field_smf_UVC, mass_bins = np.histogram(Q_field_uvc_list, bins=num_bins,range=range2)
+SF_field_smf_UVC, mass_bins = np.histogram(SF_field_uvc_list, bins=num_bins)#,range=range2)
+Q_field_smf_UVC, mass_bins = np.histogram(Q_field_uvc_list, bins=num_bins)#,range=range2)
 #
 ## compute relative errors (Poissonian)
 #
-SF_field_smf_relerr_HFF = (np.sqrt(SF_field_smf_HFF) / SF_field_smf_HFF)
-Q_field_smf_relerr_HFF = (np.sqrt(Q_field_smf_HFF) / Q_field_smf_HFF)
+SF_field_smf_relerr_HFF = (np.sqrt(np.sum(SF_field_raw_smf_HFF,axis=0)) / np.sum(SF_field_raw_smf_HFF,axis=0))
+SF_field_smf_relerr_HFF = SF_field_smf_relerr_HFF.reshape(len(SF_midbins))
+Q_field_smf_relerr_HFF = (np.sqrt(np.sum(Q_field_raw_smf_HFF,axis=0)) / np.sum(Q_field_raw_smf_HFF,axis=0))
+Q_field_smf_relerr_HFF = Q_field_smf_relerr_HFF.reshape(len(SF_midbins))
 SF_field_smf_relerr_UVC = (np.sqrt(SF_field_smf_UVC) / SF_field_smf_UVC)
 Q_field_smf_relerr_UVC = (np.sqrt(Q_field_smf_UVC) / Q_field_smf_UVC)
 #
@@ -985,55 +1005,61 @@ SF_field_smf_UVC = SF_field_smf_UVC / vol_UVC
 Q_field_smf_UVC = Q_field_smf_UVC / vol_UVC
 total_field_smf_UVC = SF_field_smf_UVC + Q_field_smf_UVC
 #
-#
+### NECESSARY DIVERSION: plot both the HFF and UVC field SMFs to check their shape and normalization
 #
 empty_error = np.zeros_like(SF_field_smf_HFF)
-#
-fig = plt.figure()
-string = 'HFF field SMF: %s'%np.round(z_field_bounds[0],decimals=2),' < z < %s'%np.round(z_field_bounds[1],decimals=2)
-fig.suptitle(string, fontsize=30)
-ax = fig.add_subplot(1, 1, 1)
-ax.errorbar(SF_midbins,SF_field_smf_HFF,yerr=empty_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
-ax.errorbar(Q_midbins,Q_field_smf_HFF,yerr=empty_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
-ax.errorbar(SF_midbins,total_field_smf_HFF,yerr=empty_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
-ax.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
-ax.set_xscale('linear')
-ax.minorticks_on()
-ax.set_xlim(7,12.5)
-ax.set_yscale('log')
-#ax.set_ylim(6e-5,0.5)
-ax.minorticks_on()
-ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=True,labelsize=18)
-ax.yaxis.set_label_position("left")
-ax.set_ylabel('???',fontsize=20)
-ax.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
-ax.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
+SF_field_err_temp = SF_field_smf_relerr_HFF*SF_field_smf_HFF
+SF_field_err_temp = SF_field_err_temp.reshape(len(SF_midbins))
+Q_field_err_temp = Q_field_smf_relerr_HFF*Q_field_smf_HFF
+Q_field_err_temp = Q_field_err_temp.reshape(len(SF_midbins))
 #
 #
-fig = plt.figure()
-string = 'UVC field SMF: %s'%np.round(z_field_bounds[0],decimals=2),' < z < %s'%np.round(z_field_bounds[1],decimals=2)
-fig.suptitle(string, fontsize=30)
-ax = fig.add_subplot(1, 1, 1)
-ax.errorbar(SF_midbins,SF_field_smf_UVC,yerr=empty_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
-ax.errorbar(Q_midbins,Q_field_smf_UVC,yerr=empty_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
-ax.errorbar(SF_midbins,total_field_smf_UVC,yerr=empty_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
-ax.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
-ax.set_xscale('linear')
-ax.minorticks_on()
-ax.set_xlim(7,12.5)
-ax.set_yscale('log')
-#ax.set_ylim(6e-5,0.5)
-ax.minorticks_on()
-ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=True,labelsize=18)
-ax.yaxis.set_label_position("left")
-ax.set_ylabel('???',fontsize=20)
-ax.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
-ax.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
+if field_construction_flag == 1:
+    fig = plt.figure()
+    string = 'HFF field SMF: %s'%np.round(z_field_bounds[0],decimals=2),' < z < %s'%np.round(z_field_bounds[1],decimals=2)
+    fig.suptitle(string, fontsize=30)
+    ax = fig.add_subplot(1, 1, 1)
+    ax.errorbar(SF_midbins,SF_field_smf_HFF,yerr=SF_field_err_temp, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
+    ax.errorbar(Q_midbins,Q_field_smf_HFF,yerr=Q_field_err_temp,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
+    ax.errorbar(SF_midbins,total_field_smf_HFF,yerr=empty_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
+    ax.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
+    ax.set_xscale('linear')
+    ax.minorticks_on()
+    ax.set_xlim(7,12.5)
+    ax.set_yscale('log')
+    ax.set_ylim(1e2,2.5e8)
+    ax.minorticks_on()
+    ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=True,labelsize=18)
+    ax.yaxis.set_label_position("left")
+    ax.set_ylabel('???',fontsize=20)
+    ax.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
+    ax.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
+    #
+    #
+    fig = plt.figure()
+    string = 'UVC field SMF: %.2f'%z_field_bounds[0],' < z < %.2f'%z_field_bounds[1],' at UVC cutoff: %.2f'%limiting_mass_uvc
+    fig.suptitle(string, fontsize=30)
+    ax = fig.add_subplot(1, 1, 1)
+    ax.errorbar(SF_midbins,SF_field_smf_UVC,yerr=np.sqrt(SF_field_smf_UVC), fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
+    ax.errorbar(Q_midbins,Q_field_smf_UVC,yerr=np.sqrt(Q_field_smf_UVC),fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
+    ax.errorbar(SF_midbins,total_field_smf_UVC,yerr=empty_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
+    ax.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
+    ax.set_xscale('linear')
+    ax.minorticks_on()
+    ax.set_xlim(7,12.5)
+    ax.set_yscale('log')
+    ax.set_ylim(1e2,2.5e8)
+    ax.minorticks_on()
+    ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=True,labelsize=18)
+    ax.yaxis.set_label_position("left")
+    ax.set_ylabel('???',fontsize=20)
+    ax.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
+    ax.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
 #
 #
 #
 #
-some_flag = 1
+some_flag = 1           # 1== avg over 3 points near UVC cutoff; 2 == hard transition from HFF curve to UVC curve
 if some_flag == 1:
     ## COMBINE HFF & UVC into a single SMF: start by finding the index corresponding to the first midbin with mass >10^9. Then cut the two lists above/below that bin index, then add the two together
     #
@@ -1042,25 +1068,86 @@ if some_flag == 1:
     for ii in range(len(SF_midbins)):
         if SF_midbins[ii] < limiting_mass_uvc:
             index = ii
-    print('Index for HFF/UVC cutoff is: %s'%index+'out of: %s'%len(SF_midbins)+' bins for UVC mass cutoff: %s'%limiting_mass_uvc)
+    print('Index for HFF/UVC cutoff is: %s'%(index+1)+'out of: %s'%len(SF_midbins)+' bins for UVC mass cutoff: %s'%limiting_mass_uvc)
+    #
+    ## set all entries in HFF >index to zero, and all entries <index to zero for UVC
+    for ii in range(len(SF_field_smf_HFF)):
+        if ii > (index+2):
+            SF_field_smf_HFF[ii] = 0
+            Q_field_smf_HFF[ii] = 0
+            SF_field_smf_relerr_HFF[ii] = 0
+            Q_field_smf_relerr_HFF[ii] = 0
+        elif ii == (index+2):
+            SF_field_smf_HFF[ii] = 0.25*SF_field_smf_HFF[ii]
+            Q_field_smf_HFF[ii] = 0.25*Q_field_smf_HFF[ii]
+            SF_field_smf_relerr_HFF[ii] = 0.25*SF_field_smf_relerr_HFF[ii]
+            Q_field_smf_relerr_HFF[ii] = 0.25*Q_field_smf_relerr_HFF[ii]
+            SF_field_smf_UVC[ii] = 0.75*SF_field_smf_UVC[ii]
+            Q_field_smf_UVC[ii] = 0.75*Q_field_smf_UVC[ii]
+            SF_field_smf_relerr_UVC[ii] = 0.75*SF_field_smf_relerr_UVC[ii]
+            Q_field_smf_relerr_UVC[ii] = 0.75*Q_field_smf_relerr_UVC[ii]
+        elif ii == (index+1):
+            SF_field_smf_HFF[ii] = 0.5*SF_field_smf_HFF[ii]
+            Q_field_smf_HFF[ii] = 0.5*Q_field_smf_HFF[ii]
+            SF_field_smf_relerr_HFF[ii] = 0.5*SF_field_smf_relerr_HFF[ii]
+            Q_field_smf_relerr_HFF[ii] = 0.5*Q_field_smf_relerr_HFF[ii]
+            SF_field_smf_UVC[ii] = 0.5*SF_field_smf_UVC[ii]
+            Q_field_smf_UVC[ii] = 0.5*Q_field_smf_UVC[ii]
+            SF_field_smf_relerr_UVC[ii] = 0.5*SF_field_smf_relerr_UVC[ii]
+            Q_field_smf_relerr_UVC[ii] = 0.5*Q_field_smf_relerr_UVC[ii]
+        elif ii == (index-0):
+            SF_field_smf_HFF[ii] = 0.75*SF_field_smf_HFF[ii]
+            Q_field_smf_HFF[ii] = 0.75*Q_field_smf_HFF[ii]
+            SF_field_smf_relerr_HFF[ii] = 0.75*SF_field_smf_relerr_HFF[ii]
+            Q_field_smf_relerr_HFF[ii] = 0.75*Q_field_smf_relerr_HFF[ii]
+            SF_field_smf_UVC[ii] = 0.25*SF_field_smf_UVC[ii]
+            Q_field_smf_UVC[ii] = 0.25*Q_field_smf_UVC[ii]
+            SF_field_smf_relerr_UVC[ii] = 0.25*SF_field_smf_relerr_UVC[ii]
+            Q_field_smf_relerr_UVC[ii] = 0.25*Q_field_smf_relerr_UVC[ii]
+        elif ii < (index-0):
+            SF_field_smf_UVC[ii] = 0
+            Q_field_smf_UVC[ii] = 0
+            SF_field_smf_relerr_UVC[ii] = 0
+            Q_field_smf_relerr_UVC[ii] = 0
+    #
+elif some_flag == 2:
+    ## COMBINE HFF & UVC into a single SMF: start by finding the index corresponding to the first midbin with mass >10^9. Then cut the two lists above/below that bin index, then add the two together
+    #
+    ## search for the first mass bin above 10^9 (i.e. "limiting_mass_uvc"), and return its index
+    index = 0
+    for ii in range(len(SF_midbins)):
+        if SF_midbins[ii] < limiting_mass_uvc:
+            index = ii
+    print('Index for HFF/UVC cutoff is: %s'%(index+1)+'out of: %s'%len(SF_midbins)+' bins for UVC mass cutoff: %s'%limiting_mass_uvc)
     #
     ## set all entries in HFF >index to zero, and all entries <index to zero for UVC
     for ii in range(len(SF_field_smf_HFF)):
         if ii > index:
             SF_field_smf_HFF[ii] = 0
             Q_field_smf_HFF[ii] = 0
-            SF_field_smf_relerr_HFF = 0
-            Q_field_smf_relerr_HFF = 0
-        elif ii <= index:
+            SF_field_smf_relerr_HFF[ii] = 0
+            Q_field_smf_relerr_HFF[ii] = 0
+        elif ii < index:
             SF_field_smf_UVC[ii] = 0
             Q_field_smf_UVC[ii] = 0
-            SF_field_smf_relerr_UVC = 0
-            Q_field_smf_relerr_UVC = 0
+            SF_field_smf_relerr_UVC[ii] = 0
+            Q_field_smf_relerr_UVC[ii] = 0
     #
     ## Now add the two together
 #
-SF_field_smf = SF_field_smf_HFF + SF_field_smf_UVC
-Q_field_smf = Q_field_smf_HFF + Q_field_smf_UVC
+## check: all errors should be finite. replace NaN entries with zeros
+for ii in range(len(SF_field_smf_relerr_UVC)):
+    if np.isnan(SF_field_smf_relerr_HFF[ii]) == 1:
+        SF_field_smf_relerr_HFF[ii] = 0
+    if np.isnan(SF_field_smf_relerr_UVC[ii]) == 1:
+        SF_field_smf_relerr_UVC[ii] = 0
+    if np.isnan(Q_field_smf_relerr_HFF[ii]) == 1:
+        Q_field_smf_relerr_HFF[ii] = 0
+    if np.isnan(Q_field_smf_relerr_UVC[ii]) == 1:
+        Q_field_smf_relerr_UVC[ii] = 0
+#
+SF_field_smf = (SF_field_smf_HFF + SF_field_smf_UVC)
+Q_field_smf = (Q_field_smf_HFF + Q_field_smf_UVC)
 total_field_smf = SF_field_smf + Q_field_smf
 #
 ## compute the actual error bars
@@ -1074,22 +1161,29 @@ total_field_error = SF_field_error + Q_field_error
 #
 #
 #
+if field_construction_flag == 1:
+    fig = plt.figure()
+    string = 'COMBINED field SMF: %.3f'%z_field_bounds[0],' < z < %.3f'%z_field_bounds[1],' at UVC cutoff: %.2f'%limiting_mass_uvc
+    fig.suptitle(string, fontsize=30)
+    ax = fig.add_subplot(1, 1, 1)
+    ax.errorbar(SF_midbins,SF_field_smf,yerr=SF_field_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
+    ax.errorbar(Q_midbins,Q_field_smf,yerr=Q_field_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
+    ax.errorbar(SF_midbins,total_field_smf,yerr=total_field_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
+    ax.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
+    ax.set_xscale('linear')
+    ax.minorticks_on()
+    ax.set_xlim(7,12.5)
+    ax.set_yscale('log')
+    ax.set_ylim(1e2,2.5e8)
+    ax.minorticks_on()
+    ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=True,labelsize=18)
+    ax.yaxis.set_label_position("left")
+    ax.set_ylabel('???',fontsize=20)
+    ax.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
+    ax.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
 #
-## SECTION (3.4) compute QUENCHED FRACTION
-## defined as (# of quenched galaxies in a given mass bin) / (total # of galaxies in that mass bin)
-#
-quenched_fraction = np.array([[0]*len(SF_midbins)]*2,dtype='float32')    # row 1 = cluster;   row 2 = field
-#
-quenched_fraction[0] = Q_smf / total_smf                             # quenched fraction for cluster
-quenched_fraction[1] = Q_field_smf / total_field_smf                 # quenched fraction for cluster
 #
 #
-## compute errors on the quenched fractions
-
-
-######## TO BE COMPLETED #########
-
-
 #
 #
 #
@@ -1370,11 +1464,6 @@ elif smf_error_method == 3:                  # method 3: treat entire SMF as one
     SF_error_rel = SF_error_rel.reshape(len(SF_midbins))
     Q_error_rel = Q_error_rel.reshape(len(SF_midbins))
     #
-    ## compute error bars for SMF plot
-    SF_error = SF_error_rel * SF_smf
-    Q_error = Q_error_rel * Q_smf
-    #
-    total_error = SF_error + Q_error
     #
     ## reshape arrays to match SMF
     #SF_error = SF_error.reshape(len(SF_midbins))
@@ -1384,6 +1473,58 @@ elif smf_error_method == 3:                  # method 3: treat entire SMF as one
 #
 #
 #
+#
+#
+## SECTION (4.1) compute QUENCHED FRACTION
+## defined as (# of quenched galaxies in a given mass bin) / (total # of galaxies in that mass bin)
+#
+quenched_fraction = np.array([[0]*len(SF_midbins)]*2,dtype='float32')    # row 1 = cluster;   row 2 = field
+quenched_fraction_err = np.array([[0]*len(SF_midbins)]*2,dtype='float32')
+#
+quenched_fraction[0] = Q_smf / total_smf                             # quenched fraction for cluster
+quenched_fraction[1] = Q_field_smf / total_field_smf                 # quenched fraction for cluster
+#
+#
+## compute errors on the quenched fractions
+#
+quenched_fraction_err[0] = np.sqrt( (Q_error / Q_smf)**2 + (total_error / total_smf)**2 ) * quenched_fraction[0]
+quenched_fraction_err[1] = np.sqrt( Q_field_relerr**2 + (total_field_error / total_field_smf)**2 ) * quenched_fraction[1]
+#
+#
+#
+#### ADDITIONAL STEP ADDED AT LAST MINUTE: need to normalize by bin width, so that axes of SMF are per dex
+# # cluster
+SF_smf = SF_smf / bin_width
+Q_smf = Q_smf / bin_width
+total_smf = total_smf / bin_width
+#
+## compute error bars for SMF plot
+SF_error = SF_error_rel * SF_smf
+Q_error = Q_error_rel * Q_smf
+#
+total_error = SF_error + Q_error
+#
+# #field
+SF_field_smf = SF_field_smf / bin_width
+Q_field_smf = Q_field_smf / bin_width
+total_field_smf = total_field_smf / bin_width
+#
+## compute error bars
+SF_field_error = SF_field_relerr * SF_field_smf
+Q_field_error = Q_field_relerr * Q_field_smf
+total_field_error = SF_field_error + Q_field_error
+#
+#
+#
+#### ADDED LAST MINUTE: remove the lowest-mass bin from the field samples
+SF_field_midbins = np.delete(SF_midbins,0)
+Q_field_midbins = np.delete(Q_midbins,0)
+SF_field_smf = np.delete(SF_field_smf,0)
+Q_field_smf = np.delete(Q_field_smf,0)
+total_field_smf = np.delete(total_field_smf,0)
+SF_field_error = np.delete(SF_field_error,0)
+Q_field_error = np.delete(Q_field_error,0)
+total_field_error = np.delete(total_field_error,0)
 #
 ## SECTION (5)    EMCEE simulation; see emcee_chi2_final.py;
 #
@@ -1412,25 +1553,129 @@ if mcmc_flag == 1:
 else:
 ## The following summarizes the result of the MCMC simulation and sets up the appropriate arrays for plotting
     #
-    SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.09445352e+01,9.52065100e-04,-1.48508050e+00]     # 100 walkers, 500,000 steps
-    SFM_star_sigma, SFphi_sigma, SFalpha_sigma = [0.42747631,0.00180034,0.08863049]
+    # ## Cluster
+    # SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.06435468e+01,2.27430756e-03,-1.42283793e+00]     # 1000 walkers, 30,000 steps
+    # SFM_star_sigma, SFphi_sigma, SFalpha_sigma = [0.4832527,0.00180058,0.08881995]
+    # #single-schechter Q pop
+    # QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.9330104,0.02808295,-1.04608092]     # 1000 walkers, 30,000 steps
+    # QM_star_sigma, Qphi_sigma, Qalpha_sigma = [0.08630276,0.00379149,0.02609191]
+    # #
+    # TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.0310256,0.02210855,-1.16021455]      # 1000 walkers, 30,000 steps
+    # TM_star_sigma, Tphi_sigma, Talpha_sigma = [0.09356252,0.00397525,0.03435308]
+    # # #
+    SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08930946e+01,2.76340365e-03,-1.47644761e+00]     # 1000 walkers, 30,000 steps
+    # SFM_star_sigma, SFphi_sigma, SFalpha_sigma = [0.4832527,0.00180058,0.08881995]
     #single-schechter Q pop
-    QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.76047713,0.05031532,-0.94764447]     # 100 walkers, 200,000 steps
-    QM_star_sigma, Qphi_sigma, Qalpha_sigma = [0.04034471,0.00262553,0.01046056]
-    #double-schechter Q pop
-    #QM_star_mcmc, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [7.4296233,-15.09718791,-19.94457933,2.81944241,-2.9740897]     # 100 walkers, 200,000 steps
-    #QM_star_sigma, Qphi1_sigma, Qalpha1_sigma, Qphi2_sigma, Qalpha2_sigma = [0.00010148,0.00010006,0.00010002,0.00010189,0.00010069]
+    QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.95561251,0.06819308,-1.05110493]     # 1000 walkers, 30,000 steps
+    # QM_star_sigma, Qphi_sigma, Qalpha_sigma = [0.08630276,0.00379149,0.02609191]
     #
-    TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [10.88441285,0.03862147,-1.17262005]
-    TM_star_sigma, Tphi_sigma, Talpha_sigma = [0.04220442,0.00251507,0.00934645]
+    TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06103566,0.05240375,-1.16844815]      # 1000 walkers, 30,000 steps
+    # TM_star_sigma, Tphi_sigma, Talpha_sigma = [0.09356252,0.00397525,0.03435308]
     #
 
-    ## define x array to generate points to plot Schechter fit
-    x_plot_SF = np.linspace(SF_midbins[0],SF_midbins[len(SF_midbins)-1],num=1000)#
+
     #
-    SF_model_mcmc_plot = np.log(10)*SFphi_mcmc*(10**(x_plot_SF-SFM_star_mcmc)*(1+SFalpha_mcmc))*np.exp(-10**(x_plot_SF-SFM_star_mcmc))
+    ## Field
+    #double-schechter Q pop
+    SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [10.1137477,0.0010870,1.1992579,0.0019027,−2.0279860]     # 1000 walkers, 30,000 steps
+    QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [10.5794203,0.0017748,0.4921250, 0.0001053,−2.1851572]     # 1000 walkers, 30,000 steps
+    TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [10.506470,0.0024389,0.6230880,0.0007659,-2.0886044]     # 1000 walkers, 30,000 steps
+    #QM_star_sigma, Qphi1_sigma, Qalpha1_sigma, Qphi2_sigma, Qalpha2_sigma = [0.00010148,0.00010006,0.00010002,0.00010189,0.00010069]
+    SFM_field_star_mcmc, SFphi_field_mcmc, SFalpha_field_mcmc = [11.2885504,0.0000680,−2.1150592]     # 1000 walkers, 20,000 steps
+    SFM_field_star_sigma, SFphi_field_sigma, SFalpha_field_sigma = [2.77920266e-02,7.71229608e-06,4.38608890e-03]
+    #single-schechter Q pop
+    QM_field_star_mcmc, Qphi_field_mcmc, Qalpha_field_mcmc = [10.9330104,0.02808295,-1.04608092]     # 1000 walkers, 30,000 steps
+    QM_field_star_sigma, Qphi_field_sigma, Qalpha_field_sigma = [0.08630276,0.00379149,0.02609191]
+    # #
+    TM_field_star_mcmc, Tphi_field_mcmc, Talpha_field_mcmc = [12.0938252,0.0000128,−2.1080773]      # 1000 walkers, 30,000 steps
+    TM_field_star_sigma, Tphi_field_sigma, Talpha_field_sigma = [4.82179783e-02,4.46326038e-06,4.75120599e-03]#
+    #
+    #
+    ## define x array to generate points to plot Schechter fit
+    x_plot = np.linspace(7,12.5,num=1000)#
+    x_plot = x_plot.reshape(len(x_plot),)
+    #
+    ## Cluster models
+    SF_model_mcmc_plot = np.log(10) * SFphi_mcmc * (10**((x_plot-SFM_star_mcmc)*(1+SFalpha_mcmc))) * np.exp(-10**(x_plot-SFM_star_mcmc))#
+    Q_model_mcmc_plot = np.log(10) * Qphi_mcmc * (10**((x_plot-QM_star_mcmc)*(1+Qalpha_mcmc))) * np.exp(-10**(x_plot-QM_star_mcmc))#
+    total_model_mcmc_plot = np.log(10) * Tphi_mcmc * (10**((x_plot-TM_star_mcmc)*(1+Talpha_mcmc))) * np.exp(-10**(x_plot-TM_star_mcmc))#
+    ## Field models
+    SF_model_field_mcmc_plot = np.log(10) * SFphi_field_mcmc * (10**((x_plot-SFM_field_star_mcmc)*(1+SFalpha_field_mcmc))) * np.exp(-10**(x_plot-SFM_field_star_mcmc))#
+    SF_model_field_mcmc_plot_double = np.log(10) * math.e**(-10**(x_plot-SFM_star_mcmc_field)) * ( (SFphi1_mcmc*(10**(x_plot-SFM_star_mcmc_field))**(1+SFalpha1_mcmc))  + (SFphi2_mcmc*(10**(x_plot-SFM_star_mcmc_field))**(1+SFalpha2_mcmc)) )
+    Q_model_field_mcmc_plot_single = np.log(10) * Qphi_field_mcmc * (10**((x_plot-QM_field_star_mcmc)*(1+Qalpha_field_mcmc))) * np.exp(-10**(x_plot-QM_field_star_mcmc))#
+    Q_model_field_mcmc_plot_double =  np.log(10) * math.e**(-10**(x_plot-QM_star_mcmc_field)) * ( (Qphi1_mcmc*(10**(x_plot-QM_star_mcmc_field))**(1+Qalpha1_mcmc))  + (Qphi2_mcmc*(10**(x_plot-QM_star_mcmc_field))**(1+Qalpha2_mcmc)) )
+    total_model_field_mcmc_plot = np.log(10) * Tphi_field_mcmc * (10**((x_plot-TM_field_star_mcmc)*(1+Talpha_field_mcmc))) * np.exp(-10**(x_plot-TM_field_star_mcmc))#
+    total_model_field_mcmc_plot_double = np.log(10) * math.e**(-10**(x_plot-TM_star_mcmc_field)) * ( (Tphi1_mcmc*(10**(x_plot-TM_star_mcmc_field))**(1+Talpha1_mcmc))  + (Tphi2_mcmc*(10**(x_plot-TM_star_mcmc_field))**(1+Talpha2_mcmc)) )
 #
 #
+if cluster_only_plot_flag == 1:
+    fig = plt.figure()
+    ax0 = fig.add_subplot(111)
+    ax0.errorbar(SF_midbins,SF_smf,yerr=SF_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, ms=15)#label='Star-forming', ms=15)#yerr=SF_error,
+    ax0.errorbar(Q_midbins,Q_smf,yerr=Q_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, ms=15)#,label='Quiescent', ms=15)
+    ax0.errorbar(SF_midbins,total_smf,yerr=total_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, ms=15)#,label='Total', ms=15)
+    ## Plot Schechter fits:  (uncomment 5 hashtags when fits complete)
+    ax0.plot(x_plot,SF_model_mcmc_plot, '-b', label = 'MCMC - SF', linewidth = 2.0)
+    ax0.plot(x_plot,Q_model_mcmc_plot, '-r', label = 'MCMC - Q', linewidth = 2.0)
+    ax0.plot(x_plot,total_model_mcmc_plot, '-k', label = 'MCMC - Total', linewidth = 2.0)
+    ax0.plot(x_plot,SF_model_mcmc_plot, '-b', label = 'MCMC - SF', linewidth = 2.0)
+    ax0.plot(x_plot,Q_model_mcmc_plot, '-r', label = 'MCMC - Q', linewidth = 2.0)
+    ax0.plot(x_plot,total_model_mcmc_plot, '-k', label = 'MCMC - Total', linewidth = 2.0)
+    ax0.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
+    ax0.set_xscale('linear')
+    ax0.minorticks_on()
+    ax0.set_xlim(7,12.5)
+    ax0.set_yscale('log')
+    ax0.set_ylim(6e-5,0.5)
+    ax0.minorticks_on()
+    ax0.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=True,labelsize=18)
+    ax0.yaxis.set_label_position("left")
+    ax0.set_ylabel('# density',fontsize=20)
+    ax0.set_title('HFF Cluster SMF',fontsize=30)
+    SF_string = 'SF: $M^*$: %.3f'%SFM_star_mcmc+'; alpha: %.3f'%SFalpha_mcmc
+    Q_string = 'Q: $M^*$: %.3f'%QM_star_mcmc+'; alpha: %.3f'%Qalpha_mcmc
+    total_string = 'Total: $M^*$: %.3f'%TM_star_mcmc+'; alpha: %.3f'%Talpha_mcmc
+    ax0.text(7.05,4e-4,SF_string,color='b',fontsize='medium')
+    ax0.text(7.05,3e-4,Q_string,color='r',fontsize='medium')
+    ax0.text(7.05,2e-4,total_string,color='k',fontsize='medium')
+    ax0.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'medium')
+    ax0.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
+    #
+#
+#
+if field_only_plot_flag == 1:
+    fig = plt.figure()
+    ax0 = fig.add_subplot(111)
+    ax0.errorbar(SF_field_midbins,SF_field_smf,yerr=SF_field_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, ms=15)#label='Star-forming', ms=15)#yerr=SF_error,
+    ax0.errorbar(Q_field_midbins,Q_field_smf,yerr=Q_field_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, ms=15)#,label='Quiescent', ms=15)
+    ax0.errorbar(SF_field_midbins,total_field_smf,yerr=total_field_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, ms=15)#,label='Total', ms=15)
+    ## Plot Schechter fits:  (uncomment 5 hashtags when fits complete)
+    ax0.plot(x_plot,SF_model_field_mcmc_plot, '-b', label = 'MCMC - SF', linewidth = 2.0)
+    ax0.plot(x_plot,Q_model_field_mcmc_plot_single, '-r', label = 'MCMC - Q', linewidth = 2.0)
+    ax0.plot(x_plot,total_model_field_mcmc_plot, '-k', label = 'MCMC - Total', linewidth = 2.0)
+    # ax0.plot(x_plot,SF_model_field_mcmc_plot_double, '-b', label = 'MCMC - Q', linewidth = 2.0)
+    # ax0.plot(x_plot,Q_model_field_mcmc_plot_double, '-r', label = 'MCMC - Q', linewidth = 2.0)
+    # ax0.plot(x_plot,total_model_field_mcmc_plot_double, '-k', label = 'MCMC - Q', linewidth = 2.0)
+    ax0.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
+    ax0.set_xscale('linear')
+    ax0.minorticks_on()
+    ax0.set_xlim(7,12.5)
+    ax0.set_yscale('log')
+    ax0.set_ylim(1e-6,1.2)
+    ax0.minorticks_on()
+    ax0.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=True,labelsize=18)
+    ax0.yaxis.set_label_position("left")
+    ax0.set_ylabel('# density',fontsize=20)
+    ax0.set_title('HFF+UVC FIELD SMF',fontsize=30)
+    # SF_string = 'SF: $M^*$: %.3f'%SFM_field_star_mcmc+'; alpha: %.3f'%SFalpha_field_mcmc
+    # Q_string = 'Q: $M^*$: %.3f'%QM_field_star_mcmc+'; alpha: %.3f'%Qalpha_field_mcmc
+    # total_string = 'Total: $M^*$: %.3f'%TM_field_star_mcmc+'; alpha: %.3f'%Talpha_field_mcmc
+    # ax0.text(7.05,4e-4,SF_string,color='b',fontsize='medium')
+    # ax0.text(7.05,3e-4,Q_string,color='r',fontsize='medium')
+    # ax0.text(7.05,2e-4,total_string,color='k',fontsize='medium')
+    ax0.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'medium')
+    ax0.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
+    #
 #
 #
 #
@@ -1438,19 +1683,12 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
     if project_plot_flag == 0:
         pass
     else:
-        #SF_field_smf = np.zeros_like(SF_smf)
-        #Q_field_smf = np.zeros_like(Q_smf)
-        #total_field_smf = np.zeros_like(total_smf)
-        #SF_field_error = np.zeros_like(SF_smf)
-        #Q_field_error = np.zeros_like(Q_smf)
-        #total_field_error = np.zeros_like(total_smf)
-        quenched_err = np.zeros_like(quenched_fraction[0])
     ## upper: SMF for cluster, field;       lower: fractions of SF/Q in cluster, field
     #
         #plt.close()
         SMF = plt.figure()
         string = 'Spec: %s'%z_cutoff[0]+'  Phot: %s'%z_cutoff[1]+'  Method: %i'%membership_correction_binning_flag
-        SMF.suptitle(string, fontsize=40)
+        # SMF.suptitle(string, fontsize=40)
         gs = gridspec.GridSpec(2,2, wspace=0, hspace=0, width_ratios=[1,1], height_ratios=[2,1])   #make a tiled-plot like vdB2013 w/ fractions below, this line sets the proporitons of plots in the figure
         #gs = gridspec.GridSpec(2,3, width_ratios=[1,1,1], height_ratios=[2,1])   #make a tiled-plot like vdB2013 w/ fractions below, this line sets the proporitons of plots in the figure
         #
@@ -1463,19 +1701,26 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
         ######plt.plot(x_plot_Q,Q_model_ml_plot, ':r')
         #####plt.plot(x_plot_Q,Q_model_mcmc_plot, '--r')
         ######plt.plot(x_plot_SF,SF_model_ml_plot, ':c', label = 'Max. Likelihood', linewidth = 0.5)
-        plt.plot(x_plot_SF,SF_model_mcmc_plot, '--b', label = 'MCMC', linewidth = 0.5)
-        #####plt.plot(x_plot_T,T_model_mcmc_plot, 'k')
-        ax0.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
+        ax0.plot(x_plot,SF_model_mcmc_plot, '-b', label = 'MCMC - SF', linewidth = 2.0)
+        ax0.plot(x_plot,Q_model_mcmc_plot, '-r', label = 'MCMC - Q', linewidth = 2.0)
+        ax0.plot(x_plot,total_model_mcmc_plot, '-k', label = 'MCMC - Total', linewidth = 2.0)
+        ax0.set_xlabel('$log(M/M_{\odot})$',fontsize=20)
         ax0.set_xscale('linear')
         ax0.minorticks_on()
         ax0.set_xlim(7,12.5)
         ax0.set_yscale('log')
-        ax0.set_ylim(6e-5,0.5)
+        ax0.set_ylim(5e-4,0.7)
         ax0.minorticks_on()
         ax0.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=False,labelsize=18)
         ax0.yaxis.set_label_position("left")
-        ax0.set_ylabel('???',fontsize=20)
+        ax0.set_ylabel('N density',fontsize=20)
         ax0.set_title('Cluster',fontsize=30)
+        SF_string = 'SF: $M^*$: %.3f'%SFM_star_mcmc+'; alpha: %.3f'%SFalpha_mcmc
+        Q_string = 'Q: $M^*$: %.3f'%QM_star_mcmc+'; alpha: %.3f'%Qalpha_mcmc
+        total_string = 'Total: $M^*$: %.3f'%TM_star_mcmc+'; alpha: %.3f'%Talpha_mcmc
+        ax0.text(7.05,9.5e-3,SF_string,color='b',fontsize='medium')
+        ax0.text(7.05,7e-3,Q_string,color='r',fontsize='medium')
+        ax0.text(7.05,5e-3,total_string,color='k',fontsize='medium')
         ax0.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'small')
         ax0.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
         #
@@ -1483,10 +1728,10 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
         ax2 = plt.subplot(gs[2])
         #plt.plot(SF_midbins,frac_smf[0],'.b',linewidth=0.5)
         #plt.plot(SF_midbins,frac_smf[1],'.r',linewidth=0.5)
-        ax2.errorbar(SF_midbins,quenched_fraction[0],yerr=quenched_err, fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5, ms=15)
+        ax2.errorbar(SF_midbins,quenched_fraction[0],yerr=quenched_fraction_err[0], fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, ms=15)
         #ax2.errorbar(SF_midbins,frac_smf[1],yerr=frac_error[1], fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
         ax2.set_xscale('linear')
-        ax2.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
+        ax2.set_xlabel('$log(M/M_{\odot})$',fontsize=20)
         ax2.set_xlim(7,12.5)
         ax2.set_yscale('linear')
         ax2.set_ylim(-0.1,1.1)
@@ -1497,32 +1742,33 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
         #
         ## FIELD
         ax1 = plt.subplot(gs[1])
-        ax1.errorbar(SF_midbins,SF_field_smf,yerr=SF_field_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
-        ax1.errorbar(Q_midbins,Q_field_smf,yerr=Q_field_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
-        ax1.errorbar(SF_midbins,total_field_smf,yerr=total_field_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
+        ax1.errorbar(SF_field_midbins,SF_field_smf,yerr=SF_field_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
+        ax1.errorbar(Q_field_midbins,Q_field_smf,yerr=Q_field_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
+        ax1.errorbar(SF_field_midbins,total_field_smf,yerr=total_field_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
         ## Plot Schechter fits:  (uncomment 5 hashtags when fits complete)
-        ######plt.plot(x_plot_Q,Q_model_ml_plot, ':r')
-        #####plt.plot(x_plot_Q,Q_model_mcmc_plot, '--r')
-        ######plt.plot(x_plot_SF,SF_model_ml_plot, ':c', label = 'Max. Likelihood', linewidth = 0.5)
-        #####plt.plot(x_plot_SF,SF_model_mcmc_plot, '--b', label = 'MCMC', linewidth = 0.5)
-        #####plt.plot(x_plot_T,T_model_mcmc_plot, 'k')
-        ax1.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
+        # ax1.plot(x_plot,SF_model_field_mcmc_plot, 'b')#, label = 'Max. Likelihood', linewidth = 0.5)
+        # ax1.plot(x_plot,Q_model_field_mcmc_plot_single, '-r', label = 'MCMC - Q', linewidth = 2.0)
+        # ax1.plot(x_plot,total_model_field_mcmc_plot, 'k')
+        ax1.plot(x_plot,SF_model_field_mcmc_plot_double, '-b')#, label = 'MCMC - Q', linewidth = 2.0)
+        ax1.plot(x_plot,Q_model_field_mcmc_plot_double, '-r')#, label = 'MCMC - Q', linewidth = 2.0)
+        ax1.plot(x_plot,total_model_field_mcmc_plot_double, '-k')#, label = 'MCMC - Q', linewidth = 2.0)
+        ax1.set_xlabel('$log(M/M_{\odot})$',fontsize=20)
         ax1.set_xscale('linear')
         ax1.minorticks_on()
         ax1.set_xlim(7,12.5)
         ax1.set_yscale('log')
-        #ax1.set_ylim(6e-5,0.5)
+        ax1.set_ylim(1e-6,1.2)
         ax1.minorticks_on()
         ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True,labelleft=False,labelbottom=False,labelsize=18)
         ax1.yaxis.set_label_position("right")
-        ax1.set_ylabel('???',fontsize=25)
+        ax1.set_ylabel('PHI [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
         ax1.set_title('Field',fontsize=30)
         #ax3.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
         ax1.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
         #
         ## field fraction
         ax3 = plt.subplot(gs[3])
-        ax3.errorbar(SF_midbins,quenched_fraction[1],yerr=quenched_err, fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+        ax3.errorbar(SF_midbins,quenched_fraction[1],yerr=quenched_fraction_err[1], fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, ms=15)
         #ax2.errorbar(SF_midbins,frac_smf[1],yerr=frac_error[1], fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
         ax3.set_xscale('linear')
         ax3.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
@@ -1542,43 +1788,10 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
 #
 #
 #
-####
-## THIS IS WHERE I'M AT
-####
 #
 #
 #
 #
-#
-#
-#SF_uvc, mass_bins = np.histogram(SF_field_uvc_list, bins=num_bins,range=range2)
-#Q_uvc, mass_bins = np.histogram(Q_field_uvc_list, bins=num_bins,range=range2)
-#total_uvc = SF_uvc + Q_uvc
-# #
-# SF_uvc_error = np.sqrt(SF_field_smf_UVC)
-# Q_uvc_error = np.sqrt(Q_field_smf_UVC)
-# total_uvc_error = np.sqrt(total_field_smf_UVC)
-# #
-# fig = plt.figure()
-# string = 'UltraVISTA field SMF: %s'%np.round(z_field_bounds[0],decimals=2),' < z < %s'%np.round(z_field_bounds[1],decimals=2)
-# fig.suptitle(string, fontsize=30)
-# ax = fig.add_subplot(1, 1, 1)
-# ax.errorbar(SF_midbins,SF_field_smf_UVC,yerr=SF_uvc_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
-# ax.errorbar(Q_midbins,Q_field_smf_UVC,yerr=Q_uvc_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
-# ax.errorbar(SF_midbins,total_field_smf_UVC,yerr=total_uvc_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
-# ax.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
-# ax.set_xscale('linear')
-# ax.minorticks_on()
-# ax.set_xlim(7,12.5)
-# ax.set_yscale('log')
-# #ax.set_ylim(6e-5,0.5)
-# ax.minorticks_on()
-# ax.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=True,labelsize=18)
-# ax.yaxis.set_label_position("left")
-# ax.set_ylabel('???',fontsize=20)
-# ax.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
-# ax.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
-# #
 #
 #
 #
@@ -1857,4 +2070,5 @@ if where_im_at_flag == 1:
     #
     #
     #
+print('"master_smfz_9_final.py" terminated successfully.')
 #
