@@ -101,7 +101,7 @@ diag_flag = 1
 diag_flag_1 = 1           # display cluster stats and comparison w/ "master_data*.py" analysis;
 diag_flag_2 = 1           # display result: limiting mag, limiting mass, magnitude of object chosen as limiting mass
 diag_flag_3 = 0           # prints the indices of objects w/ "NaN" mass estimates;
-diag_flag_4 = 1           # Count galaxies sorted through at each step of initial 'for' loop
+diag_flag_4 = 0           # Count galaxies sorted through at each step of initial 'for' loop
 diag_flag_5 = 0           # AVAILABLE
 #
 plot_flag_1 = 0           # produce Fig.1: mass vs mag for 1 cluster at a time (plots 6 figures total);

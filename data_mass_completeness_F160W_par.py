@@ -406,18 +406,18 @@ if summary_flag == 1 or adams_flag == 1:
     #
     #
     #
-    ## Summarize limiting mass calculation in table for CLUSTER MEMBERS
-    lim_mass_member_par_names = Column(['Members ("master_parallel*.py")','Phot Members','Spec Members','Outside Phot. Parent Sample','Bad flag (!=0)','Bad flux (F160W<0)','Mass = NaN','SUM'],name='Property')
-    col_names = cluster_names_par
-    lim_member_mass_par0 = Column([np.sum([np.sum(count_field_sample)]),np.sum(mag_phot2_par),np.sum(mag_spec2_par),np.sum(outside_parent_sample_par),np.sum(bad_flag2_par),np.sum(bad_flux2_par),np.sum(count_nans2_par),np.sum([mag_phot2_par,mag_spec2_par,bad_flag2_par,bad_flux2_par,count_nans2_par])],name='Total')  # total column
-    lim_mass_member_par_stats = Table([lim_mass_member_par_names,lim_member_mass_par0])
-    for ii in range(len(mag_phot1_par)):
-        lim_mass_member_par_col = Column([np.sum([np.sum(count_field_sample_type[0][ii]),np.sum(count_field_sample_type[1][ii])]),mag_phot2_par[ii],mag_spec2_par[ii],outside_parent_sample_par[ii],bad_flag2_par[ii],bad_flux2_par[ii],count_nans2_par[ii],np.sum([mag_phot2_par[ii],mag_spec2_par[ii],bad_flag2_par[ii],bad_flux2_par[ii],count_nans2_par[ii],outside_parent_sample_par[ii]])],name=col_names[ii])               # cluster columns
-        lim_mass_member_par_stats.add_column(lim_mass_member_par_col)
-    #
-#
+#     ## Summarize limiting mass calculation in table for CLUSTER MEMBERS
+#     lim_mass_member_par_names = Column(['Members ("master_parallel*.py")','Phot Members','Spec Members','Outside Phot. Parent Sample','Bad flag (!=0)','Bad flux (F160W<0)','Mass = NaN','SUM'],name='Property')
+#     col_names = cluster_names_par
+#     lim_member_mass_par0 = Column([np.sum([np.sum(count_field_sample)]),np.sum(mag_phot1_par),np.sum(mag_spec1_par),np.sum(outside_parent_sample_par),np.sum(bad_flag1_par),np.sum(bad_flux1_par),np.sum(count_nans1_par),np.sum([mag_phot1_par,mag_spec1_par,bad_flag1_par,bad_flux1_par,count_nans1_par])],name='Total')  # total column
+#     lim_mass_member_par_stats = Table([lim_mass_member_par_names,lim_member_mass_par0])
+#     for ii in range(len(mag_phot1_par)):
+#         lim_mass_member_par_col = Column([np.sum([np.sum(count_field_sample_type[0][ii]),np.sum(count_field_sample_type[1][ii])]),mag_phot1_par[ii],mag_spec1_par[ii],outside_parent_sample_par[ii],bad_flag1_par[ii],bad_flux1_par[ii],count_nans1_par[ii],np.sum([mag_phot1_par[ii],mag_spec1_par[ii],bad_flag1_par[ii],bad_flux1_par[ii],count_nans1_par[ii],outside_parent_sample_par[ii]])],name=col_names[ii])               # cluster columns
+#         lim_mass_member_par_stats.add_column(lim_mass_member_par_col)
+#     #
+# #
     print('\nFull CATALOGUE - PAR - breakdown\n%s'%lim_mass_par_stats)
-    print('\nMember sample - PAR - breakdown\n%s'%lim_mass_member_par_stats)
+    # print('\nMember sample - PAR - breakdown\n%s'%lim_mass_member_par_stats)
 #
 #
 #
