@@ -130,7 +130,7 @@ project_diagnostic_flag = 2        # 0=off, turn OFF ALL diagnostic flags in all
 #
 ## PROJECT VARIATIONAL ANALYSIS FLAG
 project_master_variational_flag = 0        # 0=off, don't perform variational analaysis;  1=on, do it. the analysis may also be turned on/off within "master_data*.py"
-diagnostic_round_flag = 2                  # variational analysis performed in 2 rounds: 1st round (flag==1) DEPRECATED; 2nd round (flag==2), compare sort results as you like
+diagnostic_round_flag = 2                  # variational analysis performed in 2 rounds: 1st round (flag==1) DEPRECATED; 2nd round (flag==2), compare/sort results as you like
 #
 #
 ## PROJECT PLOT FLAG
@@ -142,7 +142,7 @@ project_plot_flag = 2        # 0=off, make no figures;  1=on, make all figures; 
 #
 section_1_flag = 1                 # HFF cluster catalogue data prep
 section_2_flag = 1                 # HFF parallel field catalogue data prep
-section_3_flag = 1                 # limiting mass
+section_3_flag = 0                 # limiting mass # DEPRECATED: now called in "master_data*.py"
 section_4_flag = 1                 # import UltraVISTA catalogue for Field SMF
 section_5_flag = 0                 # z-plots
 section_6_flag = 0                 # UVJ diagram
@@ -151,11 +151,11 @@ section_8_flag = 1                 # SMF
 #
 ## Update the user on what this program will run
 #
-## MAY NEED TO EDIT: choose the filter in which to determine limiting mass
+## MAY NEED TO EDIT: choose the filter in which to determine limiting mass; DEPRECATED: SHOULD ALWAYS BE SET TO ==1
 limiting_mass_flag = 1             #   1 = F160W+F814W;   2 = F814W
 #
 ## MAY NEED TO EDIT: choose whether to enter the MCMC simulation
-mcmc_flag = 1             #   0 = off - skip sim;   1 = on - perform MCMC sim & Exit program;
+mcmc_flag = 0             #   0 = off - skip sim;   1 = on - perform MCMC sim & Exit program;
 ## Update the user on what this program will run
 #
 print('"main_project_file.py" will run the following:')

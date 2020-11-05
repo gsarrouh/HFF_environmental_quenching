@@ -719,14 +719,14 @@ counting_array = np.array([0]*10)
 ## isolate all galaxies (SF & Q) in the redshift range 0.3 < z < 0.55, for the field sample of the SMF
 for counter in range(len(master_cat_par)):
     counting_array[0]+=1
-    if master_cat_par['sub'][counter] == 1 or master_cat_par['sub'][counter] == 2:
+    if master_cat_par['sub'][counter] == 1 or master_cat_par['sub'][counter] == 2:          # (spec+phot) & (phot only) subsamples
         if master_cat_par['member'][counter] == 1:                 # member=1: preliminary member of FIELD SAMPLE
             counting_array[1]+=1
             for cluster in range(len(count_field_sample_type[0])):
                 if master_cat_par['cluster'][counter] == (cluster+1):                    # by cluster
                     counting_array[2]+=1
                     if master_cat_par['lmass'][counter] >= limiting_mass_par[cluster]:
-                        if master_cat_par['type'][counter] == 1:
+                        if master_cat_par['type'][counter] == 1:                        # SF
                             counting_array[3]+=1# SF
                             SF_field_par_list[cluster].append(master_cat_par['lmass'][counter])
                             count_field_sample_mem[0][cluster]+=1

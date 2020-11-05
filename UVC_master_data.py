@@ -69,7 +69,7 @@ if time_flag == 1:
 ## DEFINITIONS
 #
 ## MAY NEED TO EDIT
-limiting_mass_uvc = 9.5
+limiting_mass_uvc = 9.0
 #
 ## FLAGS !!!
 ## MAY NEED TO EDIT
@@ -306,8 +306,8 @@ print('\n"UVC_master_data.py" Section 3 complete.')
 #
 ### TEMPORARY
 #
-num_points = int((round((range2[1]-range2[0])/bin_width))+1)       # compute # of data points;  bin_width set in "main_project_file.py"
-num_bins = np.linspace(range2[0],range2[1],num_points)#
+# num_points = int((round((range2[1]-range2[0])/bin_width))+1)       # compute # of data points;  bin_width set in "main_project_file.py"; range2 set in 'data_mass_completeness*.py'
+# num_bins = np.linspace(range2[0],range2[1],num_points)#
 
 #
 ## TIME_FLAG END

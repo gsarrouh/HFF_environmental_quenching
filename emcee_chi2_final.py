@@ -42,7 +42,7 @@ import corner
 ######
 #
 SF_flag = 1          # star-forming population
-Q_flag = 1           # Q pop
+Q_flag = 0           # Q pop
 T_flag = 1           # total pop
 #
 field_flag = 1              # 0 = off, fit CLUSTER SMFs; 1 = on, fit FIELD SMFs
@@ -50,6 +50,7 @@ field_flag = 1              # 0 = off, fit CLUSTER SMFs; 1 = on, fit FIELD SMFs
 #
 #### MISCELANEOUS Section: if fitting the field population, rename the arrays so you don't have to change the rest of the coded
 if field_flag == 1:
+    SF_midbins = SF_field_midbins
     SF_smf = SF_field_smf
     SF_error = SF_field_error
     Q_smf = Q_field_smf
@@ -62,7 +63,7 @@ if field_flag == 1:
 ######
 #
 # initialize walkers
-ndim, nwalkers, max_nsteps = 3, 100, 5000    # (# of parameters), (#walkers), (#steps/walker)
+ndim, nwalkers, max_nsteps = 3, 5000, 20000    # (# of parameters), (#walkers), (#steps/walker)
 #
 #
 labels = ["M*","phi","alpha"]
@@ -231,7 +232,7 @@ if Q_flag ==1:
     Q_nll = lambda *args: -lnlike(*args)       # single schechter fit - Q
     #
     ## fits to a single curve
-    Qresult = op.minimize(Q_nll,[M_star_guess, phi_guess, alpha_guess], args=(Q_midbins_mcmc, Q_smf_mcmc, Q_error_mcmc))#, method='Nelder-Mead')
+    Qresult = op.minimize(Q_nll,[M_star_guess, phi_guess, alpha_guess], args=(Q_midbins_mcmc, Q_smf_mcmc, Q_error_mcmc), method='Nelder-Mead')
     QM_ml, Qphi_ml, Qalpha_ml = Qresult['x']
     #
     print("\nQResult - max. likelihood:")
@@ -246,7 +247,7 @@ if T_flag ==1:
     T_nll = lambda *args: -lnlike(*args)       # single schechter fit - total
     #
     ## fits to a single curve
-    Tresult = op.minimize(T_nll,[M_star_guess, phi_guess, alpha_guess], args=(Q_midbins_mcmc, total_smf, total_error))#, method='Nelder-Mead')
+    Tresult = op.minimize(T_nll,[M_star_guess, phi_guess, alpha_guess], args=(Q_midbins_mcmc, total_smf, total_error), method='Nelder-Mead')
     TM_ml, Tphi_ml, Talpha_ml = Tresult['x']
     #
     print("\nTResult - max. likelihood:")
@@ -525,7 +526,10 @@ if T_flag ==1:
     #
     # Set up the backend
     # Don't forget to clear it in case the file already exists
-    filename = '/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/smf_fits/binning_method_%i'%membership_correction_binning_flag+'/total_smf.h5'
+    if field_flag == 0:
+        filename = '/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/smf_fits/binning_method_%i'%membership_correction_binning_flag+'/total_smf.h5'
+    elif field_flag == 1:
+        filename = '/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/smf_fits/binning_method_%i'%membership_correction_binning_flag+'/total_field_smf.h5'
     backend = emcee.backends.HDFBackend(filename)
     backend.reset(nwalkers, ndim)
     #
