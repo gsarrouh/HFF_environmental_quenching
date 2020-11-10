@@ -33,7 +33,7 @@
 #
 ## FILTER 4 - 'member': :   identifies type of data each object has
 ## NOTE: this designation is for objects with phot only (sub =2) and spec&phot (sub=1) only, as membership determinaion requires a good 'z_phot' estimate; "member=0" is reserved for galaxies with 0.3 < z < 0.55; "member=1" for all others
-## 0: available
+## 0: too close to cluster
 ## 1: secure field sample member         <-- this comprises the sample of field of the SMF
 ## 2: redshift outside field sample range
 ## 3: redshift within range, but galaxy below limiting mass of parallel field
@@ -448,13 +448,13 @@ phot_subsample_par = np.array([0]*6)   # to track objects w/ ONLY PHOT
 skipped_delz_par = np.array([0]*6)     # to track all other objects
 #
 for counter in range(len(master_cat_par)):
-    if master_cat_par['sub'][counter] == 1:   # sub=1 identifies spec&phot subsample
+    if master_cat_par['sub'][counter] == 1 or master_cat_par['sub'][counter] == 2:   # sub=1 identifies spec&phot subsample
         master_cat_par['del_z'][counter] = ((master_cat_par['z_peak'][counter] - master_cat_par['z_spec'][counter]) / (1 + master_cat_par['z_spec'][counter]))
-        #for ii in range(len(z_cluster)):
-        #    if master_cat['cluster'][counter] == (ii+1):
+        for ii in range(len(z_cluster)):
+           if master_cat_par['cluster'][counter] == (ii+1):
         #        spec_subsample[ii]+=1
         #        master_cat['z_clusterspec'][counter] = ((master_cat['z_spec'][counter] - z_cluster[ii]) / (1 + master_cat['z_spec'][counter]))
-        #        master_cat['z_clusterphot'][counter] = ((master_cat['z_peak'][counter] - z_cluster[ii]) / (1 + master_cat['z_peak'][counter]))
+               master_cat_par['z_clusterphot'][counter] = ((master_cat_par['z_peak'][counter] - z_cluster[ii]) / (1 + master_cat_par['z_peak'][counter]))
     #elif master_cat['sub'][counter] == 2:   # sub=2 identifies phot-only subsample
     #    for ii in range(len(z_cluster)):
     #        if master_cat['cluster'][counter] == (ii+1):
@@ -629,34 +629,47 @@ count_field_sample = 0
 count_field_sample_type = np.array([[0]*6]*2)      # row1=SF;  row2=Q, by cluster
 count_not_in_field_sample = np.array([0]*6)
 count_not_in_parent_sample = np.array([0]*6)
-outliers_par = np.array([0]*6)
+stars_outliers_par = np.array([0]*6)
+too_close_to_cluster = np.array([0]*6)
 #
 ## isolate all galaxies (SF & Q) in the redshift range 0.3 < z < 0.55, for the field sample of the SMF
 for counter in range(len(master_cat_par)):
-    for ii in range(len(count_field_sample_type[0])):
-        if master_cat_par['cluster'][counter] == (ii+1):
-            a[ii]+=1
-    if master_cat_par['sub'][counter] == 1 or master_cat_par['sub'][counter] == 2:  # only look at Parent sample (spec+phot & phot_only)
-        if master_cat_par['z_peak'][counter] < z_field_bounds[1] and master_cat_par['z_peak'][counter] > z_field_bounds[0]:
-            master_cat_par['member'][counter] = 1                                   # member=1: preliminary member of FIELD SAMPLE
-            count_field_sample+=1
+    # for ii in range(len(count_field_sample_type[0])):
+    #     if master_cat_par['cluster'][counter] == (ii+1):
+    #         a[ii]+=1
+    if master_cat_par[counter]['type'] == 0 or master_cat_par[counter]['type'] ==3: #skip stars and outliers
+        for ii in range(len(count_field_sample_type[0])):
+            if master_cat_par['cluster'][counter] == (ii+1):
+                stars_outliers_par[ii]+=1               # this cut does nothing
+        # pass
+    elif master_cat_par['sub'][counter] == 1 or master_cat_par['sub'][counter] == 2:  # only look at Parent sample (spec+phot & phot_only)
+        if abs(master_cat_par[counter]['z_clusterphot']) > z_cutoff_field[1]:     # identify field galaxies
+            if master_cat_par['z_peak'][counter] < z_field_bounds[1] and master_cat_par['z_peak'][counter] > z_field_bounds[0]:
+                master_cat_par['member'][counter] = 1                                   # member=1: preliminary member of FIELD SAMPLE
+                count_field_sample+=1
+                for ii in range(len(count_field_sample_type[0])):
+                    if master_cat_par['cluster'][counter] == (ii+1):                    # by cluster
+                        if master_cat_par['type'][counter] == 1:                        # SF
+                            count_field_sample_type[0][ii]+=1
+                        elif master_cat_par['type'][counter] == 2:                      # Q
+                            count_field_sample_type[1][ii]+=1
+                        else:
+                            stars_outliers_par[ii]+=1
+                        #####
+                ########
+            ####
+        #####
+            elif master_cat_par['z_peak'][counter] > z_field_bounds[1] or master_cat_par['z_peak'][counter] < z_field_bounds[0]:
+                master_cat_par['member'][counter] = 2                                   # member=2: redshift outside of field sample
+                for ii in range(len(count_not_in_field_sample)):
+                    if master_cat_par['cluster'][counter] == (ii+1):                    # by cluster
+                        count_not_in_field_sample[ii]+=1
+
+        else:
             for ii in range(len(count_field_sample_type[0])):
-                if master_cat_par['cluster'][counter] == (ii+1):                    # by cluster
-                    if master_cat_par['type'][counter] == 1:                        # SF
-                        count_field_sample_type[0][ii]+=1
-                    elif master_cat_par['type'][counter] == 2:                      # Q
-                        count_field_sample_type[1][ii]+=1
-                    else:
-                        outliers_par[ii]+=1
-                    #####
-            ########
-        ####
-    #####
-        elif master_cat_par['z_peak'][counter] > z_field_bounds[1] or master_cat_par['z_peak'][counter] < z_field_bounds[0]:
-            master_cat_par['member'][counter] = 2                                   # member=2: redshift outside of field sample
-            for ii in range(len(count_not_in_field_sample)):
-                if master_cat_par['cluster'][counter] == (ii+1):                    # by cluster
-                    count_not_in_field_sample[ii]+=1
+                if master_cat_par['cluster'][counter] == (ii+1):
+                    too_close_to_cluster[ii]+=1
+                    master_cat_par['member'][counter] = 0
     else:
         for ii in range(len(count_not_in_field_sample)):
             if master_cat_par['cluster'][counter] == (ii+1):                    # by cluster
@@ -664,18 +677,26 @@ for counter in range(len(master_cat_par)):
 #
 #
 #
+aa=np.array([0]*2)
+for counter in range(len(master_cat_par)):
+    if master_cat_par['member'][counter] == 1:
+        aa[0]+=1
+    elif master_cat_par['member'][counter] == 0:
+        aa[1]+=1
+print('Total field members found in PAR: %i'%aa[0])
+print('Total Too Clsoe To Cluster in PAR: %i'%aa[1])
 #
 ## SECTION (4.1): SUMMARY table
 ##  summarize data MEMBER population as segregated above, and display in a table
 #
 if summary_flag_4 == 1 or adams_flag == 1:
     ## Summarize initial data stats in table
-    mem_par_names = Column(['Total catalogue (PAR)','Field mem','Mem - SF','Mem - Q','Mem - Outliers','NIFS','NIPS','SUM'],name='Property')
+    mem_par_names = Column(['Total catalogue (PAR)','Field mem','Mem - SF','Mem - Q','Stars & Outliers','TCTC','NIFS','NIPS','SUM'],name='Property')
     col_names = cluster_names_par
-    mem_par0 = Column([len(master_cat_par),count_field_sample,np.sum(count_field_sample_type[0]),np.sum(count_field_sample_type[1]),np.sum(outliers_par),np.sum(count_not_in_field_sample),np.sum(count_not_in_parent_sample),np.sum([np.sum(outliers_par),np.sum(count_field_sample_type),np.sum(count_not_in_field_sample),np.sum(count_not_in_parent_sample)])],name='Total')  # total column
+    mem_par0 = Column([len(master_cat_par),count_field_sample,np.sum(count_field_sample_type[0]),np.sum(count_field_sample_type[1]),np.sum(stars_outliers_par),np.sum(too_close_to_cluster),np.sum(count_not_in_field_sample),np.sum(count_not_in_parent_sample),np.sum([np.sum(stars_outliers_par),count_field_sample,np.sum(count_not_in_field_sample),np.sum(count_not_in_parent_sample),np.sum(too_close_to_cluster)])],name='Total')  # total column
     mem_par_stats = Table([mem_par_names,mem_par0])
     for ii in range(len(spec_only_par)):
-        mem_par_col = Column([a[ii],(count_field_sample_type[0][ii]+count_field_sample_type[1][ii]),count_field_sample_type[0][ii],count_field_sample_type[1][ii],outliers_par[ii],count_not_in_field_sample[ii],count_not_in_parent_sample[ii],np.sum([count_field_sample_type[0][ii],count_field_sample_type[1][ii],count_not_in_field_sample[ii],count_not_in_parent_sample[ii],outliers_par[ii]])],name=col_names[ii])
+        mem_par_col = Column([a[ii],(count_field_sample_type[0][ii]+count_field_sample_type[1][ii]),count_field_sample_type[0][ii],count_field_sample_type[1][ii],stars_outliers_par[ii],too_close_to_cluster[ii],count_not_in_field_sample[ii],count_not_in_parent_sample[ii],np.sum([count_field_sample_type[0][ii],count_field_sample_type[1][ii],count_not_in_field_sample[ii],too_close_to_cluster[ii],count_not_in_parent_sample[ii],stars_outliers_par[ii]])],name=col_names[ii])
         mem_par_stats.add_column(mem_par_col)  # add columns to table one cluster at a time
     #
     print('\nSummary Table 4 - Catalogue by MEMBER (PAR):\n%s'%mem_par_stats,'\nNOTE: "LBLM": Lost Below Limiting Mass of parallel field.\nNOTE: "NIFS": Not In Field Sample (i.e. z>~0.6 or z<~0.25)')
