@@ -58,18 +58,18 @@ if field_flag == 1:
     # total_smf = total_field_smf
     # total_error = total_field_error
     # SF_midbins = SF_field_midbins
-    SF_smf = SF_field_smf_UVC
-    SF_error = SF_field_smf_relerr_UVC * SF_field_smf_UVC
-    Q_smf = Q_field_smf_UVC
-    Q_error = Q_field_smf_relerr_UVC * Q_field_smf_UVC
+    SF_smf = SF_field_smf_HFF
+    SF_error = SF_field_smf_relerr_HFF * SF_field_smf_HFF
+    Q_smf = Q_field_smf_HFF
+    Q_error = Q_field_smf_relerr_HFF * Q_field_smf_HFF
     #total_smf = SF_field_smf_UVC + Q_field_smf_UVC
     #total_error = total_field_error
     #
-    SF_midbins = np.delete(SF_midbins,[0,1,2,3])
-    SF_smf = np.delete(SF_smf,[0,1,2,3])
-    SF_error = np.delete(SF_error,[0,1,2,3])
-    Q_smf = np.delete(Q_smf,[0,1,2,3])
-    Q_error = np.delete(Q_error,[0,1,2,3])
+    # SF_midbins = np.delete(SF_midbins,[0,1,2,3])
+    # SF_smf = np.delete(SF_smf,[0,1,2,3])
+    # SF_error = np.delete(SF_error,[0,1,2,3])
+    # Q_smf = np.delete(Q_smf,[0,1,2,3])
+    # Q_error = np.delete(Q_error,[0,1,2,3])
     #total_smf = np.delete(total_smf,[0,1,2,3])
     #total_error = np.delete(total_error,[0,1,2,3])
 #
