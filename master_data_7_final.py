@@ -61,17 +61,18 @@
 ###        and MEAN of |del_z|.
 ### (3)    distinguish b/w SF/Q: apply TYPE FILTER
 ### (3.1)  add DIAG_FLAG_3: summarize in table "type_stats"
-### (4)    make membership cuts to spec samples (i.e. apply MEMBER FILTER),
+### (4)    make MEMBERSHIP cuts to SPEC samples (i.e. apply MEMBER FILTER),
 ###        add DIAG_FLAG_4: apply VARIATIONAL DIAGNOSTIC ANALYSIS to test
 ###        different redshift cutoff (OUTPUT FILE: /Research/NSERC_2017_HFF/nserc17/HFF_ToAdamFinal/working_data/section_4_false_pos_neg_redshift_cuts_*.txt)
 ###        *** this section calls: "data_mass_completeness*.py" &
 ###        "spec_completeness_binning*.py";
 ###        NOTE: DIAG_FLAG_4 must equal 0 to proceed beyond this point
 ### (4.1)  add DIAG_FLAG_5: summarize in table "SF_spec_stats" & "Q_spec_stats"
-### (5)    make membership cuts to phot samples
+### (5)    make MEMBERSHIP cuts to PHOT samples
 ### (5.1)  add DIAG_FLAG_6: summarize in table "SF_phot_stats" & "Q_phot_stats"
-### (6)    setup lists for SF/Q field sample;
-### (7)    check for brightest Cluster Galaxies (bCGs) in the catalogue;
+### (6)    determine LIMITING MASS; main file "data_mass_completeness*.py"
+### (7)    setup FIELD LISTS for SF/Q field sample;
+### (8)    check for brightest Cluster Galaxies (bCGs) in the catalogue;
 ###        add DIAG_FLAG_7: report # of bCGs identified/removed/added
 #
 ### PROGRAM END
@@ -1109,9 +1110,21 @@ if summary_flag_6 == 1 or adams_flag == 1:
 #
 #
 #
-## SECTION (6): FIELD sample
 #
-print('\n"master_data*.py" Section 6: field sample tracking...')
+#
+## SECTION (6): determine limiting mass
+#
+print('\n"master_data*.py" Section 6: determining LIMITING MASS...')
+#
+#
+exec(open('data_mass_completeness_F160W.py').read())      #opens and executes the script
+#
+#
+#
+#
+## SECTION (7): FIELD sample
+#
+print('\n"master_data*.py" Section 7: field sample tracking...')
 #
 #
 SF_field_list = [ [],[],[],[],[],[] ]
@@ -1137,9 +1150,9 @@ print('Difference: %s'%(np.sum([field_phot,field_spec])-np.sum(counting_array_fi
 #
 #
 #
-## SECTION (7): BCGs. Brightest Cluster Galaxies (BCGs) need to be taken out of the cluster sample as they are unique to overly dense environments and so lack a counterpart in the field against which to make a fair comparison. as such, we remove them from our sample before making the SMF
+## SECTION (8): BCGs. Brightest Cluster Galaxies (BCGs) need to be taken out of the cluster sample as they are unique to overly dense environments and so lack a counterpart in the field against which to make a fair comparison. as such, we remove them from our sample before making the SMF
 #
-print('\n"master_data*.py" Section 7: search for BCGs beginning...')
+print('\n"master_data*.py" Section 8: search for BCGs beginning...')
 #
 #
 ## TIME_FLAG_6 START
