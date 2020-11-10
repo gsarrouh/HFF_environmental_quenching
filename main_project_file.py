@@ -90,6 +90,11 @@ if project_time_flag == 1:
 ## USER INPUTS
 ## MAY NEED TO EDIT: hard code the cluster membership definition cuts if not running Variational Analysis
 #
+range2_flag = 0            # 0==off, range of SMF set by lowest limiting mass / highest-mass object; 1==on, limits defined by user below
+#
+if range2_flag == 1:
+    range2 = [8.0,12.2]
+#
 z_cutoff_field = [0.05,0.1]    # same but for definition of "field" galaxies
 bin_width = 0.4  # of the SMF, in dex
 #
@@ -142,7 +147,7 @@ project_plot_flag = 2        # 0=off, make no figures;  1=on, make all figures; 
 #
 section_1_flag = 1                 # HFF cluster catalogue data prep
 section_2_flag = 1                 # HFF parallel field catalogue data prep
-section_3_flag = 0                 # limiting mass # DEPRECATED: now called in "master_data*.py"
+section_3_flag = 0                 # limiting mass # DEPRECATED: now called in "master_data*.py"; s/b set to == 0
 section_4_flag = 1                 # import UltraVISTA catalogue for Field SMF
 section_5_flag = 0                 # z-plots
 section_6_flag = 0                 # UVJ diagram
@@ -151,12 +156,20 @@ section_8_flag = 1                 # SMF
 #
 ## Update the user on what this program will run
 #
-## MAY NEED TO EDIT: choose the filter in which to determine limiting mass; DEPRECATED: SHOULD ALWAYS BE SET TO ==1
-limiting_mass_flag = 1             #   1 = F160W+F814W;   2 = F814W
+## MAY NEED TO EDIT: choose the filter in which to determine limiting mass
+limiting_mass_flag = 1             #   1 = F160W+F814W;   2 = F814W; DEPRECATED: SHOULD ALWAYS BE SET TO ==1
+lim_mass_offset_flag = 0           #   0 = off, do not apply offset; 1 = on, apply (F160W - F180W) offset
 #
 ## MAY NEED TO EDIT: choose whether to enter the MCMC simulation
-mcmc_flag = 0             #   0 = off - skip sim;   1 = on - perform MCMC sim & Exit program;
+mcmc_flag = 1             #   0 = off - skip sim;   1 = on - perform MCMC sim & Exit program;
+mcmc_field_flag = 1         # 0 = off - fit cluster SMFs;   1 = on - fit field SMFs
 ## Update the user on what this program will run
+#
+## MAY NEED TO EDIT: choose if you want to include in the field sample galaxies drawn from the HFF cluster images (outside the redshift range of the image's respective cluster)
+cluster_field_inclusion_flag = 0            # 0 == off (NO), do NOT include galaxies from cluster images; 1 == on (YES), include them
+#
+#
+## Update the user on which programs will be run
 #
 print('"main_project_file.py" will run the following:')
 #
@@ -191,8 +204,23 @@ if section_7_flag == 1:
 #
 if section_8_flag == 1:
     print('Section 8: Produce SMF ("master_smf*.py")')
-    if mcmc_flag == 1:
-        print('MCMC simulation will be performed, and then Exit.')
+    print('Notes:\n')
+    if lim_mass_offset_flag == 0:
+        print('(F160W - F814W) offset: OFF')
+    elif lim_mass_offset_flag == 1:
+        print('(F160W - F814W) offset: ON')
+    if cluster_field_inclusion_flag == 0:
+        print('Field SMF: PAR ONLY')
+    elif cluster_field_inclusion_flag == 1:
+        print('Field SMF: CLU + PAR')
+    if mcmc_flag == 0:
+        print('MCMC simulation: OFF')
+    elif mcmc_flag == 1:
+        print('MCMC simulation: ON')
+        if mcmc_field_flag == 0:
+            print('MCMC simulation will fit the CLUSTER SMFs.')
+        elif mcmc_field_flag == 1:
+            print('MCMC simulation will fit the FIELD SMFs.')
 #
 ## SECTION (1): main DATA preparation file; imports raw data, sorts it by data type (i.e. photometric/spectroscopic data, stars, etc...), and classifies all galaxies with good photometric redshift estimates as Star-Forming (SF) or Quiescent (Q); it then runs a VARIATIONAL ANALYSIS to determine optimal redshift definitions (redshift "cuts") for cluster membership, based on which cuts yield an equal number of false positives/negatives in each mass bin; executes redshift cuts, classifies SF/Q galaxies as either cluster members, false pos/neg, or field galaxy; and finally, checks the catalogue for Brightest Cluster Galaxies (bCGs); MAIN program: master_data_7_final.py; SUB-programs: spec_completeness_binning.py, correction_factors.py;
 
