@@ -42,14 +42,14 @@ import corner
 ######
 #
 SF_flag = 1          # star-forming population
-Q_flag = 0           # Q pop
+Q_flag = 1           # Q pop
 T_flag = 1           # total pop
 #
-field_flag = 1              # 0 = off, fit CLUSTER SMFs; 1 = on, fit FIELD SMFs
+# field_flag = 0              # 0 = off, fit CLUSTER SMFs; 1 = on, fit FIELD SMFs
 #
 #
 #### MISCELANEOUS Section: if fitting the field population, rename the arrays so you don't have to change the rest of the coded
-if field_flag == 1:
+if mcmc_field_flag == 1:
     SF_midbins = SF_field_midbins
     SF_smf = SF_field_smf
     SF_error = SF_field_error
@@ -63,7 +63,7 @@ if field_flag == 1:
 ######
 #
 # initialize walkers
-ndim, nwalkers, max_nsteps = 3, 5000, 20000    # (# of parameters), (#walkers), (#steps/walker)
+ndim, nwalkers, max_nsteps = 3, 500, 10000    # (# of parameters), (#walkers), (#steps/walker)
 #
 #
 labels = ["M*","phi","alpha"]
@@ -199,9 +199,9 @@ if not check_folder:
 else:
     pass#print(output_dir, "\nfolder already exists.")
 #
-if field_flag == 0:
+if mcmc_field_flag == 0:
     f = open('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/smf_fits/binning_method_%i'%membership_correction_binning_flag+'/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_smf_fits.txt','w+')
-elif field_flag == 1:
+elif mcmc_field_flag == 1:
     f = open('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/smf_fits/binning_method_%i'%membership_correction_binning_flag+'/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_field_smf_fits.txt','w+')
 #
 #
@@ -340,21 +340,22 @@ if SF_flag ==1:
     ## create corner plots
     SFfig = corner.corner(SFsamples, labels=["$M^*$", "$\phi^*$", "alpha"])#  SF
     SFfig.suptitle('Star-forming')
-    if field_flag == 0:
+    if mcmc_field_flag == 0:
         plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_SF_corner.png')
-    elif field_flag == 1:
+    elif mcmc_field_flag == 1:
         plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_SF_field_corner.png')
     #
-    # initialize result arrays
-    SFresult_means = np.array([0]*ndim)
-    SFrestult_sigmas = np.array([0]*ndim)
+    # initialize result arrays - means
+    SFresult_means = np.array([0.]*ndim)
     SFresult_means = SFsamples.mean(axis=0)
-    SFresult_sigmas = SFsamples.std(axis=0)
+    # initialize result arrays - medians
+    SFresult_medians = np.array([0.]*ndim)
+    SFrestult_sigma_lower = np.array([0.]*ndim)
+    SFrestult_sigma_upper = np.array([0.]*ndim)
     #display results
     # SF
     print('SF result:')
     print('Means: ',SFresult_means)
-    print('Sigmas: ',SFresult_sigmas)
     #
     SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = SFsamples.mean(axis=0)
     #
@@ -367,8 +368,18 @@ if SF_flag ==1:
         txt = "\mathrm{{{3}}} = {0:.7f}_{{-{1:.7f}}}^{{{2:.7f}}}"
         txt = txt.format(mcmc[1], q[0], q[1], labels[i])
         display(Math(txt))
+        SFresult_medians[i] = mcmc[1]
+        SFrestult_sigma_lower[i] = q[0]
+        SFrestult_sigma_upper[i] = q[1]
+    #display results
+    # SF
+    print('SF result:')
+    print('Medians: ',SFresult_medians)
+    print('Sigma - lower bounds: ',SFrestult_sigma_lower)
+    print('Sigma - upper bounds: ',SFrestult_sigma_upper)
     #
-    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(np.round(SFM_star_mcmc,decimals=3))+delim+str(np.round(SFresult_sigmas[0],decimals=3))+delim+str(np.round(SFphi_mcmc,decimals=3))+delim+str(np.round(SFresult_sigmas[1],decimals=3))+delim+str(np.round(SFalpha_mcmc,decimals=3))+delim+str(np.round(SFresult_sigmas[2],decimals=3))
+    ## Print output to file
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(np.round(SFM_star_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[0],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[0],decimals=3))+delim+str(np.round(SFphi_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[1],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[1],decimals=3))+delim+str(np.round(SFalpha_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[2],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[2],decimals=3))
     writer = '%s'%str(bin_entry1)+'\n'
     f.write(writer)
     #
@@ -457,24 +468,24 @@ if Q_flag ==1:
     Qfig = corner.corner(Qsamples, labels=["$M^*$", "$\phi$", "alpha"])#, "$\phi^*_2$", "$\alpha_2$"])#  Q
     Qfig.suptitle('Quiescent')
     #
-    if field_flag == 0:
+    if mcmc_field_flag == 0:
         plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_Q_corner.png')
-    elif field_flag == 1:
+    elif mcmc_field_flag == 1:
         plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_Q_field_corner.png')
     #
-    # initialize result arrays
-    Qresult_means = np.array([0]*ndim)
-    Qrestult_sigmas = np.array([0]*ndim)
+    # initialize result arrays - means
+    Qresult_means = np.array([0.]*ndim)
     Qresult_means = Qsamples.mean(axis=0)
-    Qresult_sigmas = Qsamples.std(axis=0)
+    # initialize result arrays - medians
+    Qresult_medians = np.array([0.]*ndim)
+    Qrestult_sigma_lower = np.array([0.]*ndim)
+    Qrestult_sigma_upper = np.array([0.]*ndim)
     #display results
-    # SF
+    # Q
     print('Q result:')
     print('Means: ',Qresult_means)
-    print('Sigmas: ',Qresult_sigmas)
     #
     QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = Qsamples.mean(axis=0)
-    #
     #
     ## display result w/ 1-sigma uncertainty (16th, 50th, 86th percentiles)
     from IPython.display import display, Math
@@ -485,11 +496,30 @@ if Q_flag ==1:
         txt = "\mathrm{{{3}}} = {0:.7f}_{{-{1:.7f}}}^{{{2:.7f}}}"
         txt = txt.format(mcmc[1], q[0], q[1], labels[i])
         display(Math(txt))
+        Qresult_medians[i] = mcmc[1]
+        Qrestult_sigma_lower[i] = q[0]
+        Qrestult_sigma_upper[i] = q[1]
+    #display results
+    # Q
+    print('Q result:')
+    print('Medians: ',Qresult_medians)
+    print('Sigma - lower bounds: ',Qrestult_sigma_lower)
+    print('Sigma - upper bounds: ',Qrestult_sigma_upper)
     #
     #
     ## investigate movement of walkers
     plt.figure()
-    plt.plot(Tsampler.get_chain()[:, 0, 0], "k", lw=0.5)
+    plt.plot(Qsampler.get_chain()[:, 0, 0], "k", lw=0.5)
+    #plt.xlim(0, 5000)
+    #plt.ylim(-5.5, 5.5)
+    plt.title("move: StretchMove", fontsize=14)
+    plt.xlabel("step number")
+    plt.ylabel("x");
+    #
+    #
+    ## investigate movement of walkers
+    plt.figure()
+    plt.plot(SFsampler.get_chain()[:, 0, 0], "k", lw=0.5)
     #plt.xlim(0, 5000)
     #plt.ylim(-5.5, 5.5)
     plt.title("move: StretchMove", fontsize=14)
@@ -498,7 +528,8 @@ if Q_flag ==1:
     #
     #
     ## print OUTPUT to file
-    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(np.round(QM_star_mcmc,decimals=3))+delim+str(np.round(Qresult_sigmas[0],decimals=3))+delim+str(np.round(Qphi_mcmc,decimals=3))+delim+str(np.round(Qresult_sigmas[1],decimals=3))+delim+str(np.round(Qalpha_mcmc,decimals=3))+delim+str(np.round(Qresult_sigmas[2],decimals=3))
+    #
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(np.round(QM_star_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[0],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[0],decimals=3))+delim+str(np.round(Qphi_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[1],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[1],decimals=3))+delim+str(np.round(Qalpha_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[2],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[2],decimals=3))
     writer = '%s'%str(bin_entry1)+'\n'
     f.write(writer)
     #
@@ -526,9 +557,9 @@ if T_flag ==1:
     #
     # Set up the backend
     # Don't forget to clear it in case the file already exists
-    if field_flag == 0:
+    if mcmc_field_flag == 0:
         filename = '/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/smf_fits/binning_method_%i'%membership_correction_binning_flag+'/total_smf.h5'
-    elif field_flag == 1:
+    elif mcmc_field_flag == 1:
         filename = '/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/smf_fits/binning_method_%i'%membership_correction_binning_flag+'/total_field_smf.h5'
     backend = emcee.backends.HDFBackend(filename)
     backend.reset(nwalkers, ndim)
@@ -588,25 +619,25 @@ if T_flag ==1:
     Tfig = corner.corner(Tsamples, labels=["$M^*$", "$\phi^*$", "alpha"])#  total
     Tfig.suptitle('Total')
     #
-    if field_flag == 0:
+    if mcmc_field_flag == 0:
         plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_total_corner.png')
-    elif field_flag == 1:
+    elif mcmc_field_flag == 1:
         plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_total_field_corner.png')
     #
     #
-    # initialize result arrays
-    Tresult_means = np.array([0]*ndim)
-    Trestult_sigmas = np.array([0]*ndim)
+    # initialize result arrays - means
+    Tresult_means = np.array([0.]*ndim)
     Tresult_means = Tsamples.mean(axis=0)
-    Tresult_sigmas = Tsamples.std(axis=0)
+    # initialize result arrays - medians
+    Tresult_medians = np.array([0.]*ndim)
+    Trestult_sigma_lower = np.array([0.]*ndim)
+    Trestult_sigma_upper = np.array([0.]*ndim)
     #display results
     # SF
-    print('Total result:')
+    print('SF result:')
     print('Means: ',Tresult_means)
-    print('Sigmas: ',Tresult_sigmas)
     #
     TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = Tsamples.mean(axis=0)
-    #
     #
     ## display result w/ 1-sigma uncertainty (16th, 50th, 86th percentiles)
     from IPython.display import display, Math
@@ -617,6 +648,15 @@ if T_flag ==1:
         txt = "\mathrm{{{3}}} = {0:.7f}_{{-{1:.7f}}}^{{{2:.7f}}}"
         txt = txt.format(mcmc[1], q[0], q[1], labels[i])
         display(Math(txt))
+        Tresult_medians[i] = mcmc[1]
+        Trestult_sigma_lower[i] = q[0]
+        Trestult_sigma_upper[i] = q[1]
+    #display results
+    # SF
+    print('Total result:')
+    print('Medians: ',Tresult_medians)
+    print('Sigma - lower bounds: ',Trestult_sigma_lower)
+    print('Sigma - upper bounds: ',Trestult_sigma_upper)
     #
     #
     ## investigate movement of walkers
@@ -630,7 +670,8 @@ if T_flag ==1:
     #
     #
     ## print OUTPUT to file
-    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Total'+delim+str(np.round(TM_star_mcmc,decimals=3))+delim+str(np.round(Tresult_sigmas[0],decimals=3))+delim+str(np.round(Tphi_mcmc,decimals=3))+delim+str(np.round(Tresult_sigmas[1],decimals=3))+delim+str(np.round(Talpha_mcmc,decimals=3))+delim+str(np.round(Tresult_sigmas[2],decimals=3))
+    #
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Total'+delim+str(np.round(TM_star_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[0],decimals=3))+delim+str(np.round(Trestult_sigma_upper[0],decimals=3))+delim+str(np.round(Tphi_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[1],decimals=3))+delim+str(np.round(Trestult_sigma_upper[1],decimals=3))+delim+str(np.round(Talpha_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[2],decimals=3))+delim+str(np.round(Trestult_sigma_upper[2],decimals=3))
     writer = '%s'%str(bin_entry1)+'\n'
     f.write(writer)
     #
@@ -653,7 +694,7 @@ if T_flag ==1:
 f.close()
 #
 #
-print('\n\n"emcee_chi2*.py"  terminated successfully.\n')
+print('\n\n"emcee_chi2_final.py"  terminated successfully.\n')
 #
 #
 #
