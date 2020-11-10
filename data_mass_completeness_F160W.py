@@ -170,7 +170,13 @@ for ii in range(len(limiting_mag)):
     medians[0] = np.median(temp_F160W)
     medians[1] = np.median(temp_F814W)
 #
-#    offset[ii] = medians[0] - medians[1]
+    if lim_mass_offset_flag == 1:
+        offset[ii] = medians[0] - medians[1]
+
+#
+####        [7.8  8.17 8.33 7.75 7.36 7.36]  <-- lim masses w/o the offset applied
+#
+####        [8.05 8.04 8.36 7.67 8.21 7.07]  <-- lim masses w/ the offset applied
 #
 # store the offset in magnitudes to be used between magnitudes measured in F160W filter and F814W
 #offset = limiting_mag - limiting_mag_814    # [limiting mag F160] - [limiting mag F814W]
@@ -419,7 +425,10 @@ for ii in range(len(z_cluster)):
 max_mass, max_mass_index = max_nested_list(max_mass_array,1)
 #
 # range2 = [7.3,12.2]
-range2=[min(limiting_mass),max_mass[1]]
+if range2_flag == 0:
+    range2=[min(limiting_mass),max_mass[1]]
+elif range2_flag == 1:
+    pass
 #
 ## Now I have lists of corresponding magnitudes and masses for each cluster. make a single plot for the first cluster (as a clear example of the method), then a subplot (w/ 6 plots) all together. add lines to the plot for (A) the limiting magnitude (vertical); and (B) range of masses at that magnitude (horizontal), for clusters w/ many such objects, or circle/point to/identify in some way on the plot the galaxy closest to the limiting magnitude which was chosen as the standard for limiting mass
 #

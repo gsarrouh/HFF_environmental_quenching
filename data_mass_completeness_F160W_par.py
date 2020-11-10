@@ -137,7 +137,7 @@ mag_par_F160W = [ [], [], [], [], [], [] ]
 mag_par_F814W = [ [], [], [], [], [], [] ]
 for counter in range(len(master_cat_par)):
     for cluster in range(len(limiting_mag_par)):
-        if master_cat['cluster'][counter] == (cluster+1):                 # track by cluster
+        if master_cat_par['cluster'][counter] == (cluster+1):                 # track by cluster
             if (master_cat_par['flag_F160W'][counter] == 0 and master_cat_par['f_F160W'][counter] > 0) and (master_cat_par['flag_F814W'][counter] == 0 and master_cat_par['f_F814W'][counter] > 0):
                 master_cat_par['F160W_mag'][counter] = ((-2.5*np.log10(master_cat_par['f_F160W'][counter]))+25)
                 master_cat_par['F814W_mag'][counter] = ((-2.5*np.log10(master_cat_par['f_F814W'][counter]))+25)
@@ -155,7 +155,13 @@ for ii in range(len(limiting_mag_par)):
     medians[0] = np.median(temp_par_F160W)
     medians[1] = np.median(temp_par_F814W)
 #
-#    offset[ii] = medians[0] - medians[1]
+    if lim_mass_offset_flag == 1:
+        offset[ii] = medians[0] - medians[1]
+#
+#
+####        [7.04 7.77 7.41 7.42 8.02 7.42]  <-- lim masses w/o the offset applied
+#
+####        [7.94 6.54 7.5  7.06 7.97 7.42]  <-- lim masses w/ the offset applied
 #
 # store the offset in magnitudes to be used between magnitudes measured in F160W filter and F814W
 #offset = limiting_mag - limiting_mag_814    # [limiting mag F160] - [limiting mag F814W]
@@ -188,11 +194,13 @@ count_non_member_par = np.array([0]*6)
 #
 counting_array1_par = np.array([0]*9)
 #
+aa = 0
 #
 for counter in range(len(master_cat_par)):             # loop through catalogue
     for cluster in range(len(limiting_mag_par)):
         if master_cat_par['cluster'][counter] == (cluster+1):       # start by looking at clusters, one at a time
             if master_cat_par['member'][counter] == 1:    # now look only at cluster MEMBERS only
+                aa+=1
                 if master_cat_par['flag_F160W'][counter] != -1 and master_cat_par['f_F160W'][counter] > 0:         # look at good objects w/ good fluxes
                     master_cat_par['F160W_mag'][counter] = ((-2.5*np.log10(master_cat_par['f_F160W'][counter]))+25)     # AB_mag system zero point = 25, confirmed in Shipley et al.
                     if (diag_flag_3 == 1 and project_diagnostic_flag == 2) or project_diagnostic_flag == 1:   # diagnostic check
@@ -257,7 +265,7 @@ for counter in range(len(master_cat_par)):             # loop through catalogue
                             masses_at_lim_mag_par[cluster].append([master_cat_par['F160W_mag'][counter],master_cat_par['lmass'][counter],master_cat_par['z_clusterphot'][counter]])
                         if master_cat_par['sub'][counter] == 1:     # (spec+phot)
                             mag_spec1_par[cluster]+=1
-
+                            #
                         elif master_cat_par['sub'][counter] == 2:   # phot only
                             mag_phot1_par[cluster]+=1
                         #
@@ -281,6 +289,7 @@ for counter in range(len(master_cat_par)):             # loop through catalogue
     #
     #
 #
+print('Total # of field members looked at: %i'%aa)
 ## DIAG_FLAG_4: ACCOUNTING for each galaxy at each condition imposed within the above for loop, which sets up the lists of galaxies to be plotted
 #
 ## SECTION (1.1): SUMMARY TABLE
