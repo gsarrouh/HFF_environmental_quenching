@@ -39,7 +39,10 @@ for counter in range(len(master_cat)):
         if master_cat['type'][counter]==1:                # type=1 identifies SF sample
             if abs(master_cat['z_clusterspec'][counter]) > z_cutoff_field[0] and abs(master_cat['z_clusterphot'][counter]) > z_cutoff_field[1]:
                 if master_cat['z_peak'][counter] > z_field_bounds[0] and master_cat['z_peak'][counter] < z_field_bounds[1]:
-                    master_cat['member'][counter] = 1         # member=1 for FIELD
+                    if cluster_field_inclusion_flag == 1:
+                        master_cat['member'][counter] = 1         # member=1 for FIELD
+                    elif cluster_field_inclusion_flag == 0:
+                        master_cat['member'][counter] = -99
                     for ii in range(len(field_spec[0])):
                         if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
                             field_spec[0][ii]+=1
@@ -69,9 +72,12 @@ for counter in range(len(master_cat)):
                     if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
                         lost_due_to_buffer_spec[0][ii]+=1
         elif master_cat['type'][counter]==2:                # type=2 identifies Q sample
-            if abs(master_cat['z_clusterspec'][counter]) > z_cutoff_field[0] and abs(master_cat['z_clusterphot'][counter]) > z_cutoff_field[1]: 
+            if abs(master_cat['z_clusterspec'][counter]) > z_cutoff_field[0] and abs(master_cat['z_clusterphot'][counter]) > z_cutoff_field[1]:
                 if master_cat['z_peak'][counter] > z_field_bounds[0] and master_cat['z_peak'][counter] < z_field_bounds[1]:
-                    master_cat['member'][counter] = 1         # member=1 for FIELD
+                    if cluster_field_inclusion_flag == 1:
+                        master_cat['member'][counter] = 1         # member=1 for FIELD
+                    elif cluster_field_inclusion_flag == 0:
+                        master_cat['member'][counter] = -99       # ember == -99 to remove this galaxy from further consideration and all further calculations
                     for ii in range(len(field_spec[1])):
                         if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
                             field_spec[1][ii]+=1

@@ -46,7 +46,10 @@ for counter in range(len(master_cat)):
             n_SF+=1
             if abs(master_cat[counter]['z_clusterphot']) > z_cutoff_field[1]:     # identify field galaxies
                 if master_cat['z_peak'][counter] > z_field_bounds[0] and master_cat['z_peak'][counter] < z_field_bounds[1]:
-                    master_cat['member'][counter] = 1         # member=1 for FIELD SAMPLE
+                    if cluster_field_inclusion_flag == 1:
+                        master_cat['member'][counter] = 1         # member=1 for FIELD
+                    elif cluster_field_inclusion_flag == 0:
+                        master_cat['member'][counter] = -99
                     for ii in range(len(field_phot[0])):
                         if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
                             SF_field_list[ii].append(master_cat['lmass'][counter])
@@ -71,7 +74,10 @@ for counter in range(len(master_cat)):
             n_Q+=1
             if abs(master_cat[counter]['z_clusterphot']) > z_cutoff_field[1]:     # identify field galaxies
                 if master_cat['z_peak'][counter] > z_field_bounds[0] and master_cat['z_peak'][counter] < z_field_bounds[1]:
-                    master_cat['member'][counter] = 1         # member=1 for FIELD SAMPLE
+                    if cluster_field_inclusion_flag == 1:
+                        master_cat['member'][counter] = 1         # member=1 for FIELD
+                    elif cluster_field_inclusion_flag == 0:
+                        master_cat['member'][counter] = -99
                     for ii in range(len(field_phot[1])):
                         if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
                             Q_field_list[ii].append(master_cat['lmass'][counter])
