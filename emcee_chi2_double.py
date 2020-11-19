@@ -42,9 +42,9 @@ import corner
 ###### MAY NEED TO EDIT ######
 ######
 #
-SF_flag = 1          # star-forming population
+SF_flag = 0          # star-forming population
 Q_flag = 1           # Q pop
-T_flag = 1           # total pop
+T_flag = 0           # total pop
 #
 # field_flag = 1              # 0 = off, fit CLUSTER SMFs; 1 = on, fit FIELD SMFs
 #
@@ -64,7 +64,7 @@ if mcmc_field_flag == 1:
 ######
 #
 # initialize walkers
-ndim, nwalkers, max_nsteps = 5, 500, 10000    # (# of parameters), (#walkers), (#steps/walker)
+ndim, nwalkers, max_nsteps = 5, 100, 15000    # (# of parameters), (#walkers), (#steps/walker)
 #
 labels = ["M*","phi1","alpha1","phi2","alpha2"]
 #
@@ -102,7 +102,7 @@ def lnlike2(theta, midbins, smf, smf_error):
 # define "prior" function - DOUBLE schechter
 def lnprior2(theta):
    M_star, phi1, alpha1, phi2, alpha2 = theta
-   if (10 < M_star < 13) and (-30 < phi1 < 30) and (-5 < alpha1 < 5) and (-30 < phi2 < 30) and (-5 < alpha2 < 5):
+   if (10 < M_star < 11.5) and (-1 < phi1 < 1) and (-1.5 < alpha1 < 1.5) and (-1 < phi2 < 1) and (-3 < alpha2 < -1):
        return 0.0
    else:
        return -np.inf
@@ -139,7 +139,7 @@ for ii in range(len(SF_smf)):
         SF_smf_mcmc.append(SF_smf[ii])
         SF_error_mcmc.append(SF_error[ii])
 #
-## this does the exact same as above, but for Q_smf
+## this does the exact same as above, but for Q_smf / total_smf
 Q_midbins_mcmc = []
 Q_smf_mcmc = []
 Q_error_mcmc = []
@@ -181,11 +181,12 @@ Q_midbins_mcmc = Q_midbins_mcmc.reshape(len(Q_midbins_mcmc))
 #
 # theta_guess = [M_star_guess,phi_guess,alpha_guess]
 # define guesses for initial guesses - DOUBLE schechter
-M_star_guess = 10.5
-phi_guess1 = 1e-03
-alpha_guess1 = 0.5
-phi_guess2 = 1e-04
-alpha_guess2 = -2
+[M_star_guess,phi_guess1,alpha_guess1,phi_guess2,alpha_guess2 ] = 1.06096756e+01,3.06831006e-04,-1.29666612e+00,1.75670077e-03,-2
+# M_star_guess = 10.5
+# phi_guess1 = 1e-03
+# alpha_guess1 = 0.5
+# phi_guess2 = 1e-04
+# alpha_guess2 = -1.5
 # #
 # define guesses for initial guesses - DOUBLE schechter result from MCMC
 # M_star_guess = 1.05991057e+01
@@ -288,6 +289,7 @@ if SF_flag ==1:
 #
     t0 = time.time()       # start timer to run emcee.EnsembleSampler()
     ## setup initial positions of walkers in a Guassian ball around the least-squares position
+    # SFpos = theta_guess + 1e-4*np.random.randn(nwalkers, ndim)
     SFpos = SFresult['x'] + 1e-4*np.random.randn(nwalkers, ndim)
     #
     # Set up the backend
@@ -310,7 +312,7 @@ if SF_flag ==1:
     # Now we'll sample for up to max_n steps
     for sample in SFsampler.sample(SFpos, iterations=max_nsteps, progress=True):
         # Only check convergence every 100 steps
-        if SFsampler.iteration % 100:
+        if SFsampler.iteration % 1000:
             continue
 
         # Compute the autocorrelation time so far
@@ -354,6 +356,7 @@ if SF_flag ==1:
     SFfig = corner.corner(SFsamples, labels=["$M^*$", "$\phi^*_1$", "alpha1", "$\phi^*_2$", "$alpha_2$"])#  SF
     SFfig.suptitle('Field: Star-forming')
     plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_SF_field_double_corner.png')
+    plt.close()
     #
     # initialize result arrays - means
     SFresult_means = np.array([0.]*ndim)
@@ -388,6 +391,21 @@ if SF_flag ==1:
     print('Sigma - lower bounds: ',SFrestult_sigma_lower)
     print('Sigma - upper bounds: ',SFrestult_sigma_upper)
     #
+    print("SF mean acceptance fraction: {0:.3f}".format(np.mean(SFsampler.acceptance_fraction)))
+    #
+    # #
+    # fig, axes = plt.subplots(5, figsize=(10, 7), sharex=True)
+    # labels = ["$M^*$", "phi1", "alpha1", "phi2", "alpha2"]
+    # for i in range(ndim):
+    #     ax = axes[i]
+    #     ax.plot(SFsamples[:, :, i], "k", alpha=0.3)
+    #     ax.set_xlim(0, len(SFsamples))
+    #     ax.set_ylabel(labels[i])
+    #     ax.yaxis.set_label_coords(-0.1, 0.5)
+    #     #
+    # axes[-1].set_xlabel("SF - step number");
+    # #
+    #
     #
     bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(np.round(SFM_star_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[0],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[0],decimals=3))+delim+str(np.round(SFphi1_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[1],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[1],decimals=3))+delim+str(np.round(SFalpha1_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[2],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[2],decimals=3))+delim+str(np.round(SFphi2_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[3],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[3],decimals=3))+delim+str(np.round(SFalpha2_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[4],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[4],decimals=3))
     writer = '%s'%str(bin_entry1)+'\n'
@@ -412,8 +430,8 @@ if Q_flag ==1:
 #
     t0 = time.time()       # start timer to run emcee.EnsembleSampler()
     ## setup initial positions of walkers in a Guassian ball around the least-squares position
-    # Qpos = theta_guess + 1e-4*np.random.randn(nwalkers, ndim)
-    Qpos = Qresult['x'] + 1e-4*np.random.randn(nwalkers, ndim)
+    Qpos = theta_guess + 1e-4*np.random.randn(nwalkers, ndim)
+    # Qpos = Qresult['x'] + 1e-4*np.random.randn(nwalkers, ndim)
     #
     # Set up the backend
     # Don't forget to clear it in case the file already exists
@@ -435,7 +453,7 @@ if Q_flag ==1:
     # Now we'll sample for up to max_n steps
     for sample in Qsampler.sample(Qpos, iterations=max_nsteps, progress=True):
         # Only check convergence every 100 steps
-        if Qsampler.iteration % 100:
+        if Qsampler.iteration % 1000:
             continue
 
         # Compute the autocorrelation time so far
@@ -478,6 +496,7 @@ if Q_flag ==1:
     Qfig = corner.corner(Qsamples, labels=["$M^*$", "$\phi^*_1$", "alpha1", "$\phi^*_2$", "$alpha_2$"])#  Q
     Qfig.suptitle('Field: Quiescent')
     plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_Q_field_double_corner.png')
+    plt.close()
     #
     # initialize result arrays - means
     Qresult_means = np.array([0.]*ndim)
@@ -512,9 +531,23 @@ if Q_flag ==1:
     print('Sigma - lower bounds: ',Qrestult_sigma_lower)
     print('Sigma - upper bounds: ',Qrestult_sigma_upper)
     #
+    print("Q mean acceptance fraction: {0:.3f}".format(np.mean(Qsampler.acceptance_fraction)))
+    #
+    # #
+    # fig, axes = plt.subplots(5, figsize=(10, 7), sharex=True)
+    # labels = ["$M^*$", "phi1", "alpha1", "phi2", "alpha2"]
+    # for i in range(ndim):
+    #     ax = axes[i]
+    #     ax.plot(Qsamples[:, :, i], "k", alpha=0.3)
+    #     ax.set_xlim(0, len(Qsamples))
+    #     ax.set_ylabel(labels[i])
+    #     ax.yaxis.set_label_coords(-0.1, 0.5)
+    #     #
+    # axes[-1].set_xlabel("Q - step number");
+    # #
     ## print OUTPUT to file
     #
-    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(np.round(QM_star_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[0],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[0],decimals=3))+delim+str(np.round(Qphi_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[1],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[1],decimals=3))+delim+str(np.round(Qalpha_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[2],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[2],decimals=3))+delim+str(np.round(Qphi2_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[3],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[3],decimals=3))+delim+str(np.round(Qalpha2_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[4],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[4],decimals=3))
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(np.round(QM_star_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[0],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[0],decimals=3))+delim+str(np.round(Qphi1_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[1],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[1],decimals=3))+delim+str(np.round(Qalpha1_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[2],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[2],decimals=3))+delim+str(np.round(Qphi2_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[3],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[3],decimals=3))+delim+str(np.round(Qalpha2_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[4],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[4],decimals=3))
     writer = '%s'%str(bin_entry1)+'\n'
     f.write(writer)
     #
@@ -547,7 +580,7 @@ if T_flag ==1:
     backend.reset(nwalkers, ndim)
     #
     # setup the emcee sampler
-    Tsampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob2, args=(SF_midbins, total_smf, total_error), backend=backend)
+    Tsampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob2, args=(Q_midbins_mcmc, total_smf, total_error), backend=backend)
     #
     # We'll track how the average autocorrelation time estimate changes
     index = 0
@@ -559,7 +592,7 @@ if T_flag ==1:
     # Now we'll sample for up to max_n steps
     for sample in Tsampler.sample(Tpos, iterations=max_nsteps, progress=True):
         # Only check convergence every 100 steps
-        if Tsampler.iteration % 100:
+        if Tsampler.iteration % 1000:
             continue
 
         # Compute the autocorrelation time so far
@@ -601,6 +634,7 @@ if T_flag ==1:
     Tfig = corner.corner(Tsamples, labels=["$M^*$", "$\phi^*_1$", "alpha1", "$\phi^*_2$", "$alpha_2$"])#  total
     Tfig.suptitle('Field: Total')
     plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_Total_field_double_corner.png')
+    plt.close()
     #
     # initialize result arrays - means
     Tresult_means = np.array([0.]*ndim)
@@ -611,7 +645,7 @@ if T_flag ==1:
     Trestult_sigma_upper = np.array([0.]*ndim)
     #display results
     # SF
-    print('SF result:')
+    print('Total result:')
     print('Means: ',Tresult_means)
     #
     TM_star_mcmc, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = Tsamples.mean(axis=0)
@@ -635,10 +669,23 @@ if T_flag ==1:
     print('Sigma - lower bounds: ',Trestult_sigma_lower)
     print('Sigma - upper bounds: ',Trestult_sigma_upper)
     #
+    print("TOTAL mean acceptance fraction: {0:.3f}".format(np.mean(Tsampler.acceptance_fraction)))
     #
+    # #
+    # fig, axes = plt.subplots(5, figsize=(10, 7), sharex=True)
+    # labels = ["$M^*$", "phi1", "alpha1", "phi2", "alpha2"]
+    # for i in range(ndim):
+    #     ax = axes[i]
+    #     ax.plot(Tsamples[:, :, i], "k", alpha=0.3)
+    #     ax.set_xlim(0, len(Tsamples))
+    #     ax.set_ylabel(labels[i])
+    #     ax.yaxis.set_label_coords(-0.1, 0.5)
+    #     #
+    # axes[-1].set_xlabel("TOTAL - step number");
+    # #
     ## print OUTPUT to file
     #
-    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Total'+delim+str(np.round(TM_star_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[0],decimals=3))+delim+str(np.round(Trestult_sigma_upper[0],decimals=3))+delim+str(np.round(Tphi_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[1],decimals=3))+delim+str(np.round(Trestult_sigma_upper[1],decimals=3))+delim+str(np.round(Talpha_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[2],decimals=3))+delim+str(np.round(Trestult_sigma_upper[2],decimals=3))+delim+str(np.round(Tphi2_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[3],decimals=3))+delim+str(np.round(Trestult_sigma_upper[3],decimals=3))+delim+str(np.round(Talpha2_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[4],decimals=3))+delim+str(np.round(Trestult_sigma_upper[4],decimals=3))
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Total'+delim+str(np.round(TM_star_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[0],decimals=3))+delim+str(np.round(Trestult_sigma_upper[0],decimals=3))+delim+str(np.round(Tphi1_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[1],decimals=3))+delim+str(np.round(Trestult_sigma_upper[1],decimals=3))+delim+str(np.round(Talpha1_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[2],decimals=3))+delim+str(np.round(Trestult_sigma_upper[2],decimals=3))+delim+str(np.round(Tphi2_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[3],decimals=3))+delim+str(np.round(Trestult_sigma_upper[3],decimals=3))+delim+str(np.round(Talpha2_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[4],decimals=3))+delim+str(np.round(Trestult_sigma_upper[4],decimals=3))
     writer = '%s'%str(bin_entry1)+'\n'
     f.write(writer)
     #
