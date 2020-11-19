@@ -73,41 +73,73 @@ def Gpc_to_Mpc_cube(Gpc3):
 #
 #
 ## compute redshift range of galaxies in cluster sample, i.e. the "height" of the volume enclosed (whose geometry is that of a pyramid, with the observer at the vertex).
-## for z_cutoff = [0.012,0.055]
-lower_bound = (min(z_cluster) - z_cutoff[1]) / (1 + z_cutoff[1])  # == ~0.240
-upper_bound = (max(z_cluster) + z_cutoff[1]) / (1 - z_cutoff[1])  # == ~0.635
-z_field_bounds = [lower_bound, upper_bound]
-#
+# ## for z_cutoff = [0.012,0.055]
+# if z_field_bounds_flag == 1:
+#     lower_bound = (min(z_cluster) - z_cutoff[1]) / (1 + z_cutoff[1])  # == ~0.240
+#     upper_bound = (max(z_cluster) + z_cutoff_field[1]) / (1 - z_cutoff_field[1])  # ==
+#     z_field_bounds = [lower_bound, upper_bound]
+# #
 ## define the lower_bound & upper_bound for each cluster
 lower_bound_cluster = np.array([0.]*6)
 upper_bound_cluster = np.array([0.]*6)
 for cluster in range(len(z_cluster)):
-    lower_bound_cluster[cluster] = (z_cluster[cluster] - z_cutoff[1]) / (1 + z_cutoff[1])
-    upper_bound_cluster[cluster] = (z_cluster[cluster] + z_cutoff[1]) / (1 - z_cutoff[1])
+    lower_bound_cluster[cluster] = (z_cluster[cluster] - z_cutoff_field[1]) / (1 + z_cutoff_field[1])
+    upper_bound_cluster[cluster] = (z_cluster[cluster] + z_cutoff_field[1]) / (1 - z_cutoff_field[1])
     #
 print('lower_bound_cluster: %s'%lower_bound_cluster )
 print('upper_bound_cluster: %s'%upper_bound_cluster )
 #
 ## RESULT
-# lower_bound_cluster: [0.32322275 0.46255924 0.46445498 0.30331754 0.27772512 0.23981043]
-# upper_bound_cluster: [0.47724868 0.63280423 0.63492063 0.45502646 0.42645503 0.38412698]
+## z_cutoff_field[2] == 0.14
+# lower_bound_cluster: [0.2245614  0.35350877 0.35526316 0.20614035 0.18245614 0.14736842]
+# upper_bound_cluster: [0.62325581 0.79418605 0.79651163 0.59883721 0.56744186 0.52093023]
 #
+## z_cutoff_field[1] == 0.15
+# lower_bound_cluster: [0.21391304 0.34173913 0.34347826 0.19565217 0.17217391 0.1373913 ]
+# upper_bound_cluster: [0.64235294 0.81529412 0.81764706 0.61764706 0.58588235 0.53882353]
 
 ## SECTION (1): determine volume subtended by ENTIRE SKY over redshift range [lower_bound, upper_bound]
 ## NOTE: comoving volumes calculated using Ned Wright's Java Script Cosmological Calculatror (http://www.astro.ucla.edu/~wright/CosmoCalc.html); *** cite  Wright (2006, PASP, 118, 1711) ***
 #
 # Parameters: omega_matter = 0.3, omega_lambda = 0.7, H_0 = 70 km/s/Mpc
 ## COMOVING VOLUMES
-vol_sky_lower = 3.826            # volume subtended of entire sky from z=0  to z=lower_bound; UNITS = [Gpc^3]
-vol_sky_upper = 51.837           # volume subtended of entire sky from z=0  to z=upper_bound; UNITS = [Gpc^3]
+if z_field_bounds_flag == 0:
+    vol_sky_lower = 4.292            # volume subtended of entire sky from z=0  to z=lower_bound = 0.25; UNITS = [Gpc^3]
+    vol_sky_upper = 77.829           # volume subtended of entire sky from z=0  to z_upper_bound = 0.75
+elif z_field_bounds_flag == 1 and z_cutoff_field[1] == 0.125:
+    vol_sky_lower = 4.292            # volume subtended of entire sky from z=0  to z=lower_bound; UNITS = [Gpc^3]    <-- z_lower_bound= 0.240
+    vol_sky_upper = 85.793
+elif z_field_bounds_flag == 1 and z_cutoff_field[1] == 0.14:
+    vol_sky_lower = 3.826            # volume subtended of entire sky from z=0  to z=lower_bound; UNITS = [Gpc^3]    <-- z_lower_bound= 0.240
+    vol_sky_upper = 89.793           # volume subtended of entire sky from z=0  to z=upper_bound; UNITS = [Gpc^3]    <-- for z_cutoff_field[1] == 0.14
+elif z_field_bounds_flag == 1 and z_cutoff_field[1] == 0.15:
+    vol_sky_lower = 3.826            # volume subtended of entire sky from z=0  to z=lower_bound; UNITS = [Gpc^3]    <-- z_lower_bound= 0.240
+    vol_sky_upper = 95.494           # volume subtended of entire sky from z=0  to z=upper_bound; UNITS = [Gpc^3]    <-- for z_cutoff_field[1] == 0.15
+
 #
 vol_sky = vol_sky_upper - vol_sky_lower      # volume subtended of entire sky over redshift range of clusters; UNITS = [Gpc^3]
 vol_sky = Gpc_to_Mpc_cube(vol_sky)      # UNITS = [Mpc^3]
 #
-## do the same but for the volume occupied by a cluster at redshift z=0.4, del_z = 0.06
-vol_cluster_lower = np.array([8.750,23.010,23.267,7.357,5.760,3.817])        # volume subtended of entire sky from z=0  to z=lower_bound_cluster; UNITS = [Gpc^3]
-vol_cluster_upper = np.array([24.986,51.392,51.821,22.044,18.564,14.029])       # volume subtended of entire sky from z=0  to z=upper_bound_cluster; UNITS = [Gpc^3]
+## do the same but for the volume occupied by each cluster at redshift
+## NOTE: the lower bound is fixedby the lower redshift bound of the clusters, and so is the same for all field cuts; it is also the floor redshift cut for all low-redshift clusters (i.e. the the lower_bound based on del_z calculation is below z ~.240, volume corresponding to z=.240 is adopted)
+if z_field_bounds_flag == 0 and z_cutoff_field[1] == 0.125:
+    vol_cluster_lower = np.array([4.292,12.200,12.347,4.292,4.292,4.292])        # volume subtended of entire sky from z=0  to z=lower_bound_cluster; UNITS = [Gpc^3]
+    vol_cluster_upper = np.array([47.480,77.829,77.829,42.763,37.063,29.376])       # volume subtended of entire sky from z=0  to z=upper_bound_cluster; UNITS = [Gpc^3
+elif z_field_bounds_flag == 0 and z_cutoff_field[1] == 0.14:
+    vol_cluster_lower = np.array([4.292,11.200,11.347,4.292,4.292,4.292])        # volume subtended of entire sky from z=0  to z=lower_bound_cluster; UNITS = [Gpc^3]
+    vol_cluster_upper = np.array([49.480,77.829,77.829,44.763,39.063,31.376])       # volume subtended of entire sky from z=0  to z=upper_bound_cluster; UNITS = [Gpc^3]
+elif z_field_bounds_flag == 0 and z_cutoff_field[1] == 0.15:
+    vol_cluster_lower = np.array([4.292,10.212,10.355,4.292,4.292,4.292])        # volume subtended of entire sky from z=0  to z=lower_bound_cluster; UNITS = [Gpc^3]
+    vol_cluster_upper = np.array([53.340,77.829,77.829,48.376,42.362,34.225])       # volume subtended of entire sky from z=0  to z=upper_bound_cluster; UNITS = [Gpc^3]
+elif z_field_bounds_flag == 1 and z_cutoff_field[1] == 0.14:
+    vol_cluster_lower = np.array([3.826,11.200,11.347,3.826,3.826,3.826])        # volume subtended of entire sky from z=0  to z=lower_bound_cluster; UNITS = [Gpc^3]
+    vol_cluster_upper = np.array([49.480,89.174,89.793,44.763,39.063,31.376])       # volume subtended of entire sky from z=0  to z=upper_bound_cluster; UNITS = [Gpc^3]
+elif z_field_bounds_flag == 1 and z_cutoff_field[1] == 0.15:
+    vol_cluster_lower = np.array([3.826,10.212,10.355,3.826,3.826,3.826])        # volume subtended of entire sky from z=0  to z=lower_bound_cluster; UNITS = [Gpc^3]
+    vol_cluster_upper = np.array([53.340,94.851,95.494,48.376,42.362,34.225])       # volume subtended of entire sky from z=0  to z=upper_bound_cluster; UNITS = [Gpc^3]
 #
+#
+
 vol_cluster_sky = vol_cluster_upper - vol_cluster_lower     # volume subtended by all 6 clusters, in units of [Gpc^3]
 vol_cluster_sky = Gpc_to_Mpc_cube(vol_cluster_sky)                  # units [Mpc^3]
 #
@@ -158,8 +190,8 @@ if (diag_flag_1 == 1 and project_diagnostic_flag == 2) or project_diagnostic_fla
         pass
     else:
         print('\nVolume of HFF Parallel Fields from %s'%np.round(lower_bound,decimals=3)+' < z < %s'%np.round(upper_bound,decimals=3)+': %s'%np.round(vol_parallel,decimals=3)+' (Mpc^3)')
-        print('Vol. Parallel IMAGES: %s'%np.round(vol_parallel_field,decimals=3)+' [Mpc^3]')
-        print('Vol. CLUTSERS in Parallel images: %s'%np.round(vol_parallel_cluster,decimals=3)+' [Mpc^3]')
+        print('Vol. Parallel IMAGES: %s'%np.round(np.sum(vol_parallel_field),decimals=3)+' [Mpc^3]')
+        print('Vol. CLUTSERS in Parallel images: %s'%np.round(np.sum(vol_parallel_cluster),decimals=3)+' [Mpc^3]')
         print('Note: vol_parallel = vol_parallel_field - vol_parallel_cluster')
 #
 #
@@ -189,7 +221,7 @@ if (diag_flag_1 == 1 and project_diagnostic_flag == 2) or project_diagnostic_fla
     else:
         print('\nVolume of HFF Cluster IMAGES (total) from %s'%np.round(lower_bound,decimals=3)+' < z < %s'%np.round(upper_bound,decimals=3)+': %s'%np.round(np.sum(vol_cluster_image),decimals=3)+' (Mpc^3)')
         print('Volume of HFF CLUSTERS (cluster volume inside "cluster" images) from %s'%np.round(lower_bound_cluster,decimals=3)+' < z < %s'%np.round(upper_bound_cluster,decimals=3)+': %s'%np.round(np.sum(vol_cluster),decimals=3)+' (Mpc^3)')
-        print('Volume of HFF Cluster FIELD (total volume of image less volume of clusters): %s'%np.round(vol_cluster_image,decimals=3)+' - %s'%np.round(vol_cluster,decimals=3)+' = %s'%np.round((np.sum(vol_cluster_image) - np.sum(vol_cluster)),decimals=3)+' (Mpc^3)')
+        print('\nVolume of HFF Cluster FIELD (total volume of image less volume of clusters): %s'%np.round(np.sum(vol_cluster_image),decimals=3)+' - %s'%np.round(np.sum(vol_cluster),decimals=3)+' = %s'%np.round((np.sum(vol_cluster_image) - np.sum(vol_cluster)),decimals=3)+' (Mpc^3)')
 #
 #
 #
@@ -198,7 +230,7 @@ if (diag_flag_1 == 1 and project_diagnostic_flag == 2) or project_diagnostic_fla
 if cluster_field_inclusion_flag == 0:
     vol_HFF = vol_parallel
 elif cluster_field_inclusion_flag == 1:
-    vol_HFF = vol_parallel + (np.sum(vol_cluster_image) - np.sum(vol_cluster))           # units: [Gpc^3]
+    vol_HFF = vol_parallel + (np.sum(vol_cluster_image) - np.sum(vol_cluster))           # units: [Mpc^3]
 #
 ## SCALING FACTOR
 scale_factor_uvc_HFF = vol_HFF / vol_UVC
