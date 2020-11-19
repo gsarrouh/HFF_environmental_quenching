@@ -252,9 +252,10 @@ print('\n"UVC_master_data.py" Section 2 complete.')
 ## SECTION (3) : apply MEMBER FILTER: 'member=1' identifies our field sample for the SMF
 #
 ## compute redshift range of galaxies in cluster sample
-lower_bound = (min(z_cluster) - z_cutoff[1]) / (1 + z_cutoff[1])
-upper_bound = (max(z_cluster) + z_cutoff[1]) / (1 - z_cutoff[1])
-z_field_bounds = [lower_bound, upper_bound]
+if z_field_bounds_flag == 1:
+    lower_bound = (min(z_cluster) - z_cutoff[1]) / (1 + z_cutoff[1])
+    upper_bound = (max(z_cluster) + z_cutoff_field[1]) / (1 - z_cutoff_field[1])
+    z_field_bounds = [lower_bound, upper_bound]
 #
 counting_array4 = np.array([0]*6)    # counting array to track total number of objects in each cluster
 #
