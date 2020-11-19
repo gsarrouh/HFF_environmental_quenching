@@ -216,7 +216,7 @@ def interpolate_errors(ratios,ratios_err,correction_factors,ratio_bins,mass_bins
 #
 #
 #
-### TEMPORARY WRITING FLAG - comments all code past the point where the flag is invoked; should be set to ==0
+### TEMPORARY WRITING FLAG - comments out all code past the point where the flag is invoked; should be set to ==0
 where_im_at_flag = 0
 #
 #
@@ -250,7 +250,7 @@ cluster_only_plot_flag = 0  # create a plot of just the cluster data alone
 field_only_plot_flag = 0  # create a plot of just the field data alone
 field_construction_flag = 0 # create plots of HFF field and UVC field separately, and then the combined plot
 UVC_fit_flag = 0            # create plot fitting just the UVC sample to a schechter function
-
+schechter_plot_flag = 1     # plot the best-fitting schechter function: 0==off;  1==on
 #
 ## SECTION (1): collect objects above limiting mass by cluster into a single array in order to plot
 ## SF_*/Q_*, and track sublists of objects which have spec vs those which only have phot, separately for SF/Q; creates list of samples to be binned & plotted as histogram/scatterplot
@@ -524,6 +524,7 @@ for ii in range(len(SF_spec_list)):
 SF_midbins = midbins(mass_bins)
 Q_midbins = SF_midbins + 0.05
 #
+print('\nSF_midbins: %s'%SF_midbins+'\n')
 ## convert lists to arrays so we can do math operations on them
 SF_phot_smf = np.array(SF_phot_smf)
 SF_spec_smf = np.array(SF_spec_smf)
@@ -582,7 +583,8 @@ mass_completeness_correction = mass_completeness_correction_function(mass_bins,l
 if cluster_field_inclusion_flag == 0:
     limiting_mass_field = limiting_mass_par
 elif cluster_field_inclusion_flag == 1:
-    limiting_mass_field = np.concatenate([limiting_mass,limiting_mass_par])
+    limiting_mass_field = np.concatenate([limiting_mass_cluster_field,limiting_mass_par])
+#
 mass_completeness_correction_field = mass_completeness_correction_function(mass_bins,limiting_mass_field)
 ## first, combine the cluster_field_smf + parallel_field_smf to obtain the full HFF RAW smf
 SF_field_raw_smf_HFF = SF_field_raw_smf + SF_field_par_raw_smf
@@ -1034,8 +1036,8 @@ if field_construction_flag == 1:
     string = 'HFF field SMF: %s'%np.round(z_field_bounds[0],decimals=2),' < z < %s'%np.round(z_field_bounds[1],decimals=2)
     fig.suptitle(string, fontsize=30)
     ax = fig.add_subplot(1, 1, 1)
-    ax.errorbar(SF_midbins,SF_field_smf_HFF,yerr=SF_field_err_temp, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
-    ax.errorbar(Q_midbins,Q_field_smf_HFF,yerr=Q_field_err_temp,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
+    ax.errorbar(SF_midbins,SF_field_smf_HFF,yerr=SF_field_err_temp_HFF, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, label='Star-forming', ms=15)#yerr=SF_error,
+    ax.errorbar(Q_midbins,Q_field_smf_HFF,yerr=Q_field_err_temp_HFF,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
     ax.errorbar(SF_midbins,total_field_smf_HFF,yerr=empty_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
     ax.set_xlabel('$log(M/M_{\odot})$',fontsize=25)
     ax.set_xscale('linear')
@@ -1529,49 +1531,52 @@ total_field_error = SF_field_error + Q_field_error
 #
 ### ADDED LAST MINUTE: remove the lowest-mass bin from the field samples
 #
-# if range2_flag == 0 and lim_mass_offset_flag == 0:           # if not using offset, delete 1st data point
-#     SF_field_midbins = np.delete(SF_midbins,0)
-#     Q_field_midbins = np.delete(Q_midbins,0)
-#     SF_midbins = np.delete(SF_midbins,0)
-#     Q_midbins = np.delete(Q_midbins,0)
-#     SF_smf = np.delete(SF_smf,0)
-#     SF_error = np.delete(SF_error,0)
-#     Q_smf = np.delete(Q_smf,0)
-#     Q_error = np.delete(Q_error,0)
-#     total_smf = np.delete(total_smf,0)
-#     total_error = np.delete(total_error,0)
-#     quenched_fraction = np.delete(quenched_fraction,0,axis=1)
-#     quenched_fraction_err = np.delete(quenched_fraction_err,0,axis=1)
-#     SF_field_smf = np.delete(SF_field_smf,0)
-#     Q_field_smf = np.delete(Q_field_smf,0)
-#     total_field_smf = np.delete(total_field_smf,0)
-#     SF_field_error = np.delete(SF_field_error,0)
-#     Q_field_error = np.delete(Q_field_error,0)
-#     total_field_error = np.delete(total_field_error,0)
-# elif range2_flag == 0 and lim_mass_offset_flag == 1:           # if not using offset, delete 1st data point
-#     SF_field_midbins = np.delete(SF_midbins,[0,1])
-#     Q_field_midbins = np.delete(Q_midbins,[0,1])
-#     SF_midbins = np.delete(SF_midbins,[0,1])
-#     Q_midbins = np.delete(Q_midbins,[0,1])
-#     SF_smf = np.delete(SF_smf,[0,1])
-#     SF_error = np.delete(SF_error,[0,1])
-#     Q_smf = np.delete(Q_smf,[0,1])
-#     Q_error = np.delete(Q_error,[0,1])
-#     total_smf = np.delete(total_smf,[0,1])
-#     total_error = np.delete(total_error,[0,1])
-#     quenched_fraction = np.delete(quenched_fraction,[0,1],axis=1)
-#     quenched_fraction_err = np.delete(quenched_fraction_err,[0,1],axis=1)
-#     SF_field_smf = np.delete(SF_field_smf,[0,1])
-#     Q_field_smf = np.delete(Q_field_smf,[0,1])
-#     total_field_smf = np.delete(total_field_smf,[0,1])
-#     SF_field_error = np.delete(SF_field_error,[0,1])
-#     Q_field_error = np.delete(Q_field_error,[0,1])
-#     total_field_error = np.delete(total_field_error,[0,1])
-# elif range2_flag == 1:
-#     pass
+if mcmc_flag == 1:
+    if range2_flag == 0 and lim_mass_offset_flag == 0:           # if not using offset, delete 1st data point
+        SF_field_midbins = np.delete(SF_midbins,0)
+        Q_field_midbins = np.delete(Q_midbins,0)
+        SF_midbins = np.delete(SF_midbins,0)
+        Q_midbins = np.delete(Q_midbins,0)
+        SF_smf = np.delete(SF_smf,0)
+        SF_error = np.delete(SF_error,0)
+        Q_smf = np.delete(Q_smf,0)
+        Q_error = np.delete(Q_error,0)
+        total_smf = np.delete(total_smf,0)
+        total_error = np.delete(total_error,0)
+        quenched_fraction = np.delete(quenched_fraction,0,axis=1)
+        quenched_fraction_err = np.delete(quenched_fraction_err,0,axis=1)
+        SF_field_smf = np.delete(SF_field_smf,0)
+        Q_field_smf = np.delete(Q_field_smf,0)
+        total_field_smf = np.delete(total_field_smf,0)
+        SF_field_error = np.delete(SF_field_error,0)
+        Q_field_error = np.delete(Q_field_error,0)
+        total_field_error = np.delete(total_field_error,0)
+    elif range2_flag == 0 and lim_mass_offset_flag == 1:           # if not using offset, delete 1st data point
+        SF_field_midbins = np.delete(SF_midbins,[0,1])
+        Q_field_midbins = np.delete(Q_midbins,[0,1])
+        SF_midbins = np.delete(SF_midbins,[0,1])
+        Q_midbins = np.delete(Q_midbins,[0,1])
+        SF_smf = np.delete(SF_smf,[0,1])
+        SF_error = np.delete(SF_error,[0,1])
+        Q_smf = np.delete(Q_smf,[0,1])
+        Q_error = np.delete(Q_error,[0,1])
+        total_smf = np.delete(total_smf,[0,1])
+        total_error = np.delete(total_error,[0,1])
+        quenched_fraction = np.delete(quenched_fraction,[0,1],axis=1)
+        quenched_fraction_err = np.delete(quenched_fraction_err,[0,1],axis=1)
+        SF_field_smf = np.delete(SF_field_smf,[0,1])
+        Q_field_smf = np.delete(Q_field_smf,[0,1])
+        total_field_smf = np.delete(total_field_smf,[0,1])
+        SF_field_error = np.delete(SF_field_error,[0,1])
+        Q_field_error = np.delete(Q_field_error,[0,1])
+        total_field_error = np.delete(total_field_error,[0,1])
+    elif range2_flag == 1:
+        SF_field_midbins = SF_midbins
+        Q_field_midbins = Q_midbins
 #
-SF_field_midbins = SF_midbins
-Q_field_midbins = Q_midbins
+elif mcmc_flag == 0:
+    SF_field_midbins = SF_midbins
+    Q_field_midbins = Q_midbins
 #
 ## SECTION (5)    EMCEE simulation; see emcee_chi2_final.py;
 #
@@ -1586,14 +1591,14 @@ if mcmc_flag == 1:
     #
     #
     if mcmc_field_flag == 0:
-        exec(open('emcee_chi2_final.py').read())
+        exec(open('emcee_chi2_final.py').read())        # fits a single schechter function, for CLUSTER
         #
         #
         print('\n"master_smfz*.py" Section 5 MCMC complete for binning method %i .\n\nPROGRAM SHOULD EXIT AFTER PRINTING THIS STATEMENT'%membership_correction_binning_flag)
         sys.exit()
         print('PROGRAM SHOULD HAVE EXITED BEFORE PRINTING THIS STATEMENT')
     elif mcmc_field_flag == 1:
-        exec(open('emcee_chi2_double.py').read())
+        exec(open('emcee_chi2_double.py').read())        # fits a double schechter function, for FIELD
         #
         #
         print('\n"master_smfz*.py" Section 5 MCMC complete for binning method %i .\n\nPROGRAM SHOULD EXIT AFTER PRINTING THIS STATEMENT'%membership_correction_binning_flag)
@@ -1607,47 +1612,350 @@ if mcmc_flag == 1:
 #
 else:
 ## The following summarizes the result of the MCMC simulation and sets up the appropriate arrays for plotting
-    pass
-    # #
-    # if range2_flag == 0 and lim_mass_offset_flag == 0:
-    #     # ## Cluster
-    #     SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [10.7919369,0.0026711,-1.5219867]     # 500 walkers, 10,000 steps
-    #     QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [11.0250830,0.0548112,-1.1194144]
-    #     TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.0878181,0.0460268,-1.2078481]
-    #     #
-    #     ## Field
-    #     # #double-schechter Q pop
-    #     SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [10.6270003,0.0013485,-1.1617583,0.0000107,-2.1644472]     # 500 walkers, 10,000 steps
-    #     QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [10.8893420,0.0000043,-1.9722080,0.0015703,-0.5406310]
-    #     TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = []
-    #     #
-    # elif range2_flag == 0 and lim_mass_offset_flag == 1:
-    #     # ## Cluster
-    #     SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = []     # 500 walkers, 10,000 steps
-    #     QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = []
-    #     TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = []
-    #     #
-    #     ## Field
-    #     # #double-schechter Q pop
-    #     SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = []     # 1000 walkers, 30,000 steps
-    #     QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = []
-    #     TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = []
-    #     #
-    # ## define x array to generate points to plot Schechter fit
-    # x_plot = np.linspace(7,12.5,num=1000)#
-    # x_plot = x_plot.reshape(len(x_plot),)
-    # #
-    # ## Cluster models
-    # SF_model_mcmc_plot = np.log(10) * SFphi_mcmc * (10**((x_plot-SFM_star_mcmc)*(1+SFalpha_mcmc))) * np.exp(-10**(x_plot-SFM_star_mcmc))#
-    # Q_model_mcmc_plot = np.log(10) * Qphi_mcmc * (10**((x_plot-QM_star_mcmc)*(1+Qalpha_mcmc))) * np.exp(-10**(x_plot-QM_star_mcmc))#
-    # total_model_mcmc_plot = np.log(10) * Tphi_mcmc * (10**((x_plot-TM_star_mcmc)*(1+Talpha_mcmc))) * np.exp(-10**(x_plot-TM_star_mcmc))#
-    # ## Field models
-    # # SF_model_field_mcmc_plot = np.log(10) * SFphi_field_mcmc * (10**((x_plot-SFM_field_star_mcmc)*(1+SFalpha_field_mcmc))) * np.exp(-10**(x_plot-SFM_field_star_mcmc))#
-    # SF_model_field_mcmc_plot_double = np.log(10) * math.e**(-10**(x_plot-SFM_star_mcmc_field)) * ( (SFphi1_mcmc*(10**(x_plot-SFM_star_mcmc_field))**(1+SFalpha1_mcmc))  + (SFphi2_mcmc*(10**(x_plot-SFM_star_mcmc_field))**(1+SFalpha2_mcmc)) )
-    # # Q_model_field_mcmc_plot_single = np.log(10) * Qphi_field_mcmc * (10**((x_plot-QM_field_star_mcmc)*(1+Qalpha_field_mcmc))) * np.exp(-10**(x_plot-QM_field_star_mcmc))#
-    # Q_model_field_mcmc_plot_double =  np.log(10) * math.e**(-10**(x_plot-QM_star_mcmc_field)) * ( (Qphi1_mcmc*(10**(x_plot-QM_star_mcmc_field))**(1+Qalpha1_mcmc))  + (Qphi2_mcmc*(10**(x_plot-QM_star_mcmc_field))**(1+Qalpha2_mcmc)) )
-    # # total_model_field_mcmc_plot = np.log(10) * Tphi_field_mcmc * (10**((x_plot-TM_field_star_mcmc)*(1+Talpha_field_mcmc))) * np.exp(-10**(x_plot-TM_field_star_mcmc))#
-    # total_model_field_mcmc_plot_double = np.log(10) * math.e**(-10**(x_plot-TM_star_mcmc_field)) * ( (Tphi1_mcmc*(10**(x_plot-TM_star_mcmc_field))**(1+Talpha1_mcmc))  + (Tphi2_mcmc*(10**(x_plot-TM_star_mcmc_field))**(1+Talpha2_mcmc)) )
+    #
+    #
+    if range2_flag == 0 and z_cutoff_field[1] == 0.10:
+        #
+        ## pass
+        if lim_mass_offset_flag == 0 and cluster_field_inclusion_flag == 0:            # par only
+            #
+            # ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.07932761e+01,2.67133425e-03,-1.52211218e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [11.02475088,0.0548576,-1.11912586]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.08698214,0.04611485,-1.20737296]
+            #
+            ## Field
+            # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06250408e+01,1.34868286e-03 ,-1.15654789e+00,1.33074635e-05,-2.09371535e+00]     # 100 walkers, 25,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08911525e+01,1.57509772e-03,-5.33607622e-01,3.53911493e-06,-2.03959241e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09842577e+01,1.68980938e-03,-1.08541784e+00,1.05363224e-05,-2.04646381e+00]
+            #
+        elif lim_mass_offset_flag == 0 and cluster_field_inclusion_flag == 1:      # clu + par
+            #
+            # ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.07932761e+01,2.67133425e-03,-1.52211218e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [11.02475088,0.0548576,-1.11912586]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.08698214,0.04611485,-1.20737296]
+            #
+            ## Field
+            # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06267271e+01,1.30963180e-03,-1.11303459e+00,5.34621184e-05,-2.02012805e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08423249e+01,1.67748950e-03,-3.85220256e-01,2.18232373e-05,-1.94929595e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09492543e+01,1.81649458e-03,-9.70100384e-01,6.33980357e-05,-1.94398905e+00]
+            #
+        elif lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 0:      # par
+            #
+            # ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            #
+            ## Field
+            #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06165938e+01,1.34523402e-03 ,-1.11780109e+00,2.31932949e-05,-2.02703239e+00]     # 100 walkers, 25,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08645556e+01,1.60700496e-03,-4.94498499e-01,4.20169577e-06,-2.03800999e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09523912e+01,1.78624096e-03,-1.03944747e+00,1.77838455e-05,-1.99695055e+00]
+            #
+        elif lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 1:      # clu + par
+            #
+            # pass
+            # ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            ##
+            # ## Field
+            # # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.05951424e+01,1.26243947e-03,-9.49451317e-01,1.92649294e-04,-1.80047401e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08201445e+01,1.69449383e-03,-3.56489254e-01,2.20711044e-05,-1.96054438e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09123466e+01,1.89791151e-03,-8.89690837e-01,1.11715509e-04,-1.85419976e+00]
+            #
+    elif range2_flag == 0 and z_cutoff_field[1] == 0.125:
+        #
+        ## pass
+        if lim_mass_offset_flag == 0 and cluster_field_inclusion_flag == 0:            # par only
+            #
+            # pass
+            # # ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.07932761e+01,2.67133425e-03,-1.52211218e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [11.02475088,0.0548576,-1.11912586]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.08698214,0.04611485,-1.20737296]
+            # #
+            # ## Field
+            # # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06036239e+01,1.37317063e-03, -1.08517157e+00,6.28338502e-05,-1.74087920e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08905300e+01,1.57370132e-03, -5.33208764e-01,3.39966486e-06,-1.96669094e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09749600e+01,1.72709079e-03,-1.07322214e+00,1.02367573e-05,-1.96273061e+00]
+            # #
+        elif lim_mass_offset_flag == 0 and cluster_field_inclusion_flag == 1:      # clu + par
+            #
+            # ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.07932761e+01,2.67133425e-03,-1.52211218e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [11.02475088,0.0548576,-1.11912586]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.08698214,0.04611485,-1.20737296]
+            #
+            ## Field
+            # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06043947e+01,  1.34618096e-03,-1.05285636e+00,1.03917778e-04,-1.80501764e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08683497e+01,1.62721439e-03,-4.67210415e-01,1.18449523e-05,-1.92368574e+00 ]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09604065e+01,1.77169438e-03,-1.01291735e+00,5.16342526e-05,-1.86079496e+00 ]
+            #
+        elif lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 0:      # par only
+            #
+            # pass
+            # ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            # #
+            # ## Field
+            # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.05994151e+01,1.33094741e-03,-1.06482905e+00,9.56666563e-05,-1.67073543e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08642570e+01,1.61001292e-03,-4.96012787e-01,3.54679674e-06,-1.97554077e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09443440e+01,1.80217089e-03,-1.02401208e+00,2.42873749e-05,-1.85036362e+00]
+            # #
+        elif lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 1:      # clu + par
+            #
+            # pass
+            ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            ##
+            # ## Field
+            # # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.05906712e+01,1.28674740e-03,-9.59819997e-01,1.96579727e-04,-1.69923770e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08482652e+01,1.64494637e-03,-4.45895352e-01,9.74155829e-06,-1.98149026e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09281553e+01,1.85946130e-03,-9.58377257e-01,7.32820586e-05,-1.82061029e+00]
+            #
+    elif range2_flag == 0 and z_cutoff_field[1] == 0.14:
+        #
+        ## pass
+        if lim_mass_offset_flag == 0 and cluster_field_inclusion_flag == 0:            # par only
+            #
+            pass                              #BAD VALUES
+            # # # ## Cluster
+            # SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.07932761e+01,2.67133425e-03,-1.52211218e+00]     # 500 walkers, 10,000 steps
+            # QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [11.02475088,0.0548576,-1.11912586]
+            # TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.08698214,0.04611485,-1.20737296]
+            # # #
+            # # ## Field
+            # # # #double-schechter Q pop
+            # SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06036239e+01,1.37317063e-03, -1.08517157e+00,6.28338502e-05,-1.74087920e+00]     # 500 walkers, 10,000 steps
+            # QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08905300e+01,1.57370132e-03, -5.33208764e-01,3.39966486e-06,-1.96669094e+00]
+            # TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09749600e+01,1.72709079e-03,-1.07322214e+00,1.02367573e-05,-1.96273061e+00]
+            # #
+        elif lim_mass_offset_flag == 0 and cluster_field_inclusion_flag == 1:      # clu + par
+            #
+            pass
+            # ## Cluster                        BAD VALUES
+            # #
+            # SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.07932761e+01,2.67133425e-03,-1.52211218e+00]     # 500 walkers, 10,000 steps
+            # QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [11.02475088,0.0548576,-1.11912586]
+            # TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.08698214,0.04611485,-1.20737296]
+            # #
+            # ## Field
+            # # #double-schechter Q pop
+            # SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06043947e+01,  1.34618096e-03,-1.05285636e+00,1.03917778e-04,-1.80501764e+00]     # 500 walkers, 10,000 steps
+            # QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08683497e+01,1.62721439e-03,-4.67210415e-01,1.18449523e-05,-1.92368574e+00 ]
+            # TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09604065e+01,1.77169438e-03,-1.01291735e+00,5.16342526e-05,-1.86079496e+00 ]
+            #
+        elif lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 0:      # par only
+            #
+            # pass
+            # ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            # #
+            # ## Field
+            # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06094033e+01,6.28581886e-04,-1.10823989e+00, 1.60904659e-04,-1.46677539e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08655999e+01,8.97294580e-04,-5.02153708e-01,1.29752547e-06,-2.06251664e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09468384e+01,9.88342022e-04,-1.02731089e+00,1.52601179e-05,-1.83983304e+00]
+            # #
+        elif lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 1:      # clu + par
+            #
+            # pass
+            ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            ##
+            # ## Field
+            # # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.05922684e+01,6.84527683e-04,-9.34621112e-01,1.37744160e-04,-1.67381947e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08501226e+01,9.15300471e-04,-4.50894716e-01,5.11694635e-06,-2.00802381e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09302091e+01,1.02501846e-03,-9.55305573e-01, 4.48724043e-05,-1.81946069e+00]
+            #
+    elif range2_flag == 0 and z_cutoff_field[1] == 0.15:
+        #
+        ## pass
+        if range2_flag == 0 and lim_mass_offset_flag == 0 and cluster_field_inclusion_flag == 0:            # par only
+            #
+            pass                              #BAD VALUES
+            # # # ## Cluster
+            # SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.07932761e+01,2.67133425e-03,-1.52211218e+00]     # 500 walkers, 10,000 steps
+            # QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [11.02475088,0.0548576,-1.11912586]
+            # TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.08698214,0.04611485,-1.20737296]
+            # # #
+            # # ## Field
+            # # # #double-schechter Q pop
+            # SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06036239e+01,1.37317063e-03, -1.08517157e+00,6.28338502e-05,-1.74087920e+00]     # 500 walkers, 10,000 steps
+            # QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08905300e+01,1.57370132e-03, -5.33208764e-01,3.39966486e-06,-1.96669094e+00]
+            # TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09749600e+01,1.72709079e-03,-1.07322214e+00,1.02367573e-05,-1.96273061e+00]
+            # #
+        elif range2_flag == 0 and lim_mass_offset_flag == 0 and cluster_field_inclusion_flag == 1:      # clu + par
+            #
+            pass
+            # ## Cluster                        BAD VALUES
+            # #
+            # SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.07932761e+01,2.67133425e-03,-1.52211218e+00]     # 500 walkers, 10,000 steps
+            # QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [11.02475088,0.0548576,-1.11912586]
+            # TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.08698214,0.04611485,-1.20737296]
+            # #
+            # ## Field
+            # # #double-schechter Q pop
+            # SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06043947e+01,  1.34618096e-03,-1.05285636e+00,1.03917778e-04,-1.80501764e+00]     # 500 walkers, 10,000 steps
+            # QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08683497e+01,1.62721439e-03,-4.67210415e-01,1.18449523e-05,-1.92368574e+00 ]
+            # TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09604065e+01,1.77169438e-03,-1.01291735e+00,5.16342526e-05,-1.86079496e+00 ]
+            #
+        elif range2_flag == 0 and lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 0:      # par only
+            #
+            # pass
+            # ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            # #
+            # ## Field
+            # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06094033e+01,6.28581886e-04,-1.10823989e+00, 1.60904659e-04,-1.46677539e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08655999e+01,8.97294580e-04,-5.02153708e-01,1.29752547e-06,-2.06251664e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09468384e+01,9.88342022e-04,-1.02731089e+00,1.52601179e-05,-1.83983304e+00]
+            # #
+        elif range2_flag == 0 and lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 1:      # clu + par
+            #
+            # pass
+            ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            ##
+            # ## Field
+            # # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.05922684e+01,6.84527683e-04,-9.34621112e-01,1.37744160e-04,-1.67381947e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08501226e+01,9.15300471e-04,-4.50894716e-01,5.11694635e-06,-2.00802381e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09302091e+01,1.02501846e-03,-9.55305573e-01, 4.48724043e-05,-1.81946069e+00]
+            #
+    elif range2_flag == 1 and z_cutoff_field[1] == 0.125:
+        #
+        ## pass
+        if lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 0:      # par only
+            #
+            # pass
+            # ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            # #
+            # ## Field
+            # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06094033e+01,6.28581886e-04,-1.10823989e+00, 1.60904659e-04,-1.46677539e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08655999e+01,8.97294580e-04,-5.02153708e-01,1.29752547e-06,-2.06251664e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09468384e+01,9.88342022e-04,-1.02731089e+00,1.52601179e-05,-1.83983304e+00]
+            # #
+        elif lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 1:      # clu + par
+            #
+            # pass
+            ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            ##
+            # ## Field
+            # # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.05922684e+01,6.84527683e-04,-9.34621112e-01,1.37744160e-04,-1.67381947e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08501226e+01,9.15300471e-04,-4.50894716e-01,5.11694635e-06,-2.00802381e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09302091e+01,1.02501846e-03,-9.55305573e-01, 4.48724043e-05,-1.81946069e+00]
+            #
+    elif range2_flag == 1 and z_cutoff_field[1] == 0.14:
+    #
+    ## pass
+        if lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 0:      # par only
+            #
+            # pass
+            # ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            # #
+            # ## Field
+            # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06094033e+01,6.28581886e-04,-1.10823989e+00, 1.60904659e-04,-1.46677539e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08655999e+01,8.97294580e-04,-5.02153708e-01,1.29752547e-06,-2.06251664e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09468384e+01,9.88342022e-04,-1.02731089e+00,1.52601179e-05,-1.83983304e+00]
+            # #
+        elif lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 1:      # clu + par
+            #
+            # pass
+            ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            ##
+            # ## Field
+            # # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.05922684e+01,6.84527683e-04,-9.34621112e-01,1.37744160e-04,-1.67381947e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08501226e+01,9.15300471e-04,-4.50894716e-01,5.11694635e-06,-2.00802381e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09302091e+01,1.02501846e-03,-9.55305573e-01, 4.48724043e-05,-1.81946069e+00]
+            #
+    elif range2_flag == 1 and z_cutoff_field[1] == 0.15:
+    #
+    ## pass
+        if lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 0:      # par only
+            #
+            # pass
+            # ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08210401e+01,2.51004581e-03,-1.53053501e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [10.97345436,0.06593025,-1.07729047]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.06057385,0.05202444,-1.18526766]
+            # #
+            # ## Field
+            # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06094033e+01,6.28581886e-04,-1.10823989e+00, 1.60904659e-04,-1.46677539e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08655999e+01,8.97294580e-04,-5.02153708e-01,1.29752547e-06,-2.06251664e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09468384e+01,9.88342022e-04,-1.02731089e+00,1.52601179e-05,-1.83983304e+00]
+            # #
+        elif lim_mass_offset_flag == 1 and cluster_field_inclusion_flag == 1:      # clu + par
+            #
+            # pass
+            ## Cluster
+            SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = [1.08384375e+01,2.98612832e-03,-1.52617446e+00]     # 500 walkers, 10,000 steps
+            QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = [11.04379024,0.06828438,-1.1100403]
+            TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = [11.10966535,0.05676524,-1.1994069]
+            ##
+            # ## Field
+            # # #double-schechter Q pop
+            SFM_star_mcmc_field, SFphi1_mcmc, SFalpha1_mcmc, SFphi2_mcmc, SFalpha2_mcmc = [1.06063954e+01,1.09552808e-03,-7.91954678e-01,4.34061888e-04,-1.64117422e+00]     # 100 walkers, 15,000 steps
+            QM_star_mcmc_field, Qphi1_mcmc, Qalpha1_mcmc, Qphi2_mcmc, Qalpha2_mcmc = [1.08451166e+01,1.77985933e-03,-4.38598577e-01,7.89725668e-06,-2.00914587e+00]
+            TM_star_mcmc_field, Tphi1_mcmc, Talpha1_mcmc, Tphi2_mcmc, Talpha2_mcmc = [1.09225817e+01,1.95026782e-03,-8.88656895e-01,1.52503470e-04,-1.76588428e+00]
+            #
+    ## define x array to generate points to plot Schechter fit
+    x_plot = np.linspace(7,12.5,num=1000)#
+    x_plot = x_plot.reshape(len(x_plot),)
+    #
+    ## Cluster models
+    SF_model_mcmc_plot = np.log(10) * SFphi_mcmc * (10**((x_plot-SFM_star_mcmc)*(1+SFalpha_mcmc))) * np.exp(-10**(x_plot-SFM_star_mcmc))#
+    Q_model_mcmc_plot = np.log(10) * Qphi_mcmc * (10**((x_plot-QM_star_mcmc)*(1+Qalpha_mcmc))) * np.exp(-10**(x_plot-QM_star_mcmc))#
+    total_model_mcmc_plot = np.log(10) * Tphi_mcmc * (10**((x_plot-TM_star_mcmc)*(1+Talpha_mcmc))) * np.exp(-10**(x_plot-TM_star_mcmc))#
+    ## Field models
+    # SF_model_field_mcmc_plot = np.log(10) * SFphi_field_mcmc * (10**((x_plot-SFM_field_star_mcmc)*(1+SFalpha_field_mcmc))) * np.exp(-10**(x_plot-SFM_field_star_mcmc))#
+    SF_model_field_mcmc_plot_double = np.log(10) * math.e**(-10**(x_plot-SFM_star_mcmc_field)) * ( (SFphi1_mcmc*(10**(x_plot-SFM_star_mcmc_field))**(1+SFalpha1_mcmc))  + (SFphi2_mcmc*(10**(x_plot-SFM_star_mcmc_field))**(1+SFalpha2_mcmc)) )
+    # Q_model_field_mcmc_plot_single = np.log(10) * Qphi_field_mcmc * (10**((x_plot-QM_field_star_mcmc)*(1+Qalpha_field_mcmc))) * np.exp(-10**(x_plot-QM_field_star_mcmc))#
+    Q_model_field_mcmc_plot_double =  np.log(10) * math.e**(-10**(x_plot-QM_star_mcmc_field)) * ( (Qphi1_mcmc*(10**(x_plot-QM_star_mcmc_field))**(1+Qalpha1_mcmc))  + (Qphi2_mcmc*(10**(x_plot-QM_star_mcmc_field))**(1+Qalpha2_mcmc)) )
+    # total_model_field_mcmc_plot = np.log(10) * Tphi_field_mcmc * (10**((x_plot-TM_field_star_mcmc)*(1+Talpha_field_mcmc))) * np.exp(-10**(x_plot-TM_field_star_mcmc))#
+    total_model_field_mcmc_plot_double = np.log(10) * math.e**(-10**(x_plot-TM_star_mcmc_field)) * ( (Tphi1_mcmc*(10**(x_plot-TM_star_mcmc_field))**(1+Talpha1_mcmc))  + (Tphi2_mcmc*(10**(x_plot-TM_star_mcmc_field))**(1+Talpha2_mcmc)) )
 #
 #
 if UVC_fit_flag == 1:
@@ -1699,9 +2007,6 @@ if cluster_only_plot_flag == 1:
     ax0.errorbar(Q_midbins,Q_smf,yerr=Q_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, ms=15)#,label='Quiescent', ms=15)
     ax0.errorbar(SF_midbins,total_smf,yerr=total_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0, ms=15)#,label='Total', ms=15)
     ## Plot Schechter fits:  (uncomment 5 hashtags when fits complete)
-    # ax0.plot(x_plot,SF_model_mcmc_plot, '-b', label = 'MCMC - SF', linewidth = 2.0)
-    # ax0.plot(x_plot,Q_model_mcmc_plot, '-r', label = 'MCMC - Q', linewidth = 2.0)
-    # ax0.plot(x_plot,total_model_mcmc_plot, '-k', label = 'MCMC - Total', linewidth = 2.0)
     # ax0.plot(x_plot,SF_model_mcmc_plot, '-b', label = 'MCMC - SF', linewidth = 2.0)
     # ax0.plot(x_plot,Q_model_mcmc_plot, '-r', label = 'MCMC - Q', linewidth = 2.0)
     # ax0.plot(x_plot,total_model_mcmc_plot, '-k', label = 'MCMC - Total', linewidth = 2.0)
@@ -1798,31 +2103,32 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
         ax0.errorbar(Q_midbins,Q_smf,yerr=Q_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
         ax0.errorbar(SF_midbins,total_smf,yerr=total_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
         ## Plot Schechter fits:  (uncomment 5 hashtags when fits complete)
-        ######plt.plot(x_plot_Q,Q_model_ml_plot, ':r')
-        #####plt.plot(x_plot_Q,Q_model_mcmc_plot, '--r')
-        ######plt.plot(x_plot_SF,SF_model_ml_plot, ':c', label = 'Max. Likelihood', linewidth = 0.5)
-        # ax0.plot(x_plot,SF_model_mcmc_plot, '-b', label = 'MCMC - SF', linewidth = 2.0)
-        # ax0.plot(x_plot,Q_model_mcmc_plot, '-r', label = 'MCMC - Q', linewidth = 2.0)
-        # ax0.plot(x_plot,total_model_mcmc_plot, '-k', label = 'MCMC - Total', linewidth = 2.0)
+        if schechter_plot_flag == 1:
+            ax0.plot(x_plot,SF_model_mcmc_plot, '-b', label = 'MCMC - SF', linewidth = 2.0)
+            ax0.plot(x_plot,Q_model_mcmc_plot, '-r', label = 'MCMC - Q', linewidth = 2.0)
+            ax0.plot(x_plot,total_model_mcmc_plot, '-k', label = 'MCMC - Total', linewidth = 2.0)
         ax0.set_xlabel('$log(M/M_{\odot})$',fontsize=20)
         ax0.set_xscale('linear')
         ax0.minorticks_on()
         ax0.set_xlim(7,12.5)
         ax0.set_yscale('log')
-        ax0.set_ylim(5e-4,0.7)
+        ax0.set_ylim(5e-4,0.8)
         ax0.minorticks_on()
         ax0.tick_params(axis='both', which='both',direction='in',color='k',top=True,left=True, right=True,labelleft=True,labelright=False,labelbottom=False,labelsize=18)
         ax0.yaxis.set_label_position("left")
         ax0.set_ylabel('N density',fontsize=20)
         ax0.set_title('Cluster',fontsize=30)
-        # SF_string = 'SF: $M^*$: %.3f'%SFM_star_mcmc+'; alpha: %.3f'%SFalpha_mcmc
-        # Q_string = 'Q: $M^*$: %.3f'%QM_star_mcmc+'; alpha: %.3f'%Qalpha_mcmc
-        # total_string = 'Total: $M^*$: %.3f'%TM_star_mcmc+'; alpha: %.3f'%Talpha_mcmc
-        range2_string = 'lim. masses: %s'%limiting_mass
-        # ax0.text(7.05,9e-3,SF_string,color='b',fontsize='medium')
-        # ax0.text(7.05,6.5e-3,Q_string,color='r',fontsize='medium')
-        # ax0.text(7.05,4e-3,total_string,color='k',fontsize='medium')
-        ax0.text(7.05,5e-3,range2_string,color='k',fontsize='medium')
+        if schechter_plot_flag == 1:
+            SF_string = 'SF: $M^*$: %.3f'%SFM_star_mcmc+'; alpha: %.3f'%SFalpha_mcmc
+            Q_string = 'Q: $M^*$: %.3f'%QM_star_mcmc+'; alpha: %.3f'%Qalpha_mcmc
+            total_string = 'Total: $M^*$: %.3f'%TM_star_mcmc+'; alpha: %.3f'%Talpha_mcmc
+            ax0.text(7.05,2e-2,SF_string,color='b',fontsize='medium')
+            ax0.text(7.05,1.2e-2,Q_string,color='r',fontsize='medium')
+            ax0.text(7.05,8e-3,total_string,color='k',fontsize='medium')
+        limmass_string = 'lim. masses: %s'%limiting_mass
+        ax0.text(7.05,4e-3,limmass_string,color='k',fontsize='medium')
+        range_string = 'SMF range: %s'%np.round(range2,decimals=2)
+        ax0.text(7.05,3e-3,range_string,color='k',fontsize='medium')
         ax0.legend(scatterpoints=1,loc='lower left', frameon=False, fontsize = 'small')
         ax0.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
         #
@@ -1848,18 +2154,30 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1: # plo
         ax1.errorbar(Q_field_midbins,Q_field_smf,yerr=Q_field_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Quiescent', ms=15)
         ax1.errorbar(SF_field_midbins,total_field_smf,yerr=total_field_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=2.0,label='Total', ms=15)
         ## Plot Schechter fits:  (uncomment 5 hashtags when fits complete)
-        # ax1.plot(x_plot,SF_model_field_mcmc_plot, 'b')#, label = 'Max. Likelihood', linewidth = 0.5)
-        # ax1.plot(x_plot,Q_model_field_mcmc_plot_single, '-r', label = 'MCMC - Q', linewidth = 2.0)
-        # ax1.plot(x_plot,total_model_field_mcmc_plot, 'k')
-        # ax1.plot(x_plot,SF_model_field_mcmc_plot_double, '-b')#, label = 'MCMC - Q', linewidth = 2.0)
-        # ax1.plot(x_plot,Q_model_field_mcmc_plot_double, '-r')#, label = 'MCMC - Q', linewidth = 2.0)
-        # ax1.plot(x_plot,total_model_field_mcmc_plot_double, '-k')#, label = 'MCMC - Q', linewidth = 2.0)
-        range2_string_field = 'lim. masses (par): %s'%limiting_mass_par
-        ax1.text(7.05,5e-5,range2_string_field,color='k',fontsize='medium')
+        if schechter_plot_flag == 1:
+            ax1.plot(x_plot,SF_model_field_mcmc_plot_double, '-b')#, label = 'MCMC - Q', linewidth = 2.0)
+            ax1.plot(x_plot,Q_model_field_mcmc_plot_double, '-r')#, label = 'MCMC - Q', linewidth = 2.0)
+            ax1.plot(x_plot,total_model_field_mcmc_plot_double, '-k')#, label = 'MCMC - Q', linewidth = 2.0)
+        range2_string_par = 'lim. masses (par): %s'%limiting_mass_par
+        bounds_string_par = 'z_field_bounds: %s'%np.round(z_field_bounds,decimals=3)
+        ax1.text(7.05,5e-5,range2_string_par,color='k',fontsize='medium')
+        ax1.text(7.05,3.25e-6,bounds_string_par,color='k',fontsize='medium')
         if cluster_field_inclusion_flag == 0:
-            ax1.text(7.05,1e-4,'Field: Just Parallel',fontsize='medium')
+            ax1.text(7.05,1.5e-4,'Field: Just Parallel',fontsize='medium')
         elif cluster_field_inclusion_flag == 1:
-            ax1.text(7.05,1e-4,'Field: Cluster + Parallel',fontsize='medium')
+            range2_string_cluster_field = 'lim. masses (cluster field): %s'%limiting_mass_cluster_field
+            ax1.text(7.05,1.5e-4,'Field: Cluster + Parallel',fontsize='medium')
+            ax1.text(7.05,8e-5,range2_string_cluster_field,color='k',fontsize='medium')
+        #
+        if schechter_plot_flag == 1:
+            SF_string = 'SF: $M^*$: %.3f'%SFM_star_mcmc_field+'; alpha1: %.3f'%SFalpha1_mcmc+'; alpha2: %.3f'%SFalpha2_mcmc
+            Q_string = 'Q: $M^*$: %.3f'%QM_star_mcmc_field+'; alpha1: %.3f'%Qalpha1_mcmc+'; alpha2: %.3f'%Qalpha2_mcmc
+            total_string = 'Total: $M^*$: %.3f'%TM_star_mcmc_field+'; alpha1: %.3f'%Talpha1_mcmc+'; alpha2: %.3f'%Talpha2_mcmc
+            ax1.text(7.05,1.5e-5,SF_string,color='b',fontsize='medium')
+            ax1.text(7.05,8.5e-6,Q_string,color='r',fontsize='medium')
+            ax1.text(7.05,5.5e-6,total_string,color='k',fontsize='medium')
+        #
+        ax1.text(7.05,2.25e-6,'z_cutoff_field: %s'%z_cutoff_field,color='k',fontsize='medium')
         ax1.set_xlabel('$log(M/M_{\odot})$',fontsize=20)
         ax1.set_xscale('linear')
         ax1.minorticks_on()
