@@ -89,7 +89,7 @@ def lnlike(theta, midbins, smf, smf_error):
 # define "prior" function - SINGLE schechter
 def lnprior(theta):
     M_star, phi, alpha = theta
-    if (9.5 < M_star < 14) and (-50 < phi < 50) and (-5 < alpha < 2):
+    if (10 < M_star < 12.5) and (-50 < phi < 50) and (-3 < alpha < 2):
         return 0.0
     else:
         return -np.inf
@@ -345,6 +345,7 @@ if SF_flag ==1:
     elif mcmc_field_flag == 1:
         plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_SF_field_corner.png')
     #
+    plt.close()
     # initialize result arrays - means
     SFresult_means = np.array([0.]*ndim)
     SFresult_means = SFsamples.mean(axis=0)
@@ -377,6 +378,16 @@ if SF_flag ==1:
     print('Medians: ',SFresult_medians)
     print('Sigma - lower bounds: ',SFrestult_sigma_lower)
     print('Sigma - upper bounds: ',SFrestult_sigma_upper)
+    #
+    ## investigate movement of walkers
+    plt.figure()
+    plt.plot(SFsampler.get_chain()[:, 0, 0], "k", lw=0.5)
+    #plt.xlim(0, 5000)
+    #plt.ylim(-5.5, 5.5)
+    plt.title("SF move: StretchMove", fontsize=14)
+    plt.xlabel("step number")
+    plt.ylabel("x");
+    #
     #
     ## Print output to file
     bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(np.round(SFM_star_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[0],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[0],decimals=3))+delim+str(np.round(SFphi_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[1],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[1],decimals=3))+delim+str(np.round(SFalpha_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[2],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[2],decimals=3))
@@ -473,6 +484,7 @@ if Q_flag ==1:
     elif mcmc_field_flag == 1:
         plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_Q_field_corner.png')
     #
+    plt.close()
     # initialize result arrays - means
     Qresult_means = np.array([0.]*ndim)
     Qresult_means = Qsamples.mean(axis=0)
@@ -512,17 +524,7 @@ if Q_flag ==1:
     plt.plot(Qsampler.get_chain()[:, 0, 0], "k", lw=0.5)
     #plt.xlim(0, 5000)
     #plt.ylim(-5.5, 5.5)
-    plt.title("move: StretchMove", fontsize=14)
-    plt.xlabel("step number")
-    plt.ylabel("x");
-    #
-    #
-    ## investigate movement of walkers
-    plt.figure()
-    plt.plot(SFsampler.get_chain()[:, 0, 0], "k", lw=0.5)
-    #plt.xlim(0, 5000)
-    #plt.ylim(-5.5, 5.5)
-    plt.title("move: StretchMove", fontsize=14)
+    plt.title("Q move: StretchMove", fontsize=14)
     plt.xlabel("step number")
     plt.ylabel("x");
     #
@@ -624,6 +626,7 @@ if T_flag ==1:
     elif mcmc_field_flag == 1:
         plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_total_field_corner.png')
     #
+    plt.close()
     #
     # initialize result arrays - means
     Tresult_means = np.array([0.]*ndim)
@@ -634,7 +637,7 @@ if T_flag ==1:
     Trestult_sigma_upper = np.array([0.]*ndim)
     #display results
     # SF
-    print('SF result:')
+    print('Total result:')
     print('Means: ',Tresult_means)
     #
     TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = Tsamples.mean(axis=0)
@@ -657,6 +660,16 @@ if T_flag ==1:
     print('Medians: ',Tresult_medians)
     print('Sigma - lower bounds: ',Trestult_sigma_lower)
     print('Sigma - upper bounds: ',Trestult_sigma_upper)
+    #
+    #
+    ## investigate movement of walkers
+    plt.figure()
+    plt.plot(Tsampler.get_chain()[:, 0, 0], "k", lw=0.5)
+    #plt.xlim(0, 5000)
+    #plt.ylim(-5.5, 5.5)
+    plt.title("Total move: StretchMove", fontsize=14)
+    plt.xlabel("step number")
+    plt.ylabel("x");
     #
     #
     ## investigate movement of walkers
