@@ -486,11 +486,10 @@ if time_flag_2 == 1 and time_flag == 2:
 master_cat.add_column(Column([-99]*len(master_cat),name='del_z', dtype=np.float64))           # del_z = (z_phot - z_spec) / (1 + z_spec)
 master_cat.add_column(Column([-99]*len(master_cat),name='z_clusterspec', dtype=np.float64))   # del_z = (z_spec - z_cl) / (1 + z_spec)
 master_cat.add_column(Column([-99]*len(master_cat),name='z_clusterphot', dtype=np.float64))   # del_z = (z_phot - z_cl) / (1 + z_phot)
-#
-# store cluster redshifts; obtained from https://archive.stsci.edu/prepds/frontier/
-z_cluster = [0.396,0.543,0.545,0.375,0.348,0.308]
-# cluster_names = ['M0416','M1149','M0717','A370','A1063','A2744']
-#
+## store cluster redshifts; obtained from https://archive.stsci.edu/prepds/frontier/
+# z_cluster = [0.396,0.543,0.545,0.375,0.348,0.308]
+# # cluster_names = ['M0416','M1149','M0717','A370','A1063','A2744']
+# #
 ## calucalte del_z, z_clusterspec, z_clusterphot for outlier cut (defined above); these will be used to make cuts (member, field, false pos/neg) to spec sample, from which we will use relative fractions by mass to correct the photometric sample for completeness.
 #
 #
@@ -778,9 +777,10 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
             #
             #
             ## compute redshift range of galaxies in cluster sample
-            lower_bound = (min(z_cluster) - z_cutoff[1]) / (1 + z_cutoff[1])
-            upper_bound = (max(z_cluster) + z_cutoff[1]) / (1 - z_cutoff[1])
-            z_field_bounds = [lower_bound, upper_bound]
+            if z_field_bounds_flag == 1:
+                lower_bound = (min(z_cluster) - z_cutoff[1]) / (1 + z_cutoff[1])
+                upper_bound = (max(z_cluster) + z_cutoff_field[1]) / (1 - z_cutoff_field[1])
+                z_field_bounds = [lower_bound, upper_bound]
             #
             ## check it directories to store outputs exist. if not, create them
             output_dir = '/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/spec_binning/z_spec_%.3f'%z_cutoff[0]
@@ -824,7 +824,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
             ## Call "data_mass_completeness*.py", to determine the limiting mass of each cluster for the redshift cuts you just adopted     #
             #
             if limiting_mass_flag == 1:
-                exec(open('data_mass_completeness_F160W.py').read())      #opens and executes the script
+                exec(open('data_mass_completeness_F160W_cluster.py').read())      #opens and executes the script
             elif limiting_mass_flag == 2:
                 exec(open('data_mass_completeness_F814W.py').read())      #opens and executes the script
             #
@@ -958,9 +958,10 @@ else:
     #
     #
     ## compute redshift range of galaxies in cluster sample
-    lower_bound = (min(z_cluster) - z_cutoff[1]) / (1 + z_cutoff[1])
-    upper_bound = (max(z_cluster) + z_cutoff[1]) / (1 - z_cutoff[1])
-    z_field_bounds = [lower_bound, upper_bound]
+    if z_field_bounds_flag == 1:
+        lower_bound = (min(z_cluster) - z_cutoff[1]) / (1 + z_cutoff[1])
+        upper_bound = (max(z_cluster) + z_cutoff_field[1]) / (1 - z_cutoff_field[1])
+        z_field_bounds = [lower_bound, upper_bound]
     #
     #
     ## Call "spec_membership_selection.py" to determine spec. membership based on hard-coded cuts you just made
@@ -1114,11 +1115,18 @@ if summary_flag_6 == 1 or adams_flag == 1:
 #
 ## SECTION (6): determine limiting mass
 #
-print('\n"master_data*.py" Section 6: determining LIMITING MASS...')
+print('\n"master_data*.py" Section 6.1: determining LIMITING MASS of CLUSTER...')
 #
 #
-exec(open('data_mass_completeness_F160W.py').read())      #opens and executes the script
+exec(open('data_mass_completeness_F160W_cluster.py').read())      #opens and executes the script
 #
+#
+if cluster_field_inclusion_flag == 1:
+    print('\n"master_data*.py" Section 6.2: determining LIMITING MASS of FIELD...')
+    #
+    #
+    exec(open('data_mass_completeness_F160W_cluster_field.py').read())      #opens and executes the script
+    #
 #
 #
 #
@@ -1131,17 +1139,18 @@ SF_field_list = [ [],[],[],[],[],[] ]
 Q_field_list = [ [],[],[],[],[],[] ]
 counting_array_field = np.array([[0]*6]*2)
 #
-for counter in range(len(master_cat)):
-    for cluster in range(len(z_cluster)):
-        if master_cat['cluster'][counter] == (cluster+1):
-            if master_cat['member'][counter] == 1:                    # field sample within cluster redshift range
-                if master_cat['type'][counter] == 1:                  # type=1 is SF
-                    counting_array_field[0][cluster]+=1
-                    SF_field_list[cluster].append(master_cat['lmass'][counter])
-                elif master_cat['type'][counter] == 2:                # type=2 is Q
-                    counting_array_field[1][cluster]+=1
-                    Q_field_list[cluster].append(master_cat['lmass'][counter])
-#
+if cluster_field_inclusion_flag == 1:
+    for counter in range(len(master_cat)):
+        for cluster in range(len(z_cluster)):
+            if master_cat['cluster'][counter] == (cluster+1):
+                if master_cat['member'][counter] == 1:                    # field sample within cluster redshift range
+                    if master_cat['type'][counter] == 1:                  # type=1 is SF
+                        counting_array_field[0][cluster]+=1
+                        SF_field_list[cluster].append(master_cat['lmass'][counter])
+                    elif master_cat['type'][counter] == 2:                # type=2 is Q
+                        counting_array_field[1][cluster]+=1
+                        Q_field_list[cluster].append(master_cat['lmass'][counter])
+    #
 ## compare the list just created to what was found during membership selection
 #
 print('# of field galaxies found during membership selection: %s'%np.sum([field_phot,field_spec]))
