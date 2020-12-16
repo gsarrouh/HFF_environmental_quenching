@@ -90,10 +90,12 @@ if project_time_flag == 1:
 ## USER INPUTS
 ## MAY NEED TO EDIT: hard code the cluster membership definition cuts if not running Variational Analysis
 #
-range2_flag = 1            # 0==off, range of SMF set by lowest limiting mass / highest-mass object; 1==on, limits defined by user below
+range2_flag = 2            # 0==off, range of SMF set by lowest limiting mass / highest-mass object; 1==on, limits defined by user below
 #
 if range2_flag == 1:
     range2 = [7.8,12.2]
+elif range2_flag == 2:
+    range2 = [8.0,12.4]
 #
 # store cluster redshifts; obtained from https://archive.stsci.edu/prepds/frontier/
 z_cluster = [0.396,0.543,0.545,0.375,0.348,0.308]
@@ -102,10 +104,26 @@ z_cluster = [0.396,0.543,0.545,0.375,0.348,0.308]
 z_cutoff_field = [0.04,0.15]    # same but for definition of "field" galaxies
 bin_width = 0.4  # of the SMF, in dex
 #
+ang_dist_TOL = 0.5                  # angular distance TOLerance (in units of arcmin) for field sample (from cluster images only)
+#
+#
+bins_exempt_from_membership_correction = 0      # the 1st 'n' bins will be exempt from the membership correction due to spectroscopic incompleteness
+#
+if range2_flag == 1:
+    if bins_exempt_from_membership_correction != 4:             # for bins_exempt_from_membership_correction == 0,1,2,3
+        membership_correction_lower_mass = range2[0] + (bin_width * bins_exempt_from_membership_correction)      # mass below which the membership correction (i.e. spec. completeness correction) will NOT be applied
+    elif bins_exempt_from_membership_correction == 4:
+        membership_correction_lower_mass = 12.2
+elif range2_flag == 2:
+    if bins_exempt_from_membership_correction == 0:
+        membership_correction_lower_mass = range2[0]
+    elif bins_exempt_from_membership_correction == 1:
+        membership_correction_lower_mass = range2[0] + (bin_width * bins_exempt_from_membership_correction)      # mass below which the membership correction (i.e. spec. completeness correction) will NOT be applied
+#
 #
 ## choose your binning method for calculating membership correction (i.e. false pos/neg ratios)
-## 1 = symmetric binning;   2 = asymmetric binning by # count;   3 = asymmetric binning by mass;   4 = best of all methods
-membership_correction_binning_flag = 4
+## 1 = symmetric binning;   2 = asymmetric binning by # count;   3 = asymmetric binning by mass;   4 = best of all methods; 5 = final values for range2 = [7.8,12.2]
+membership_correction_binning_flag = 5
 #
 if membership_correction_binning_flag == 1:    # symmetric
     z_cutoff = [0.012,0.060]
@@ -123,6 +141,32 @@ elif membership_correction_binning_flag == 4:     # best of all 3 methods
     z_cutoff = [0.012,0.055]
     num_bins_SF_pos_neg = [7.36,8.93,10.16,12.3]   #1st try
     num_bins_Q_pos_neg = [7.36,9.41,10.41,12.3]
+elif membership_correction_binning_flag == 5:     # FINAL - SMF range fixed at
+    if range2_flag == 1:                # range2 = [7.8,12.2]
+        z_cutoff = [0.013,0.055]
+        z_cutoff_lo_mass = 0.1
+        if bins_exempt_from_membership_correction == 1:
+            num_bins_SF_pos_neg = [8.2,9.64,10.11,12.2]   #binning method = 2
+            num_bins_Q_pos_neg = [8.2,9.6,10.42,12.2]   #binning method = 2
+        elif bins_exempt_from_membership_correction == 2:
+            num_bins_SF_pos_neg = [8.6,9.5,10.18,12.2]   #binning method = 2
+            num_bins_Q_pos_neg = [8.6,9.47,10.41,12.2]   #binning method = 2
+        elif bins_exempt_from_membership_correction == 3:
+            num_bins_SF_pos_neg = [8.6,9.5,10.18,12.2]   # PLACEHOLDER
+            num_bins_Q_pos_neg = [8.6,9.47,10.41,12.2]   #
+        elif bins_exempt_from_membership_correction == 4:
+            num_bins_SF_pos_neg = [8.6,9.5,10.18,12.2]   # PLACEHOLDER
+            num_bins_Q_pos_neg = [8.6,9.47,10.41,12.2]   #
+            #
+    elif range2_flag == 2:          # range2 = [8.0,12.4]
+        z_cutoff = [0.012,0.055]
+        z_cutoff_lo_mass = z_cutoff[1] #0.1
+        if bins_exempt_from_membership_correction == 0:
+            num_bins_SF_pos_neg = [8.0,8.93,10.16,12.4]   #binning method = 3
+            num_bins_Q_pos_neg = [8.0,9.46,10.41,12.4]
+        elif bins_exempt_from_membership_correction == 1:
+            num_bins_SF_pos_neg = [8.4,9.4,10.18,12.4]   #binning method = 2
+            num_bins_Q_pos_neg = [8.4,9.46,10.41,12.4]
 #
 ## define redshift bounds for the FIELD SAMPLE
 z_field_bounds_flag = 0         # 0 = user-defined, below;   1 = automatically defined based on definition of z_cutoff_field
@@ -173,13 +217,23 @@ section_8_flag = 1                 # SMF
 limiting_mass_flag = 1             #   1 = F160W+F814W;   2 = F814W; DEPRECATED: SHOULD ALWAYS BE SET TO ==1
 lim_mass_offset_flag = 1           #   0 = off, do not apply offset; 1 = on, apply (F160W - F180W) offset
 #
+#
+#
+## MCMC FLAGS
 ## MAY NEED TO EDIT: choose whether to enter the MCMC simulation
 mcmc_flag = 0             #   0 = off - skip sim;   1 = on - perform MCMC sim & Exit program;
-mcmc_field_flag = 0         # 0 = off - fit cluster SMFs;   1 = on - fit field SMFs
+mcmc_field_flag = 1         # 0 = off - fit cluster SMFs;   1 = on - fit field SMFs
 ## Update the user on what this program will run
 #
 ## MAY NEED TO EDIT: choose if you want to include in the field sample galaxies drawn from the HFF cluster images (outside the redshift range of the image's respective cluster)
 cluster_field_inclusion_flag = 1            # 0 == off (NO), do NOT include galaxies from cluster images; 1 == on (YES), include them
+field_smf_schechter_flag = 1                # fitting the SF FIELD SMF with a schechter function:  1==single;   2==double
+#
+## MAY NEED TO EDIT: choose which populations to fit
+SF_flag = 0
+Q_flag = 1
+T_flag = 0
+#
 #
 #
 ## Update the user on which programs will be run
@@ -228,12 +282,16 @@ if z_field_bounds_flag == 0:
 elif z_field_bounds_flag == 1:
     print('z_field_bounds set by definition of z_cutoff_field.\nz_cutoff_field = %s'%np.round(z_cutoff_field,decimlas=3))
 #
-print('Field cutoff (del_z) [spec,phot]: %s'%z_cutoff_field)
+print('Cluster cutoff (del_z) [spec,phot]: %s'%z_cutoff)
+print('Lo-mass cluster cutoff (del_z) [phot]: %s'%z_cutoff_lo_mass)
+print('Field cutoff (del_z) [spec,phot]: %s'%z_cutoff_field+'      NOTE: no spec cutoff applied to field')
 #
 if range2_flag == 1:
     print('SMF range fixed at: %s'%range2)
 elif range2_flag == 0:
     print('SMF range: auto')
+#
+print('Membership correction not applied below: %.2f'%membership_correction_lower_mass+' (affects the first %i'%bins_exempt_from_membership_correction+' bin(s).)')
 #
 if lim_mass_offset_flag == 0:
     print('(F160W - F814W) offset: OFF')
@@ -258,6 +316,10 @@ elif mcmc_flag == 1:
         print('MCMC simulation will fit the CLUSTER SMFs.')
     elif mcmc_field_flag == 1:
         print('MCMC simulation will fit the FIELD SMFs.')
+        if field_smf_schechter_flag == 1:
+            print('FIELD SMFs: SF: single-schechter; Q/Total: double-schechter')
+        elif field_smf_schechter_flag == 2:
+            print('FIELD SMFs: SF/Q/Total: double-schechter')
 #
 ## SECTION (1): main DATA preparation file; imports raw data, sorts it by data type (i.e. photometric/spectroscopic data, stars, etc...), and classifies all galaxies with good photometric redshift estimates as Star-Forming (SF) or Quiescent (Q); it then runs a VARIATIONAL ANALYSIS to determine optimal redshift definitions (redshift "cuts") for cluster membership, based on which cuts yield an equal number of false positives/negatives in each mass bin; executes redshift cuts, classifies SF/Q galaxies as either cluster members, false pos/neg, or field galaxy; and finally, checks the catalogue for Brightest Cluster Galaxies (bCGs); MAIN program: master_data_7_final.py; SUB-programs: spec_completeness_binning.py, correction_factors.py;
 

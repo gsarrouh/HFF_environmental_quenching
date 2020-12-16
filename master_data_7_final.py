@@ -42,6 +42,7 @@
 ## 5: BCGs            <-- identified in the last section of the program, over-writing MEMBER assignment from section 4
 ## 6: cluster MEMBERS lost BELOW limiting mass
 ## 7: FIELD lost BELOW limiting mass
+## 8: FIELD within ~0.5 arcmin of cluster centre
 #
 #
 #
@@ -55,9 +56,10 @@
 ###        cluster ["nodata", "phot_only","spec_only","both"],
 ### (1.2)  add DIAG_FLAG_1: summarize in table "sub_stats"
 ### (1.3)  convert flux to mag.,
-### (2)    calculate various del_z's,
+### (2)    calculate various del_z's & angular distance
 ### (2.1)  identify outliers; add DIAG_FLAG_2: summarize outliers
-### (2.2)  compute & DISPLAY OUTLIER FRACTION, SCATTER (i.e. std dev),
+### (2.2)  calculate angular distance from cluster centre
+### (2.3)  compute & DISPLAY OUTLIER FRACTION, SCATTER (i.e. std dev),
 ###        and MEAN of |del_z|.
 ### (3)    distinguish b/w SF/Q: apply TYPE FILTER
 ### (3.1)  add DIAG_FLAG_3: summarize in table "type_stats"
@@ -249,12 +251,12 @@ F2744_u = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_da
 F2744_v = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell2744clu_catalogs/abell2744clu_v3.9.155.rf',format='ascii')
 F2744_j = Table.read('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/HFF_catalgoues/abell2744clu_catalogs/abell2744clu_v3.9.161.rf',format='ascii')
 ##aggregate into a single table
-macs0416 = Table([z_macs0416['id'],z_macs0416['z_peak'],z_macs0416['z_spec'],F0416_u['L153'],F0416_v['L155'],F0416_j['L161'],F0416_u['DM'],f_macs0416['lmass'],f_macs0416['lsfr'],f_macs0416['lssfr'],cat_macs0416['flux_radius'],cat_macs0416['star_flag'],cat_macs0416['use_phot'],cat_macs0416['f_F160W'],cat_macs0416['e_F160W'],cat_macs0416['flag_F160W'],cat_macs0416['f_F814W'],cat_macs0416['flag_F814W'],cat_macs0416['bandtotal'],cat_macs0416['f_F435W'],cat_macs0416['f_F606W'],cat_macs0416['f_F105W'],cat_macs0416['f_F125W'],cat_macs0416['f_F140W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W'))
-macs1149 = Table([z_macs1149['id'],z_macs1149['z_peak'],z_macs1149['z_spec'],F1149_u['L153'],F1149_v['L155'],F1149_j['L161'],F1149_u['DM'],f_macs1149['lmass'],f_macs1149['lsfr'],f_macs1149['lssfr'],cat_macs1149['flux_radius'],cat_macs1149['star_flag'],cat_macs1149['use_phot'],cat_macs1149['f_F160W'],cat_macs1149['e_F160W'],cat_macs1149['flag_F160W'],cat_macs1149['f_F814W'],cat_macs1149['flag_F814W'],cat_macs1149['bandtotal'],cat_macs1149['f_F435W'],cat_macs1149['f_F606W'],cat_macs1149['f_F105W'],cat_macs1149['f_F125W'],cat_macs1149['f_F140W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W'))
-macs0717 = Table([z_macs0717['id'],z_macs0717['z_peak'],z_macs0717['z_spec'],F0717_u['L153'],F0717_v['L155'],F0717_j['L161'],F0717_u['DM'],f_macs0717['lmass'],f_macs0717['lsfr'],f_macs0717['lssfr'],cat_macs0717['flux_radius'],cat_macs0717['star_flag'],cat_macs0717['use_phot'],cat_macs0717['f_F160W'],cat_macs0717['e_F160W'],cat_macs0717['flag_F160W'],cat_macs0717['f_F814W'],cat_macs0717['flag_F814W'],cat_macs0717['bandtotal'],cat_macs0717['f_F435W'],cat_macs0717['f_F606W'],cat_macs0717['f_F105W'],cat_macs0717['f_F125W'],cat_macs0717['f_F140W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W'))
-abell370 = Table([z_abell370['id'],z_abell370['z_peak'],z_abell370['z_spec'],F370_u['L153'],F370_v['L155'],F370_j['L161'],F370_u['DM'],f_abell370['lmass'],f_abell370['lsfr'],f_abell370['lssfr'],cat_abell370['flux_radius'],cat_abell370['star_flag'],cat_abell370['use_phot'],cat_abell370['f_F160W'],cat_abell370['e_F160W'],cat_abell370['flag_F160W'],cat_abell370['f_F814W'],cat_abell370['flag_F814W'],cat_abell370['bandtotal'],cat_abell370['f_F435W'],cat_abell370['f_F606W'],cat_abell370['f_F105W'],cat_abell370['f_F125W'],cat_abell370['f_F140W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W'))
-abell1063 = Table([z_abell1063['id'],z_abell1063['z_peak'],z_abell1063['z_spec'],F1063_u['L153'],F1063_v['L155'],F1063_j['L161'],F1063_u['DM'],f_abell1063['lmass'],f_abell1063['lsfr'],f_abell1063['lssfr'],cat_abell1063['flux_radius'],cat_abell1063['star_flag'],cat_abell1063['use_phot'],cat_abell1063['f_F160W'],cat_abell1063['e_F160W'],cat_abell1063['flag_F160W'],cat_abell1063['f_F814W'],cat_abell1063['flag_F814W'],cat_abell1063['bandtotal'],cat_abell1063['f_F435W'],cat_abell1063['f_F606W'],cat_abell1063['f_F105W'],cat_abell1063['f_F125W'],cat_abell1063['f_F140W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W'))
-abell2744 = Table([z_abell2744['id'],z_abell2744['z_peak'],z_abell2744['z_spec'],F2744_u['L153'],F2744_v['L155'],F2744_j['L161'],F2744_u['DM'],f_abell2744['lmass'],f_abell2744['lsfr'],f_abell2744['lssfr'],cat_abell2744['flux_radius'],cat_abell2744['star_flag'],cat_abell2744['use_phot'],cat_abell2744['f_F160W'],cat_abell2744['e_F160W'],cat_abell2744['flag_F160W'],cat_abell2744['f_F814W'],cat_abell2744['flag_F814W'],cat_abell2744['bandtotal'],cat_abell2744['f_F435W'],cat_abell2744['f_F606W'],cat_abell2744['f_F105W'],cat_abell2744['f_F125W'],cat_abell2744['f_F140W']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W'))
+macs0416 = Table([z_macs0416['id'],z_macs0416['z_peak'],z_macs0416['z_spec'],F0416_u['L153'],F0416_v['L155'],F0416_j['L161'],F0416_u['DM'],f_macs0416['lmass'],f_macs0416['lsfr'],f_macs0416['lssfr'],cat_macs0416['flux_radius'],cat_macs0416['star_flag'],cat_macs0416['use_phot'],cat_macs0416['f_F160W'],cat_macs0416['e_F160W'],cat_macs0416['flag_F160W'],cat_macs0416['f_F814W'],cat_macs0416['flag_F814W'],cat_macs0416['bandtotal'],cat_macs0416['f_F435W'],cat_macs0416['f_F606W'],cat_macs0416['f_F105W'],cat_macs0416['f_F125W'],cat_macs0416['f_F140W'],cat_macs0416['ra'],cat_macs0416['dec']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W','ra','dec'))
+macs1149 = Table([z_macs1149['id'],z_macs1149['z_peak'],z_macs1149['z_spec'],F1149_u['L153'],F1149_v['L155'],F1149_j['L161'],F1149_u['DM'],f_macs1149['lmass'],f_macs1149['lsfr'],f_macs1149['lssfr'],cat_macs1149['flux_radius'],cat_macs1149['star_flag'],cat_macs1149['use_phot'],cat_macs1149['f_F160W'],cat_macs1149['e_F160W'],cat_macs1149['flag_F160W'],cat_macs1149['f_F814W'],cat_macs1149['flag_F814W'],cat_macs1149['bandtotal'],cat_macs1149['f_F435W'],cat_macs1149['f_F606W'],cat_macs1149['f_F105W'],cat_macs1149['f_F125W'],cat_macs1149['f_F140W'],cat_macs1149['ra'],cat_macs1149['dec']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W','ra','dec'))
+macs0717 = Table([z_macs0717['id'],z_macs0717['z_peak'],z_macs0717['z_spec'],F0717_u['L153'],F0717_v['L155'],F0717_j['L161'],F0717_u['DM'],f_macs0717['lmass'],f_macs0717['lsfr'],f_macs0717['lssfr'],cat_macs0717['flux_radius'],cat_macs0717['star_flag'],cat_macs0717['use_phot'],cat_macs0717['f_F160W'],cat_macs0717['e_F160W'],cat_macs0717['flag_F160W'],cat_macs0717['f_F814W'],cat_macs0717['flag_F814W'],cat_macs0717['bandtotal'],cat_macs0717['f_F435W'],cat_macs0717['f_F606W'],cat_macs0717['f_F105W'],cat_macs0717['f_F125W'],cat_macs0717['f_F140W'],cat_macs0717['ra'],cat_macs0717['dec']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W','ra','dec'))
+abell370 = Table([z_abell370['id'],z_abell370['z_peak'],z_abell370['z_spec'],F370_u['L153'],F370_v['L155'],F370_j['L161'],F370_u['DM'],f_abell370['lmass'],f_abell370['lsfr'],f_abell370['lssfr'],cat_abell370['flux_radius'],cat_abell370['star_flag'],cat_abell370['use_phot'],cat_abell370['f_F160W'],cat_abell370['e_F160W'],cat_abell370['flag_F160W'],cat_abell370['f_F814W'],cat_abell370['flag_F814W'],cat_abell370['bandtotal'],cat_abell370['f_F435W'],cat_abell370['f_F606W'],cat_abell370['f_F105W'],cat_abell370['f_F125W'],cat_abell370['f_F140W'],cat_abell370['ra'],cat_abell370['dec']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W','ra','dec'))
+abell1063 = Table([z_abell1063['id'],z_abell1063['z_peak'],z_abell1063['z_spec'],F1063_u['L153'],F1063_v['L155'],F1063_j['L161'],F1063_u['DM'],f_abell1063['lmass'],f_abell1063['lsfr'],f_abell1063['lssfr'],cat_abell1063['flux_radius'],cat_abell1063['star_flag'],cat_abell1063['use_phot'],cat_abell1063['f_F160W'],cat_abell1063['e_F160W'],cat_abell1063['flag_F160W'],cat_abell1063['f_F814W'],cat_abell1063['flag_F814W'],cat_abell1063['bandtotal'],cat_abell1063['f_F435W'],cat_abell1063['f_F606W'],cat_abell1063['f_F105W'],cat_abell1063['f_F125W'],cat_abell1063['f_F140W'],cat_abell1063['ra'],cat_abell1063['dec']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W','ra','dec'))
+abell2744 = Table([z_abell2744['id'],z_abell2744['z_peak'],z_abell2744['z_spec'],F2744_u['L153'],F2744_v['L155'],F2744_j['L161'],F2744_u['DM'],f_abell2744['lmass'],f_abell2744['lsfr'],f_abell2744['lssfr'],cat_abell2744['flux_radius'],cat_abell2744['star_flag'],cat_abell2744['use_phot'],cat_abell2744['f_F160W'],cat_abell2744['e_F160W'],cat_abell2744['flag_F160W'],cat_abell2744['f_F814W'],cat_abell2744['flag_F814W'],cat_abell2744['bandtotal'],cat_abell2744['f_F435W'],cat_abell2744['f_F606W'],cat_abell2744['f_F105W'],cat_abell2744['f_F125W'],cat_abell2744['f_F140W'],cat_abell2744['ra'],cat_abell2744['dec']], names=('id','z_peak','z_spec','u','v','j','DM','lmass','lsfr','lssfr','flux_radius','star_flag','use_phot','f_F160W','e_F160W','flag_F160W','f_F814W','flag_F814W','bandtotal','f_F435W','f_F606W','f_F105W','f_F125W','f_F140W','ra','dec'))
 #
 #
 ## NOTE: cat_*['flag_F160W'] identifies BCGs IN EACH FILTER. ***** CONFIRM w/ AM ***** that I'm using the right filter; BCGs are identified as ['flag_F160W']==4, see Shipley et al 2018. Section 3.9
@@ -546,7 +548,20 @@ for counter in range(len(master_cat)):
             count_stars+=1
 #
 #
-## SECTION (2.2): compute & DISPLAY OUTLIER FRACTION, SCATTER (i.e. std dev), and MEAN of |del_z|.
+#
+## SECTION (2.2): compute angular distance from cluster center
+#
+#
+#
+#
+exec(open('angular_distance.py').read())
+#
+#
+#
+#
+#
+#
+## SECTION (2.3): compute & DISPLAY OUTLIER FRACTION, SCATTER (i.e. std dev), and MEAN of |del_z|.
 #
 if summary_flag_2 == 1 or adams_flag == 1:
     ## Summary table of U V J and excesses calc., total numbers should agree w/ those reported in "sub_stats"
@@ -731,7 +746,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
     ## MAY NEED TO EDIT: "increment" & "*cutoff_range", for both SPEC (immediately below) and PHOT (after the first 'for' loop)
     ## SPEC cuts
     increment = np.array([0.001,0.005])   # [spec,phot]
-    z_cutoff_spec_range = np.array([0.010,(0.020+increment[0])])
+    z_cutoff_spec_range = np.array([0.010,(0.017+increment[0])])
     #z_cutoff_spec_range = np.array([    ])
     #
     # define cut-offs for SF & Q
@@ -764,9 +779,9 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
         ## print diagnostic progress
         if cutoff_spec%1 == 0:
             progress = (cutoff_spec / len(z_cutoff_spec)*100)    # calculate progress through z_cutoff_spec_range
-            print('%s'%(cutoff_spec+1),'th cut of %s'%len(z_cutoff_spec),' being investigated.\nz_spec cut: %.3f'%z_cutoff_spec[cutoff_spec],'; in range %.3f'%z_cutoff_spec[0],' to %.3f'%z_cutoff_spec[-1],'\nCurrent progress: %.3f'%progress,'%')
+            print('\n\n****************\n****************\n\n%s'%(cutoff_spec+1),'th cut of %s'%len(z_cutoff_spec),' being investigated.\nz_spec cut: %.3f'%z_cutoff_spec[cutoff_spec],'; in range %.3f'%z_cutoff_spec[0],' to %.3f'%z_cutoff_spec[-1],'\nCurrent progress: %.3f'%progress,'%\n\n****************\n****************\\n\n')
         ## PHOT cuts
-        z_cutoff_phot_range = [max(z_cutoff_spec[cutoff_spec],0.05),(0.09+(increment[1]))]  ## MAY NEED TO EDIT phot range
+        z_cutoff_phot_range = [max(z_cutoff_spec[cutoff_spec],0.05),(0.1+(increment[1]))]  ## MAY NEED TO EDIT phot range
         z_cutoff_phot = np.round(np.arange(z_cutoff_phot_range[0],z_cutoff_phot_range[1],increment[1]),decimals=3) # create array from [0.01,0.05] in steps of increment_phot; replace in loop below with z_cutoff once cutoffs are determined
         #z_cutoff_phot = np.array([])
         #
@@ -783,7 +798,7 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
                 z_field_bounds = [lower_bound, upper_bound]
             #
             ## check it directories to store outputs exist. if not, create them
-            output_dir = '/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/spec_binning/z_spec_%.3f'%z_cutoff[0]
+            output_dir = '/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/spec_binning/final_round/z_spec_%.3f'%z_cutoff[0]
             check_folder = os.path.isdir(output_dir)
             #
             ## If folder doesn't exist, then create it.
@@ -850,15 +865,18 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
                 ##
                 ## MAY NEED TO EDIT: if you change the (# of bins to try) or (# of binning methods to try), you must adjust the indices to drop below. The list is ranked alphabetically (Q,SF), the 1st half for Q, the 2nf half for SF. Drop all rows except the 1st row for each of SF/Q, and update the comment below to record the settings which you just hard-coded.
                 ##
+                print(df)
                 ## Now that the binning list is sorted by type, then ranked by Metric of Merit, the lines 1-9 are for Q and 10-18 are for SF (3 binning techniques * 3 different numbers of bins * 2 types (SF/Q). To keep the best binning option for each of (SF/Q), keep the 1st and 10th lines. Save them to a list.
-                df=df.drop(df.index[7:])         # for 2 methods, 3 bins, 2 types
-                df=df.drop(df.index[1:6])
-                #df=df.drop(df.index[10:])        # drop the 11th row through the last
-                #df=df.drop(df.index[1:9])       # drop the 2nd row through the 9th
+                # df=df.drop(columns=['TOTAL_MoM'])
+                # df=df.drop(df.index[7:])         # for 2 methods, 3 bins, 2 types
+                # df=df.drop(df.index[1:6])
+                df=df.drop(df.index[10:])        # for 3 methods, 3 bins, 2 types
+                df=df.drop(df.index[1:9])
                 df.reset_index(drop=True, inplace=True)
                 TOTAL_MoM = df['MoM'][0] + df['MoM'][1]
                 df.insert(5, 'TOTAL_MoM', [TOTAL_MoM,TOTAL_MoM], True)
                 df_list.append(df)
+                print(df)
     #
     ##
     if diagnostic_round_flag == 1:
@@ -985,19 +1003,19 @@ mem_fraction_spec[1] = np.round(np.sum(mem_spec[1])/np.sum([mem_spec[1],field_sp
 #
 if summary_flag_4 == 1 or adams_flag == 1:
     ## Summarize initial data stats in table
-    spec_member_names = Column(['SPEC subsample total','SF - member','SF - field sample','SF - FAR field','SF - fasle pos','SF - false neg','SF - LDTB','Q - member','Q - field sample','Q - FAR field','Q - false pos','Q - false neg','Q - LDTB','SUM'],name='Property')
+    spec_member_names = Column(['SPEC subsample total','SF - member','SF - field sample','SF - FAR field','SF - fasle pos','SF - false neg','SF - LDTB','SF - TCTC','SF TOTAL','Q - member','Q - field sample','Q - FAR field','Q - false pos','Q - false neg','Q - LDTB','Q - TCTC','Q TOTAL','SUM'],name='Property')
     col_names = cluster_names
     # SF table
-    spec_member0 = Column([(np.sum(both)-np.sum(outliers)),np.sum(mem_spec[0]),np.sum(field_spec[0]),np.sum(far_field_spec[0]),np.sum(pos_spec[0]),np.sum(neg_spec[0]),np.sum(lost_due_to_buffer_spec[0]),np.sum(mem_spec[1]),np.sum(field_spec[1]),np.sum(field_spec[1]),np.sum(pos_spec[1]),np.sum(neg_spec[1]),np.sum(lost_due_to_buffer_spec[1]),np.sum([np.sum(mem_spec),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(lost_due_to_buffer_spec)])],name='Total')  # total column
+    spec_member0 = Column([(np.sum(both)-np.sum(outliers)),np.sum(mem_spec[0]),np.sum(field_spec[0]),np.sum(far_field_spec[0]),np.sum(pos_spec[0]),np.sum(neg_spec[0]),np.sum(lost_due_to_buffer_spec[0]),np.sum(tctc_spec[0]),np.sum([np.sum(mem_spec[0]),np.sum(field_spec[0]),np.sum(far_field_spec[0]),np.sum(pos_spec[0]),np.sum(neg_spec[0]),np.sum(lost_due_to_buffer_spec[0]),np.sum(tctc_spec[0])]),np.sum(mem_spec[1]),np.sum(field_spec[1]),np.sum(far_field_spec[1]),np.sum(pos_spec[1]),np.sum(neg_spec[1]),np.sum(lost_due_to_buffer_spec[1]),np.sum(tctc_spec[1]),np.sum([np.sum(mem_spec[1]),np.sum(field_spec[1]),np.sum(far_field_spec[1]),np.sum(pos_spec[1]),np.sum(neg_spec[1]),np.sum(lost_due_to_buffer_spec[1]),np.sum(tctc_spec[1])]),np.sum([np.sum(mem_spec),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(lost_due_to_buffer_spec),np.sum(tctc_spec)])],name='Total')  # total column
     spec_member_stats = Table([spec_member_names,spec_member0])
     for ii in range(len(mem_spec[0])):
-        col = Column([(both[ii]-outliers[ii]),mem_spec[0][ii],field_spec[0][ii],far_field_spec[0][ii],pos_spec[0][ii],neg_spec[0][ii],lost_due_to_buffer_spec[0][ii],mem_spec[1][ii],field_spec[1][ii],far_field_spec[1][ii],pos_spec[1][ii],neg_spec[1][ii],lost_due_to_buffer_spec[1][ii],np.sum([mem_spec[0][ii],field_spec[0][ii],far_field_spec[0][ii],pos_spec[0][ii],neg_spec[0][ii],lost_due_to_buffer_spec[0][ii],mem_spec[1][ii],field_spec[1][ii],far_field_spec[1][ii],pos_spec[1][ii],neg_spec[1][ii],lost_due_to_buffer_spec[1][ii]])],name=col_names[ii])
+        col = Column([(both[ii]-outliers[ii]),mem_spec[0][ii],field_spec[0][ii],far_field_spec[0][ii],pos_spec[0][ii],neg_spec[0][ii],lost_due_to_buffer_spec[0][ii],other_member_spec[0][ii],np.sum([mem_spec[0][ii],field_spec[0][ii],far_field_spec[0][ii],pos_spec[0][ii],neg_spec[0][ii],lost_due_to_buffer_spec[0][ii],tctc_spec[0][ii]]),mem_spec[1][ii],field_spec[1][ii],far_field_spec[1][ii],pos_spec[1][ii],neg_spec[1][ii],lost_due_to_buffer_spec[1][ii],tctc_spec[1][ii],np.sum([mem_spec[1][ii],field_spec[1][ii],far_field_spec[1][ii],pos_spec[1][ii],neg_spec[1][ii],lost_due_to_buffer_spec[1][ii],tctc_spec[1][ii]]),np.sum([mem_spec[0][ii],field_spec[0][ii],far_field_spec[0][ii],pos_spec[0][ii],neg_spec[0][ii],lost_due_to_buffer_spec[0][ii],tctc_spec[0][ii],mem_spec[1][ii],field_spec[1][ii],far_field_spec[1][ii],pos_spec[1][ii],neg_spec[1][ii],lost_due_to_buffer_spec[1][ii],tctc_spec[1][ii]])],name=col_names[ii])
         spec_member_stats.add_column(col)  # add columns to table one cluster at a time
     #
     print('\nSummary Table 4 - SPEC Subsample\nCatalogue by MEMBER:')
     print(spec_member_stats)
     print("\nNOTE: LDTB = Lost Due To Buffer b/w member & field (recall: the def'n of 'field' doesn't start where the def'n of 'member' stops. There's a buffer in between them).\n")
-    print('SF spec. total: %s'%np.sum([mem_spec[0],field_spec[0],far_field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0]]),'\nQ spec. total: %s'%np.sum([mem_spec[1],field_spec[1],far_field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1]]),'\nSF total + Q total + Outliers = %s'%np.sum([mem_spec[0],field_spec[0],far_field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0]]),' + %s'%np.sum([mem_spec[1],field_spec[1],far_field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1]]),' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_spec),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(lost_due_to_buffer_spec),np.sum(outliers)]))
+    print('SF spec. total: %s'%np.sum([mem_spec[0],field_spec[0],far_field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0],tctc_spec[0]]),'\nQ spec. total: %s'%np.sum([mem_spec[1],field_spec[1],far_field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1],tctc_spec[1]]),'\nSF total + Q total + Outliers = %s'%np.sum([mem_spec[0],field_spec[0],far_field_spec[0],pos_spec[0],neg_spec[0],lost_due_to_buffer_spec[0],tctc_spec[0]]),' + %s'%np.sum([mem_spec[1],field_spec[1],far_field_spec[1],pos_spec[1],neg_spec[1],lost_due_to_buffer_spec[1],tctc_spec[1]]),' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_spec),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(lost_due_to_buffer_spec),np.sum(tctc_spec),np.sum(outliers)]))
     #####
 #
 #
@@ -1090,14 +1108,14 @@ else:
 #
 if summary_flag_6 == 1 or adams_flag == 1:
     ## Summarize initial data stats in table
-    member_names = Column(['Parent total','Phot. member','Phot. field sample','Phot. FAR field','PHOT TOTAL','Spec. member','Spec. field sample','Spec. FAR field','SPEC false pos','SPEC false neg','SPEC TOTAL','SUM (less totals)'],name='Property')
+    member_names = Column(['Parent total','Phot. member','Phot. field sample','Phot. FAR field','Phot. TCTC','PHOT TOTAL','Spec. member','Spec. field sample','Spec. FAR field','Spec. TCTC','SPEC false pos','SPEC false neg','SPEC TOTAL','SUM (less totals)'],name='Property')
     col_names = cluster_names
     # SF table
-    member0 = Column([np.sum([phot_only,both]),np.sum(mem_phot),np.sum(field_phot),np.sum(far_field_phot),np.sum([mem_phot,field_phot,far_field_phot]),np.sum([mem_spec[0],mem_spec[1]]),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum([mem_spec,field_spec,far_field_spec,pos_spec,neg_spec]),np.sum([mem_phot,mem_spec,field_phot,far_field_phot,far_field_spec,field_spec,pos_spec,neg_spec])],name='Total')  # total column
+    member0 = Column([np.sum([phot_only,both]),np.sum(mem_phot),np.sum(field_phot),np.sum(far_field_phot),np.sum(tctc_phot),np.sum([mem_phot,field_phot,far_field_phot,tctc_phot]),np.sum([mem_spec[0],mem_spec[1]]),np.sum(field_spec),np.sum(far_field_spec),np.sum(tctc_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum([mem_spec,field_spec,far_field_spec,pos_spec,neg_spec,tctc_spec]),np.sum([mem_phot,mem_spec,field_phot,far_field_phot,tctc_phot,far_field_spec,field_spec,tctc_spec,pos_spec,neg_spec])],name='Total')  # total column
     #
     member_stats = Table([member_names,member0])
     for ii in range(len(mem_phot[0])):
-        col = Column([np.sum([phot_only[ii],both[ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii]]),np.sum([field_phot[0][ii],field_phot[1][ii]]),np.sum([far_field_phot[0][ii],far_field_phot[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],far_field_phot[0][ii],far_field_phot[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii]]),np.sum([field_spec[0][ii],field_spec[1][ii]]),np.sum([far_field_spec[0][ii],far_field_spec[1][ii]]),np.sum([pos_spec[0][ii],pos_spec[1][ii]]),np.sum([neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],far_field_spec[0][ii],far_field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],far_field_phot[0][ii],far_field_phot[1][ii],far_field_spec[0][ii],far_field_spec[1][ii],mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]])],name=col_names[ii])
+        col = Column([np.sum([phot_only[ii],both[ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii]]),np.sum([field_phot[0][ii],field_phot[1][ii]]),np.sum([far_field_phot[0][ii],far_field_phot[1][ii]]),np.sum([tctc_phot[0][ii],tctc_phot[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],far_field_phot[0][ii],tctc_phot[0][ii],tctc_phot[1][ii],far_field_phot[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii]]),np.sum([field_spec[0][ii],field_spec[1][ii]]),np.sum([far_field_spec[0][ii],far_field_spec[1][ii]]),np.sum([tctc_spec[0][ii],tctc_spec[1][ii]]),np.sum([pos_spec[0][ii],pos_spec[1][ii]]),np.sum([neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],tctc_spec[0][ii],tctc_spec[1][ii],far_field_spec[0][ii],far_field_spec[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]]),np.sum([mem_phot[0][ii],mem_phot[1][ii],field_phot[0][ii],field_phot[1][ii],far_field_phot[0][ii],far_field_phot[1][ii],far_field_spec[0][ii],far_field_spec[1][ii],mem_spec[0][ii],mem_spec[1][ii],field_spec[0][ii],field_spec[1][ii],tctc_spec[0][ii],tctc_spec[1][ii],tctc_phot[0][ii],tctc_phot[1][ii],pos_spec[0][ii],pos_spec[1][ii],neg_spec[0][ii],neg_spec[1][ii]])],name=col_names[ii])
         #
         member_stats.add_column(col)  # add columns to table one cluster at a time
     #
@@ -1105,7 +1123,7 @@ if summary_flag_6 == 1 or adams_flag == 1:
     #
     print('\nSummary Table 6 - FULL Parent Sample\nCatalogue by MEMBER:')
     print(member_stats)
-    print('\nNOTE: Lost Due To Buffer b/w member & field: %s'%LDTB_total,'\nTotal galaxies considered: (Members+All_field) + Buffer + Outliers(spec) = %s'%np.sum([mem_phot,mem_spec,field_phot,far_field_phot,far_field_spec,field_spec,pos_spec,neg_spec]),' + %s'%LDTB_total,' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_phot),np.sum(mem_spec),np.sum(field_phot),np.sum(far_field_phot),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(LDTB_total),np.sum(outliers)]),'\nNOTE: Total (phot) FAR Field (z>0.6 or z<0.3): %s'%np.sum([far_field_phot,far_field_spec]))
+    print('\nNOTE: Lost Due To Buffer b/w member & field: %s'%LDTB_total,'\nTotal galaxies considered: (Members+All_field) + Buffer + Outliers(spec) = %s'%np.sum([mem_phot,mem_spec,field_phot,far_field_phot,far_field_spec,field_spec,pos_spec,neg_spec]),' + %s'%LDTB_total,' + %s'%np.sum(outliers),' = %s'%np.sum([np.sum(mem_phot),np.sum(mem_spec),np.sum(field_phot),np.sum(far_field_phot),np.sum(field_spec),np.sum(far_field_spec),np.sum(pos_spec),np.sum(neg_spec),np.sum(LDTB_total),np.sum(outliers)]),'\nNOTE: Total (phot) FAR Field (z>0.6 or z<0.3): %s'%np.sum([far_field_phot,far_field_spec]),'\nNOTE: "TCTC" (Too Close To Cluste) are galaxies w/in 0.5 arcmin of cluster center.')
     print('\nTOTAL MEMBERS SELECTED: phot + spec = %s'%(np.sum([mem_phot[0],mem_phot[1]])),' + %s'%(np.sum([mem_spec[0],mem_spec[1]])),' = %s'%np.sum([mem_phot,mem_spec]),'\nTOTAL FIELD SAMPLE SELECTED: %s'%np.sum([field_phot,field_spec]),'\nFor redshift cutoffs [spec,phot] = %s'%z_cutoff)
     #
 #
@@ -1128,6 +1146,69 @@ if cluster_field_inclusion_flag == 1:
     exec(open('data_mass_completeness_F160W_cluster_field.py').read())      #opens and executes the script
     #
 #
+#
+#
+## SECTION (6.1): Overall MEMBERSHIP summary table (spec + phot subsamples) POST LIMITING MASS CALCULATION
+#
+#
+mem_above_lim_mass_SF = [ [] for x in range(len(z_cluster))]
+mem_above_lim_mass_Q = [ [] for x in range(len(z_cluster))]
+mem_above_lim_mass_counter = np.array([[0]*6]*2)
+mem_below_lim_mass = np.array([[0]*6]*2)
+
+for cluster in range(len(z_cluster)):
+    for counter in range(len(master_cat)):
+        if master_cat['cluster'][counter] == (cluster+1):
+            if master_cat['member'][counter] == 0:          # members
+                if master_cat['type'][counter] == 1:
+                    mem_above_lim_mass_SF[cluster].append(master_cat['lmass'][counter])
+                    mem_above_lim_mass_counter[0][cluster]+=1
+                elif master_cat['type'][counter] == 2:
+                    mem_above_lim_mass_Q[cluster].append(master_cat['lmass'][counter])
+                    mem_above_lim_mass_counter[1][cluster]+=1
+            elif master_cat['member'][counter] == 6:        # lost_below_limiting_mass
+                if master_cat['type'][counter] == 1:
+                    mem_below_lim_mass[0][cluster]+=1
+                elif master_cat['type'][counter] == 2:
+                    mem_below_lim_mass[1][cluster]+=1
+#
+#
+SF_raw_smf = [ [] for x in range(len(z_cluster))]
+Q_raw_smf = [ [] for x in range(len(z_cluster))]
+#
+num_points = int((round((range2[1]-range2[0])/bin_width))+1)       # compute # of data points;  bin_width set in "main_project_file.py"
+num_bins = np.linspace(range2[0],range2[1],num_points)
+#
+for ii in range(len(z_cluster)):
+    SF_raw, mass_bins = np.histogram(mem_above_lim_mass_SF[ii], bins=num_bins,range=range2)
+    Q_raw, mass_bins = np.histogram(mem_above_lim_mass_Q[ii], bins=num_bins,range=range2)
+#
+    SF_raw_smf[ii].append(SF_raw)
+    Q_raw_smf[ii].append(Q_raw)
+#
+SF_raw_smf = np.array(SF_raw_smf)
+Q_raw_smf = np.array(Q_raw_smf)
+#
+#
+if summary_flag_6 == 1 or adams_flag == 1:
+    ## Summarize initial data stats in table
+    member_names = Column(['Parent total','SF > lim mass','SF < lim mass','SF Total','Q > lim mass','Q < lim mass','Q Total','SUM (less totals)'],name='Property')
+    col_names = cluster_names
+    # SF table
+    member0 = Column([np.sum([mem_phot[0],mem_phot[1],mem_spec[0],mem_spec[1]]),np.sum(mem_above_lim_mass_counter[0]),np.sum(mem_below_lim_mass[0]),np.sum([mem_above_lim_mass_counter[0],mem_below_lim_mass[0]]),np.sum(mem_above_lim_mass_counter[1]),np.sum(mem_below_lim_mass[1]),np.sum([mem_above_lim_mass_counter[1],mem_below_lim_mass[1]]),np.sum([mem_above_lim_mass_counter[0],mem_below_lim_mass[0],mem_above_lim_mass_counter[1],mem_below_lim_mass[1]]) ],name='Total')  # total column
+    #
+    member_stats = Table([member_names,member0])
+    for ii in range(len(mem_phot[0])):
+        col = Column([np.sum([mem_phot[0][ii],mem_phot[1][ii],mem_spec[0][ii],mem_spec[1][ii]]),np.sum(mem_above_lim_mass_counter[0][ii]),np.sum(mem_below_lim_mass[0][ii]),np.sum([mem_above_lim_mass_counter[0][ii],mem_below_lim_mass[0][ii]]),np.sum(mem_above_lim_mass_counter[1][ii]),np.sum(mem_below_lim_mass[1][ii]),np.sum([mem_above_lim_mass_counter[1][ii],mem_below_lim_mass[1][ii]]),np.sum([mem_above_lim_mass_counter[0][ii],mem_below_lim_mass[0][ii],mem_above_lim_mass_counter[1][ii],mem_below_lim_mass[1][ii]]) ],name=col_names[ii])
+        #
+        member_stats.add_column(col)  # add columns to table one cluster at a time
+    #
+    print('\nSummary Table 7 - FULL Parent Sample\nPOST LIMITING MASS - Catalogue by MEMBER:')
+    print(member_stats)
+    print('\nTotal members selected > lim mass (SF + Q): %i'%np.sum(mem_above_lim_mass_counter[0])+' + %i'%np.sum(mem_above_lim_mass_counter[1])+' = %i'%np.sum([mem_above_lim_mass_counter[0],mem_above_lim_mass_counter[1]]))
+    #
+    print('\nPRELIMINARY RAW SMFs (CLU):\nSF: %s'%np.sum(SF_raw_smf,axis=0)+'\nQ: %s'%np.sum(Q_raw_smf,axis=0))
+    print('Total SF: %i'%np.sum(SF_raw_smf)+'\nTotal Q: %i'%np.sum(Q_raw_smf))
 #
 #
 ## SECTION (7): FIELD sample
@@ -1209,9 +1290,9 @@ if time_flag_6 == 1 and time_flag == 2:
     if project_time_flag == 1:
         pass
     else:
-        print('"master_data*.py" Section 6 took: %s seconds.\n\n' % (time.time() - start_time))
+        print('"master_data*.py" Section 8 took: %s seconds.\n\n' % (time.time() - start_time))
 else:
-    print('"master_data*.py" Section 6 complete.')
+    print('"master_data*.py" Section 8 complete.')
 #
 #
 #
