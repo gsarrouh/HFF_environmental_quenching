@@ -41,10 +41,15 @@ import corner
 ###### MAY NEED TO EDIT ######
 ######
 #
-SF_flag = 1          # star-forming population
-Q_flag = 1           # Q pop
-T_flag = 1           # total pop
-#
+# if mcmc_field_flag == 0:
+#     SF_flag = 1          # star-forming population
+#     Q_flag = 1           # quiescent pop
+#     T_flag = 1           # total pop
+if mcmc_field_flag == 1:
+    SF_flag = 1
+    Q_flag = 0
+    T_flag = 0
+
 # field_flag = 0              # 0 = off, fit CLUSTER SMFs; 1 = on, fit FIELD SMFs
 #
 #
@@ -63,7 +68,7 @@ if mcmc_field_flag == 1:
 ######
 #
 # initialize walkers
-ndim, nwalkers, max_nsteps = 3, 500, 10000    # (# of parameters), (#walkers), (#steps/walker)
+ndim, nwalkers, max_nsteps = 3, 1000, 50000    # (# of parameters), (#walkers), (#steps/walker)
 #
 #
 labels = ["M*","phi","alpha"]
@@ -174,14 +179,12 @@ M_star_guess = 10.0
 phi_guess = 0.005
 alpha_guess = -0.6
 #
-theta_guess = [M_star_guess,phi_guess,alpha_guess]
-# define guesses for initial guesses - DOUBLE schechter
-#M_star_guess = 10.5
-#phi_guess1 = 1
-#alpha_guess1 = -1
-#phi_guess2 = 1
-#alpha_guess2 = -1
-#
+[M_star_guess,phi_guess,alpha_guess] = [1.05828184e+01,9.65982352e-04,-1.70834634e+00]
+theta_guess_SF = [M_star_guess,phi_guess,alpha_guess]
+[M_star_guess,phi_guess,alpha_guess] = [11.01427988,0.05569934,-1.13798742]
+theta_guess_Q = [M_star_guess,phi_guess,alpha_guess]
+[M_star_guess,phi_guess,alpha_guess] = [11.10677233,0.03700197,-1.27802838]
+theta_guess_T = [M_star_guess,phi_guess,alpha_guess]
 #
 #
 ## open a file to print to
@@ -275,7 +278,8 @@ if SF_flag ==1:
 #
     t0 = time.time()       # start timer to run emcee.EnsembleSampler()
     ## setup initial positions of walkers in a Guassian ball around the least-squares position
-    SFpos = SFresult['x'] + 1e-4*np.random.randn(nwalkers, ndim)
+    SFpos = theta_guess_SF + 1e-4*np.random.randn(nwalkers, ndim)
+    # SFpos = SFresult['x'] + 1e-4*np.random.randn(nwalkers, ndim)
     #
     # Set up the backend
     # Don't forget to clear it in case the file already exists
@@ -379,6 +383,8 @@ if SF_flag ==1:
     print('Sigma - lower bounds: ',SFrestult_sigma_lower)
     print('Sigma - upper bounds: ',SFrestult_sigma_upper)
     #
+    print("SF mean acceptance fraction: {0:.3f}".format(np.mean(SFsampler.acceptance_fraction)))
+    #
     ## investigate movement of walkers
     plt.figure()
     plt.plot(SFsampler.get_chain()[:, 0, 0], "k", lw=0.5)
@@ -413,8 +419,8 @@ if Q_flag ==1:
 #
     t0 = time.time()       # start timer to run emcee.EnsembleSampler()
     ## setup initial positions of walkers in a Guassian ball around the least-squares position
-    # Qpos = theta_guess + 1e-4*np.random.randn(nwalkers, ndim)
-    Qpos = Qresult['x'] + 1e-4*np.random.randn(nwalkers, ndim)
+    Qpos = theta_guess_Q + 1e-4*np.random.randn(nwalkers, ndim)
+    # Qpos = Qresult['x'] + 1e-4*np.random.randn(nwalkers, ndim)
     #
     # Set up the backend
     # Don't forget to clear it in case the file already exists
@@ -518,6 +524,7 @@ if Q_flag ==1:
     print('Sigma - lower bounds: ',Qrestult_sigma_lower)
     print('Sigma - upper bounds: ',Qrestult_sigma_upper)
     #
+    print("Q mean acceptance fraction: {0:.3f}".format(np.mean(Qsampler.acceptance_fraction)))
     #
     ## investigate movement of walkers
     plt.figure()
@@ -554,8 +561,8 @@ if T_flag ==1:
 #
     t0 = time.time()       # start timer to run emcee.EnsembleSampler()
     ## setup initial positions of walkers in a Guassian ball around the least-squares position
-    # Tpos = theta_guess + 1e-4*np.random.randn(nwalkers, ndim)
-    Tpos = Tresult['x'] + 1e-4*np.random.randn(nwalkers, ndim)
+    Tpos = theta_guess_T + 1e-4*np.random.randn(nwalkers, ndim)
+    # Tpos = Tresult['x'] + 1e-4*np.random.randn(nwalkers, ndim)
     #
     # Set up the backend
     # Don't forget to clear it in case the file already exists
@@ -661,6 +668,7 @@ if T_flag ==1:
     print('Sigma - lower bounds: ',Trestult_sigma_lower)
     print('Sigma - upper bounds: ',Trestult_sigma_upper)
     #
+    print("Total mean acceptance fraction: {0:.3f}".format(np.mean(Tsampler.acceptance_fraction)))
     #
     ## investigate movement of walkers
     plt.figure()

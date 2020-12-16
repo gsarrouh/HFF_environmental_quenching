@@ -42,9 +42,10 @@ import corner
 ###### MAY NEED TO EDIT ######
 ######
 #
-SF_flag = 0          # star-forming population
-Q_flag = 1           # Q pop
-T_flag = 0           # total pop
+# if field_smf_schechter_flag == 2:
+#     SF_flag = 1          # star-forming population
+# Q_flag = 1           # quiescent pop
+# T_flag = 1           # total pop
 #
 # field_flag = 1              # 0 = off, fit CLUSTER SMFs; 1 = on, fit FIELD SMFs
 #
@@ -64,7 +65,7 @@ if mcmc_field_flag == 1:
 ######
 #
 # initialize walkers
-ndim, nwalkers, max_nsteps = 5, 100, 15000    # (# of parameters), (#walkers), (#steps/walker)
+ndim, nwalkers, max_nsteps = 5, 1000, 50000    # (# of parameters), (#walkers), (#steps/walker)
 #
 labels = ["M*","phi1","alpha1","phi2","alpha2"]
 #
@@ -102,7 +103,7 @@ def lnlike2(theta, midbins, smf, smf_error):
 # define "prior" function - DOUBLE schechter
 def lnprior2(theta):
    M_star, phi1, alpha1, phi2, alpha2 = theta
-   if (10 < M_star < 11.5) and (-1 < phi1 < 1) and (-1.5 < alpha1 < 1.5) and (-1 < phi2 < 1) and (-3 < alpha2 < -1):
+   if (10 < M_star < 12) and (-1 < phi1 < 1) and (-3 < alpha1 < 0) and (-1 < phi2 < 1) and (-3 < alpha2 < 0):
        return 0.0
    else:
        return -np.inf
@@ -149,6 +150,15 @@ for ii in range(len(Q_smf)):
         Q_smf_mcmc.append(Q_smf[ii])
         Q_error_mcmc.append(Q_error[ii])
 #
+T_midbins_mcmc = []
+T_smf_mcmc = []
+T_error_mcmc = []
+for ii in range(len(Q_smf)):
+    if total_smf[ii] != 0:
+        T_midbins_mcmc.append(SF_midbins[ii])
+        T_smf_mcmc.append(total_smf[ii])
+        T_error_mcmc.append(total_error[ii])
+#
 #
 # convert lists to arrays
 #array_list = [SF_smf_mcmc,SF_error_mcmc,SF_midbins_mcmc,Q_smf_mcmc,Q_error_mcmc,Q_midbins_mcmc]
@@ -160,10 +170,14 @@ SF_midbins_mcmc = np.array(SF_midbins_mcmc)
 Q_smf_mcmc = np.array(Q_smf_mcmc)
 Q_error_mcmc = np.array(Q_error_mcmc)
 Q_midbins_mcmc = np.array(Q_midbins_mcmc)
+T_smf_mcmc = np.array(T_smf_mcmc)
+T_error_mcmc = np.array(T_error_mcmc)
+T_midbins_mcmc = np.array(T_midbins_mcmc)
 #
 ## Re-shape arrays
 SF_midbins_mcmc = SF_midbins_mcmc.reshape(len(SF_midbins_mcmc))
 Q_midbins_mcmc = Q_midbins_mcmc.reshape(len(Q_midbins_mcmc))
+T_midbins_mcmc = T_midbins_mcmc.reshape(len(T_midbins_mcmc))
 #
 #
 #
@@ -181,7 +195,7 @@ Q_midbins_mcmc = Q_midbins_mcmc.reshape(len(Q_midbins_mcmc))
 #
 # theta_guess = [M_star_guess,phi_guess,alpha_guess]
 # define guesses for initial guesses - DOUBLE schechter
-[M_star_guess,phi_guess1,alpha_guess1,phi_guess2,alpha_guess2 ] = 1.06096756e+01,3.06831006e-04,-1.29666612e+00,1.75670077e-03,-2
+[M_star_guess,phi_guess1,alpha_guess1,phi_guess2,alpha_guess2 ] = 1.08881931e+01, 1.34589663e-05, -2, 1.63699487e-03,-5.31885752e-01
 # M_star_guess = 10.5
 # phi_guess1 = 1e-03
 # alpha_guess1 = 0.5
@@ -227,7 +241,7 @@ header1 = 'z_spec_cutoff'+delim+'z_phot_cutoff'+delim+'type'+delim+'M_star'+deli
 f.write(header1)
 #
 #
-if SF_flag == 1:
+if SF_flag == 1 and field_smf_schechter_flag == 2:
     # optimize SF
     SF_nll = lambda *args: -lnlike2(*args)       # single schechter fit - SF
     #
@@ -261,7 +275,7 @@ if T_flag ==1:
     T_nll = lambda *args: -lnlike2(*args)       # single schechter fit - total
     #
     ## fits to a single curve
-    Tresult = op.minimize(T_nll,[M_star_guess, phi_guess1, alpha_guess1, phi_guess2, alpha_guess2], args=(Q_midbins_mcmc, total_smf, total_error), method='Nelder-Mead')
+    Tresult = op.minimize(T_nll,[M_star_guess, phi_guess1, alpha_guess1, phi_guess2, alpha_guess2], args=(T_midbins_mcmc, T_smf_mcmc, T_error_mcmc), method='Nelder-Mead')
     TM_ml, Tphi1_ml, Talpha1_ml, Tphi2_ml, Talpha2_ml = Tresult['x']
     #
     print("\nTResult - max. likelihood:")
@@ -283,7 +297,7 @@ if T_flag ==1:
 ## MCMC & Uncertainty estimation
 #
 ## STAR-FORMING LOOP
-if SF_flag ==1:
+if SF_flag ==1 and field_smf_schechter_flag == 2:
     #
     print('\nStarting SF loop for ',nwalkers,' walkers and ',max_nsteps,' steps...')
 #
@@ -430,8 +444,8 @@ if Q_flag ==1:
 #
     t0 = time.time()       # start timer to run emcee.EnsembleSampler()
     ## setup initial positions of walkers in a Guassian ball around the least-squares position
-    Qpos = theta_guess + 1e-4*np.random.randn(nwalkers, ndim)
-    # Qpos = Qresult['x'] + 1e-4*np.random.randn(nwalkers, ndim)
+    # Qpos = theta_guess + 1e-4*np.random.randn(nwalkers, ndim)
+    Qpos = Qresult['x'] + 1e-4*np.random.randn(nwalkers, ndim)
     #
     # Set up the backend
     # Don't forget to clear it in case the file already exists
@@ -580,7 +594,7 @@ if T_flag ==1:
     backend.reset(nwalkers, ndim)
     #
     # setup the emcee sampler
-    Tsampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob2, args=(Q_midbins_mcmc, total_smf, total_error), backend=backend)
+    Tsampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob2, args=(T_midbins_mcmc, T_smf_mcmc, T_error_mcmc), backend=backend)
     #
     # We'll track how the average autocorrelation time estimate changes
     index = 0
