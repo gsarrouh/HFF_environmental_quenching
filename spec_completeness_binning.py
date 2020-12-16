@@ -9,11 +9,11 @@
 ## This is the old description of SECTION (3.2):
 ### SECTION (3.2): calculate SPECTROSCOPIC COMPLETENESS correction. basically, look at all the false positives/false negatives, and sort them by type (i.e. SF/Q). then bin them (i.e. make histograms of false pos/neg for each of SF/Q). take their ratio of false pos to false neg, and plot that ratio. this is the correction factor to be applied to the photometric subsample
 #
-## SPEC. BINNING: iterate through different number of histogram bins to see which yields a set of corrections closest in general to ~1; this has now been expanded to test: 
+## SPEC. BINNING: iterate through different number of histogram bins to see which yields a set of corrections closest in general to ~1; this has now been expanded to test:
 #
-## method = 1, SYMMETRIC binning; 
-## method = 2, ASYMMETRIC binning, EQUAL NUMBER of objects in each bin; 
-## method = 3, ASYMMETRIC binning, EQUAL MASS in each bin; 
+## method = 1, SYMMETRIC binning;
+## method = 2, ASYMMETRIC binning, EQUAL NUMBER of objects in each bin;
+## method = 3, ASYMMETRIC binning, EQUAL MASS in each bin;
 ## method = 4; ASYMMETRIC binning using built-in "np.histogram_bin_edges" function, using black-box binning method "auto", which is the Maximum of the "STURGES" & "FREEDMAN DIACONIS" estimators
 #
 #
@@ -26,7 +26,7 @@
 ### (0)    modules & definitions
 ### (1)    sort data into false pos/neg lists for SF/Q;
 ### (1.1)   add Summary Table comparing to false pos/neg found in "master_data*.py"
-### (2)    Method 1: SYMMETRIC bins; 
+### (2)    Method 1: SYMMETRIC bins;
 ### (3)    Method 2: ASYMMERTIC bins, EQUAL NUMBER distribution among bins;
 ### (4)    Method 3: ASYMMERTIC bins, EQUAL MASS distribution among bins;
 ### (5)    compute BIN EDGES and METRIC OF MERIT;
@@ -36,7 +36,7 @@
 #
 #
 #
-### NOTE: To find a section, search "SECTION (*)" in all caps, where * is the section number you want. To find fields which require user input, search "MAY NEED TO EDIT" in all caps. Some of these fields may direct you to manually enter input into a sub-program. 
+### NOTE: To find a section, search "SECTION (*)" in all caps, where * is the section number you want. To find fields which require user input, search "MAY NEED TO EDIT" in all caps. Some of these fields may direct you to manually enter input into a sub-program.
 #
 #
 #
@@ -87,7 +87,7 @@ summary_flag_1 = 1                   # initial loop to pick up all the false pos
 #
 #
 ## SECTION (1): setup LISTS, i.e. compile lists of SF/Q false pos/neg populations; define "midbins" function
-# 
+#
 ## ignore 'divide by zero' errors, since they are handled with exceptions below
 np.seterr(divide='ignore')
 #
@@ -96,18 +96,18 @@ np.seterr(divide='ignore')
 if 'limiting_mass' in locals():
     pass
 else:
-    limiting_mass = [7.14,7.63,8.2,7.5,7.34,7.07]        #NOTE: limiting masses are z_cutoff dependent
+    limiting_mass = [8.05,8.04,8.36,7.67,8.21,7.2]        #NOTE: limiting masses are z_cutoff dependent
 ##### OLD LIMITING MASSES   limiting_mass = [7.5,7.8,8.0,7.5,7.4,7.3] # clusters 1,2,3,4,5,6, see IDs below
-range2 = [min(limiting_mass),12.3]
+range3 = [membership_correction_lower_mass,range2[1]]
 cluster_names = ['M0416','M1149','M0717','A370','A1063','A2744']   # in the order corresponding to limiting mags above
 ## now setup of the bin midpoints for the SMF. no need to actually create the SMF, just define an array with the same bin midpoints
 #
 ## MAY NEED TO EDIT!!! -- UPDATE: bin_width now set in main_project_file.py
 ## if you change the bin width in the "master_smf*.py" code, YOU MUST ALSO CHANGE IT HERE. just search search "MAY NEED TO EDIT" in that file.
-num_points = int((round((range2[1]-range2[0])/bin_width))+1)       # compute # of data points
-num_bins = np.linspace(range2[0],range2[1],num_points)
+num_points = int((round((range3[1]-range3[0])/bin_width))+1)       # compute # of data points
+num_bins = np.linspace(range3[0],range3[1],num_points)
 #
-SF_midbins = midbins(num_bins)                                # define 
+SF_midbins = midbins(num_bins)                                # define
 #
 SF_mem = []
 SF_pos = []
@@ -124,7 +124,7 @@ objects_below_lim_mass = np.array([[0]*6]*2)    # for tracking objects below the
 for counter in range(len(master_cat)):
     for ii in range(len(limiting_mass)):
         if master_cat['cluster'][counter] == (ii+1):           # only look at objects above the limiting mass for each cluster
-            if master_cat['lmass'][counter] > limiting_mass[ii]:      
+            if master_cat['lmass'][counter] > limiting_mass[ii]:
                 if master_cat['type'][counter] == 1:      # type=1 for SF
                     if master_cat['member'][counter] == 0:     # member=0 for cluster member
                         SF_mem.append(master_cat['lmass'][counter])
@@ -157,7 +157,7 @@ for counter in range(len(master_cat)):
                         for ii in range(len(neg_by_cluster[1])):
                             if master_cat['cluster'][counter] == (ii+1):
                                 neg_by_cluster[1][ii]+=1           # track false neg for Q
-            else: 
+            else:
                 if master_cat['member'][counter] == 0:
                     if master_cat['type'][counter] == 1:           # SF  false pos/neg below limiting mass
                         for ii in range(len(mem_below_lim_mass[0])):
@@ -204,13 +204,13 @@ Q_neg = np.sort(Q_neg)
 #
 #
 ## open a file to print to
-f = open('/Users/gsarrouh/Documents/Programs/Python/nserc17/working_data/diagnostic_outputs/spec_binning/z_spec_%.3f'%z_cutoff[0]+'/binning_%.3f'%z_cutoff[0]+'_spec_cutoff_%.3f'%z_cutoff[1]+'_phot_cutoff.txt','w+')
+f = open('/Users/gsarrouh/Research/NSERC_2017_HFF/nserc17/working_data/diagnostic_outputs/spec_binning/z_spec_%.3f'%z_cutoff[0]+'/binning_%.3f'%z_cutoff[0]+'_spec_cutoff_%.3f'%z_cutoff[1]+'_phot_cutoff.txt','w+')
 #
 #
 ## to be used in building strings throughout program
-delim = ','   
+delim = ','
 ## write a header for the file, start with hashtag to identify comment
-header1 = 'z_spec_cutoff'+delim+'z_phot_cutoff'+delim+'type'+delim+'[limiting_mass]'+delim+'MoM'+delim+'TOTAL_MoM'+delim+'cluster_members'+delim+'false pos.'+delim+'false neg.'+delim+'binning_method'+delim+'#_of_bins'+delim+'[bin_edges]\n'
+header1 = 'z_spec_cutoff'+delim+'z_phot_cutoff'+delim+'type'+delim+'[limiting_mass]'+delim+'MoM'+delim+'cluster_members'+delim+'false pos.'+delim+'false neg.'+delim+'binning_method'+delim+'#_of_bins'+delim+'[bin_edges]\n'
 #
 f.write(header1)
 #
@@ -218,23 +218,23 @@ f.write(header1)
 #########  Beginning of binning methods
 #
 ### SECTION (2): METHOD 1
-### METHOD 1: bin SF & Q in SYMMETRIC BINS, then compute false pos/neg fractions by mass bin for correction factors. 
+### METHOD 1: bin SF & Q in SYMMETRIC BINS, then compute false pos/neg fractions by mass bin for correction factors.
 #
 ## number of histogram mass bins to try for spec. completeness correction
 num_bins_to_try = np.arange(3,6,1)   # np.arange([...]) = [array_start,array_end_plus_increment,increment]
 # write a loop that interatively uses a different number of bins in the histrogram, to isolate the largest number for which all bins have at least one entry; NOTE: the lines that stop the loop have been commented out, to investigate the relative fraction of false pos/neg for each different # of bins
 #
-# 
+#
 method = 1
 for number in range(len(num_bins_to_try)):
     #
     # make histograms
-    SF_hist, bins_SF = np.histogram(SF_mem, bins=num_bins_to_try[number], range=range2)
-    SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=num_bins_to_try[number], range=range2)
-    SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_bins_to_try[number], range=range2)
-    Q_hist, bins_Q = np.histogram(Q_mem, bins=num_bins_to_try[number], range=range2)
-    Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=num_bins_to_try[number], range=range2)
-    Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_bins_to_try[number], range=range2)
+    SF_hist, bins_SF = np.histogram(SF_mem, bins=num_bins_to_try[number], range=range3)
+    SF_pos_hist, bins_SF = np.histogram(SF_pos, bins=num_bins_to_try[number], range=range3)
+    SF_neg_hist, bins_SF = np.histogram(SF_neg, bins=num_bins_to_try[number], range=range3)
+    Q_hist, bins_Q = np.histogram(Q_mem, bins=num_bins_to_try[number], range=range3)
+    Q_pos_hist, bins_Q = np.histogram(Q_pos, bins=num_bins_to_try[number], range=range3)
+    Q_neg_hist, bins_Q = np.histogram(Q_neg, bins=num_bins_to_try[number], range=range3)
     #
     bins_SF = np.round(bins_SF,decimals=3)
     bins_Q = np.round(bins_Q,decimals=3)
@@ -248,7 +248,7 @@ for number in range(len(num_bins_to_try)):
     Q_ratio_midbins = midbins(bins_Q)
     #
     #
-    #    
+    #
     ## call a new file: "spec_correction_factors.py" to interpolate/extrapolate the correction factors to the SMF, and return the metric of merit
     #
     exec(open('spec_correction_factors.py').read())      #opens and executes the script
@@ -279,7 +279,7 @@ for number in range(len(num_bins_to_try)):
     #
     ## SECIONT (6): prepare what to WRITE to file - (this is copied&pasted from below for formatting consistency)
     bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
-    bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
+    bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+' Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
     writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
     f.write(writer)
     #
@@ -287,7 +287,7 @@ for number in range(len(num_bins_to_try)):
 #
 ## ASYMMETRIC BINNING START
 #
-method_designations = [2]#[2,3]
+method_designations = [2,3]
 #
 ##
 for m in range(len(method_designations)):
@@ -299,7 +299,7 @@ for m in range(len(method_designations)):
 ### METHOD 2: ASYMMETRIC BINS for bins with ~EQUAL NUMBER OF OBJECTS in each bin (for each of the SF/Q false pos/neg pairs), return the asymmetric bin edges and compute the midpoints b/w the *_pos/*_neg bin edges. Use these midpoints as the bin edges for a new histogram for the *_pos/*_neg lists, and re-compute the false pos/neg ratio for each of SF/Q. Then print relevant data to a file.
         #
     if method == 2:
-        #    
+        #
         for number in range(len(num_bins_to_try)):    #number of bin EDGES (i.e. # of bins + 1)
             ## compute the index corresponding to the first evenly-space bin edge
             SF_pos_index = int(np.ceil(len(SF_pos))/(num_bins_to_try[number]))
@@ -338,14 +338,14 @@ for m in range(len(method_designations)):
             #print(('num_bins_SF: %s'%num_bins_SF)
             #
             ## set first/last entry as limits of mass range for smf
-            num_bins_SF[0][0] = range2[0]         # reminder: row [0] = false pos; row [1] = false neg
-            num_bins_SF[0][-1] = range2[-1]
-            num_bins_SF[1][0] = range2[0] 
-            num_bins_SF[1][-1] = range2[-1]
-            num_bins_Q[0][0] = range2[0]         # reminder: row [0] = false pos; row [1] = false neg
-            num_bins_Q[0][-1] = range2[-1]
-            num_bins_Q[1][0] = range2[0] 
-            num_bins_Q[1][-1] = range2[-1]    #
+            num_bins_SF[0][0] = range3[0]         # reminder: row [0] = false pos; row [1] = false neg
+            num_bins_SF[0][-1] = range3[-1]
+            num_bins_SF[1][0] = range3[0]
+            num_bins_SF[1][-1] = range3[-1]
+            num_bins_Q[0][0] = range3[0]         # reminder: row [0] = false pos; row [1] = false neg
+            num_bins_Q[0][-1] = range3[-1]
+            num_bins_Q[1][0] = range3[0]
+            num_bins_Q[1][-1] = range3[-1]    #
             ## compute midpoints between false pos/neg bin edges as starting point of search for ideal bin edges
             bin_edge_means_SF = np.mean(num_bins_SF,axis=0)
             bin_edge_means_Q = np.mean(num_bins_Q,axis=0)
@@ -365,12 +365,12 @@ for m in range(len(method_designations)):
             ######
             #
             ## SECIONT (3.1): prepare what to WRITE to file
-            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
-            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+' Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+'%.5f'%tot_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
+            bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(limiting_mass)+delim+'%.5f'%SF_var+delim+str(np.sum([mem_spec[0],mem_phot[0]]))+delim+'%s'%len(SF_pos)+delim+'%s'%len(SF_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_SF)
+            bin_entry2 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+' Q'+delim+str(limiting_mass)+delim+'%.5f'%Q_var+delim+str(np.sum([mem_spec[1],mem_phot[1]]))+delim+'%s'%len(Q_pos)+delim+'%s'%len(Q_neg)+delim+str(method)+delim+str(num_bins_to_try[number])+delim+str(bins_Q)
             writer = '%s'%str(bin_entry1)+'\n'+'%s'%str(bin_entry2)+'\n'
             f.write(writer)
             #
-    #      
+    #
     elif method == 3:
         #
         #
@@ -382,7 +382,7 @@ for m in range(len(method_designations)):
 #
         #
         for number in range(len(num_bins_to_try)):
-            SF_pos_sum_index = np.ceil(np.sum(SF_pos)/num_bins_to_try[number]) 
+            SF_pos_sum_index = np.ceil(np.sum(SF_pos)/num_bins_to_try[number])
             SF_neg_sum_index = np.ceil(np.sum(SF_neg)/num_bins_to_try[number])
             Q_pos_sum_index = np.ceil(np.sum(Q_pos)/num_bins_to_try[number])
             Q_neg_sum_index = np.ceil(np.sum(Q_neg)/num_bins_to_try[number])
@@ -444,31 +444,31 @@ for m in range(len(method_designations)):
             #
             ## now compare to number of bin edges (or # of bins + 1, per below. same difference)
             ## check SF false pos
-            while len_SF_pos < (num_bins_to_try[number]+1): 
+            while len_SF_pos < (num_bins_to_try[number]+1):
                 num_bins_SF_index[0].append(0)
                 len_SF_pos = len(num_bins_SF_index[0])
-            while len_SF_pos > (num_bins_to_try[number]+1): 
+            while len_SF_pos > (num_bins_to_try[number]+1):
                 del num_bins_SF_index[0][-1]
                 len_SF_pos = len(num_bins_SF_index[0])
             ## check SF false neg
-            while len_SF_neg < (num_bins_to_try[number]+1): 
+            while len_SF_neg < (num_bins_to_try[number]+1):
                 num_bins_SF_index[1].append(0)
                 len_SF_neg = len(num_bins_SF_index[1])
-            while len_SF_neg > (num_bins_to_try[number]+1): 
+            while len_SF_neg > (num_bins_to_try[number]+1):
                 del num_bins_SF_index[1][-1]
                 len_SF_neg = len(num_bins_SF_index[1])
-            ## check Q false pos    
-            while len_Q_pos < (num_bins_to_try[number]+1): 
+            ## check Q false pos
+            while len_Q_pos < (num_bins_to_try[number]+1):
                 num_bins_Q_index[0].append(0)
                 len_Q_pos = len(num_bins_Q_index[0])
-            while len_Q_pos > (num_bins_to_try[number]+1): 
+            while len_Q_pos > (num_bins_to_try[number]+1):
                 del num_bins_Q_index[0][-1]
                 len_Q_pos = len(num_bins_Q_index[0])
-            ## check Q false neg    
-            while len_Q_neg < (num_bins_to_try[number]+1): 
+            ## check Q false neg
+            while len_Q_neg < (num_bins_to_try[number]+1):
                 num_bins_Q_index[1].append(0)
                 len_Q_neg = len(num_bins_Q_index[1])
-            while len_Q_neg > (num_bins_to_try[number]+1): 
+            while len_Q_neg > (num_bins_to_try[number]+1):
                 del num_bins_Q_index[1][-1]
                 len_Q_neg = len(num_bins_Q_index[1])
             #
@@ -496,14 +496,14 @@ for m in range(len(method_designations)):
                 num_bins_Q[1][ii] = Q_neg[num_bins_Q_index[1][ii]]
             #
             ## set first/last entry as limits of mass range for smf
-            num_bins_SF[0][0] = range2[0]         # reminder: row [0] = false pos; row [1] = false neg
-            num_bins_SF[1][0] = range2[0]
-            num_bins_SF[0][-1] = range2[-1] 
-            num_bins_SF[1][-1] = range2[-1]
-            num_bins_Q[0][0] = range2[0]         # reminder: row [0] = false pos; row [1] = false neg
-            num_bins_Q[1][0] = range2[0]
-            num_bins_Q[0][-1] = range2[-1]
-            num_bins_Q[1][-1] = range2[-1]
+            num_bins_SF[0][0] = range3[0]         # reminder: row [0] = false pos; row [1] = false neg
+            num_bins_SF[1][0] = range3[0]
+            num_bins_SF[0][-1] = range3[-1]
+            num_bins_SF[1][-1] = range3[-1]
+            num_bins_Q[0][0] = range3[0]         # reminder: row [0] = false pos; row [1] = false neg
+            num_bins_Q[1][0] = range3[0]
+            num_bins_Q[0][-1] = range3[-1]
+            num_bins_Q[1][-1] = range3[-1]
             #
             if diag_flag == 1 or project_diagnostic_flag == 1:
                 if project_diagnostic_flag == 0:
@@ -535,14 +535,14 @@ for m in range(len(method_designations)):
             f.write(writer)
             #
         #
-## use built-in "Freedman Diaconis Estimator" for np.histrogram_bin_edges ASYMMETRIC binning method 
+## use built-in "Freedman Diaconis Estimator" for np.histrogram_bin_edges ASYMMETRIC binning method
 #method = 4
 ##
 ## make histograms
-#SF_pos_hist, bins_SF = np.histogram_bin_edges(SF_pos, bins='auto', range=range2)
-#SF_neg_hist, bins_SF = np.histogram_bin_edges(SF_neg, bins='auto', range=range2)
-#Q_pos_hist, bins_Q = np.histogram_bin_edges(Q_pos, bins='auto', range=range2)
-#Q_neg_hist, bins_Q = np.histogram_bin_edges(Q_neg, bins='auto', range=range2)
+#SF_pos_hist, bins_SF = np.histogram_bin_edges(SF_pos, bins='auto', range=range3)
+#SF_neg_hist, bins_SF = np.histogram_bin_edges(SF_neg, bins='auto', range=range3)
+#Q_pos_hist, bins_Q = np.histogram_bin_edges(Q_pos, bins='auto', range=range3)
+#Q_neg_hist, bins_Q = np.histogram_bin_edges(Q_neg, bins='auto', range=range3)
 ##
 # bins_SF = np.round(bins_SF,decimals=3)
 # bins_Q = np.round(bins_Q,decimals=3)
@@ -570,7 +570,7 @@ for m in range(len(method_designations)):
 #
 #
 #
-## close the file       
+## close the file
 f.close()
 #
 #
@@ -590,8 +590,8 @@ if time_flag == 1:
 if diag_flag == 1 or project_diagnostic_flag == 1:
     if project_diagnostic_flag == 0:
         pass
-    else:    
+    else:
         print('\n\n"spec_completeness_binning.py" terminated successfully.\n')
 #
-#                      
+#
 ###### PROGRAM END ######

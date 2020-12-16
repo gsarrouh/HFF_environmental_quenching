@@ -2,9 +2,9 @@
 #
 #
 ### WHAT THIS PROGRAM DOES:
-### This script reads in all data for the Hubble Frontier Fields images and prepares data for plotting and analysis. Key information is summarized in the tables: 
+### This script reads in all data for the Hubble Frontier Fields images and prepares data for plotting and analysis. Key information is summarized in the tables:
 #
-#  
+#
 ### This program creates plots for the master data catalogue, containing:
 ### Fig. 1: photometric v specroscopic redshift;   Fig. 2: delta-z (member/field/false pos/false neg segregation);   Fig. 3: UVJ diagram( "colour-colour" plot)
 #
@@ -25,7 +25,7 @@
 #
 ###################     PROGRAM START
 #
-#  
+#
 # import modules
 import numpy as np
 import matplotlib as mpl
@@ -35,22 +35,22 @@ import time
 #
 ## definitions
 #
-## 
+##
 #
 ## MAY NEED TO EDIT
 ## set mass threshold for plot_flag_2
-mass_threshold = [9,range2[1]]                        # mass threshold in units of log_10(Msol)
+mass_threshold = [7,range2[1]]                        # mass threshold in units of log_10(Msol)
 #
 ## SECTION (0): set PLOT_FLAGS    # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
 ### MAY NEED TO EDIT ### plot_flag_*/time_flag_*/diag_flag_*
 #
 plot_flag_1 = 0           # Fig.1 - UVJ diagram; colorbar = mass
-plot_flag_2 = 0           # Fig.2-4 - diagnostic plots in greyscale;  0=off;  1=on, plot above log_10(Msol) >/< threshold;  2=on, plot everything; 
+plot_flag_2 = 1           # Fig.2-4 - diagnostic plots in greyscale;  0=off;  1=on, plot above log_10(Msol) >/< threshold;  2=on, plot everything;
 plot_flag_3 = 1           # Fig.1 - UVJ diagram; color = spec/phot
 #
-lines_flag = 1            # include boundary line b/w SF/Q populations in UVJ plot
+lines_flag = 0            # include boundary line b/w SF/Q populations in UVJ plot
 #
-diag_flag_1 = 0           # Section 1: UVJ diagram
+diag_flag_1 = 1           # Section 1: UVJ diagram
 #
 #
 #
@@ -63,7 +63,7 @@ diag_flag_1 = 0           # Section 1: UVJ diagram
 counting_array_uvj = np.array([0]*5)         # counts number of galaxies at each condition; diagnostic check
 counting_array_sub = np.array([0]*2)         # count number of [spec/phot] galaxies there are
 SF_array = [ [], [], [] ]                # stores: [ [(V-J)], [(U-V)], [mass] ]
-Q_array = [ [], [], [] ]    
+Q_array = [ [], [], [] ]
 spec_array = [ [], [] ]                # stores: [ [(V-J)], [(U-V)] ]
 phot_array = [ [], [] ]                # stores: [ [(V-J)], [(U-V)] ]
 total_array = [ [], [], [] ]
@@ -132,7 +132,7 @@ field_array_par = np.array(field_array_par)
 #
 #
 #
-## UVJ Diagram: colour-colour plots; modify to add in photometric sub-sample
+## FIGURE (1): UVJ Diagram: colour-colour plots; modify to add in photometric sub-sample
 #
 if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
     if project_plot_flag == 0:
@@ -176,11 +176,11 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         plt.show()
         #
     #
-#                
+#
     #
 #
 ## The following section is for plotting points above a certain mass limit
-#    
+#
 if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
     if project_plot_flag == 0:
         pass
@@ -228,7 +228,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         rect_histx = [left, bottom + height + spacing, width, 0.2]
         rect_histy = [left + width + spacing, bottom, 0.2, height]
         #
-        # start with a rectangular Figure
+        ## FIGURE (2) start with a rectangular Figure
         plt.figure(figsize=(8, 8))
         #
         plt.suptitle('~.025 < z < ~0.6, $log_{10}$(M/M$_{\odot})$ > %s'%mass_threshold[0])
@@ -243,7 +243,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         # the scatter plot:\
         ax_scatter.scatter(field_array_hi_mass[0],field_array_hi_mass[1],s=100,c='darkgrey', marker='.', alpha=0.6, linewidths=0)
         ax_scatter.scatter(field_array_hi_mass_par[0],field_array_hi_mass_par[1],s=100,c='darkgrey', marker='.', alpha=0.6, linewidths=0)
-        ax_scatter.scatter(total_array_hi_mass[0],total_array_hi_mass[1],s=100,c='slategrey', marker='.', alpha=0.6, linewidths=0)        
+        ax_scatter.scatter(total_array_hi_mass[0],total_array_hi_mass[1],s=100,c='slategrey', marker='.', alpha=0.6, linewidths=0)
         #
         # now determine nice limits by hand:
         binwidth = 0.05
@@ -273,6 +273,12 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax_scatter.set_title('~0.25 < z < ~0.6')
         ax_scatter.text(-1.3,2.3,'Members: %s'%counting_array_hi_mass[0],c='slategrey',fontsize=15)
         ax_scatter.text(-1.3,2.15,'Field (clu+par): %s'%(counting_array_hi_mass[1]),c='darkgrey',fontsize=15)
+        #
+        median_VJ = np.median(np.concatenate([total_array_hi_mass[0],field_array_hi_mass[0],field_array_hi_mass_par[0]]))
+        median_UV = np.median(np.concatenate([total_array_hi_mass[1],field_array_hi_mass[1],field_array_hi_mass_par[1]]))
+        #
+        ax_scatter.text(-1.3,2.0,'Median (V-J): %.3f'%median_VJ,c='k',fontsize=15)
+        ax_scatter.text(-1.3,1.85,'Median (U-V): %.3f'%median_UV,c='k',fontsize=15)
         #
         plt.show()
         #
@@ -323,7 +329,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         # start with a rectangular Figure
         plt.figure(figsize=(8, 8))
         #
-        plt.suptitle('~.025 < z < ~0.6, $log_{10}$(M/M$_{\odot})$ < %s'%mass_threshold[0])
+        plt.suptitle('HFF ~.025 < z < ~0.6, $log_{10}$(M/M$_{\odot})$ < %s'%mass_threshold[0])
         #
         ax_scatter = plt.axes(rect_scatter)
         ax_scatter.tick_params(direction='in', top=True, right=True)
@@ -335,7 +341,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         # the scatter plot:\
         ax_scatter.scatter(field_array_lo_mass[0],field_array_lo_mass[1],s=100,c='darkgrey', marker='.', alpha=0.6, linewidths=0)
         ax_scatter.scatter(field_array_lo_mass_par[0],field_array_lo_mass_par[1],s=100,c='darkgrey', marker='.', alpha=0.6, linewidths=0)
-        ax_scatter.scatter(total_array_lo_mass[0],total_array_lo_mass[1],s=100,c='slategrey', marker='.', alpha=0.6, linewidths=0)        
+        ax_scatter.scatter(total_array_lo_mass[0],total_array_lo_mass[1],s=100,c='slategrey', marker='.', alpha=0.6, linewidths=0)
         #
         # now determine nice limits by hand:
         binwidth = 0.05
@@ -469,7 +475,7 @@ if (plot_flag_3 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         plt.show()
         #
     #
-#    
+#
 #
 #
 #
@@ -478,5 +484,5 @@ print('\n\n"UVJ_plots.py"  terminated successfully.\n')
 #
 #
 #
-#                        
+#
 ###### PROGRAM END ######

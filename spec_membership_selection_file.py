@@ -32,6 +32,7 @@ pos_spec = np.array([[0]*6]*2)
 neg_spec = np.array([[0]*6]*2)
 other_member_spec = np.array([[0]*6]*2)                # track objects outside of (phot + spec) subsample
 lost_due_to_buffer_spec = np.array([[0]*6]*2)
+tctc_spec = np.array([[0]*6]*2)
 #
 ## The following loop isolates the (spec + phot) sample, i.e. 'sub'=1, and makes the cuts defined above, assigning different classifications to the MEMBER FILTER
 for counter in range(len(master_cat)):
@@ -39,72 +40,115 @@ for counter in range(len(master_cat)):
         if master_cat['type'][counter]==1:                # type=1 identifies SF sample
             if abs(master_cat['z_clusterspec'][counter]) > z_cutoff_field[0] and abs(master_cat['z_clusterphot'][counter]) > z_cutoff_field[1]:
                 if master_cat['z_peak'][counter] > z_field_bounds[0] and master_cat['z_peak'][counter] < z_field_bounds[1]:
-                    if cluster_field_inclusion_flag == 1:
-                        master_cat['member'][counter] = 1         # member=1 for FIELD
-                    elif cluster_field_inclusion_flag == 0:
-                        master_cat['member'][counter] = -99
-                    for ii in range(len(field_spec[0])):
-                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
-                            field_spec[0][ii]+=1
+                    if master_cat['ang_dist'][counter] > ang_dist_TOL:
+                        if cluster_field_inclusion_flag == 1:
+                            master_cat['member'][counter] = 1         # member=1 for FIELD
+                        elif cluster_field_inclusion_flag == 0:
+                            master_cat['member'][counter] = -99
+                        for ii in range(len(field_spec[0])):
+                            if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                                field_spec[0][ii]+=1
+                    else:
+                        if cluster_field_inclusion_flag == 1:
+                            master_cat['member'][counter] = 8         # member=1 for FIELD
+                        elif cluster_field_inclusion_flag == 0:
+                            master_cat['member'][counter] = -99
+                        for ii in range(len(field_spec[0])):
+                            if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                                tctc_spec[0][ii]+=1
                 else:
                     master_cat['member'][counter] = 4         # member=4 for FAR FIELD
                     for ii in range(len(far_field_spec[0])):
                         if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
                             far_field_spec[0][ii]+=1
 
-            elif abs(master_cat['z_clusterspec'][counter]) > z_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) < z_cutoff[1]: #SF_cutoff[1]: #
-                master_cat['member'][counter] = 2         # member=2 for FALSE POSITIVE
-                for ii in range(len(pos_spec[0])):
-                    if master_cat['cluster'][counter] == (ii+1):  # keep track of false pos by cluster
-                        pos_spec[0][ii]+=1
-            elif abs(master_cat['z_clusterspec'][counter]) < z_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) > z_cutoff[1]: #SF_cutoff[1]: #
-                master_cat['member'][counter] = 3         # member=3 for FALSE NEGATIVE
-                for ii in range(len(neg_spec[0])):
-                    if master_cat['cluster'][counter] == (ii+1):  # keep track of false neg by cluster
-                        neg_spec[0][ii]+=1
-            elif abs(master_cat['z_clusterspec'][counter]) < z_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) < z_cutoff[1]: #SF_cutoff[1]: #
-                master_cat['member'][counter] = 0         # member=0 for cluster MEMBERS
-                for ii in range(len(mem_spec[0])):
-                    if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
-                        mem_spec[0][ii]+=1
-            else:
-                for ii in range(len(lost_due_to_buffer_spec[0])):
-                    if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
-                        lost_due_to_buffer_spec[0][ii]+=1
+            elif master_cat['lmass'][counter] < membership_correction_lower_mass:       # for the 1st two mass bins, do not apply spectroscopic cut at all. just phot cut, due to not applying the memberhsip correction to these bins due to insufficient spectroscopic completeness (<5%)
+                if abs(master_cat[counter]['z_clusterphot']) < z_cutoff_lo_mass:
+                    master_cat[counter]['member'] = 0           # member=0 is secure cluster member
+                    for ii in range(len(mem_spec[0])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                            mem_spec[0][ii]+=1
+                else:
+                    for ii in range(len(lost_due_to_buffer_spec[0])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
+                            lost_due_to_buffer_spec[0][ii]+=1
+
+            elif master_cat['lmass'][counter] >= membership_correction_lower_mass:
+                if abs(master_cat['z_clusterspec'][counter]) > z_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) < z_cutoff[1]: #SF_cutoff[1]: #
+                    master_cat['member'][counter] = 2         # member=2 for FALSE POSITIVE
+                    for ii in range(len(pos_spec[0])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of false pos by cluster
+                            pos_spec[0][ii]+=1
+                elif abs(master_cat['z_clusterspec'][counter]) < z_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) > z_cutoff[1]: #SF_cutoff[1]: #
+                    master_cat['member'][counter] = 3         # member=3 for FALSE NEGATIVE
+                    for ii in range(len(neg_spec[0])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of false neg by cluster
+                            neg_spec[0][ii]+=1
+                elif abs(master_cat['z_clusterspec'][counter]) < z_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) < z_cutoff[1]: #SF_cutoff[1]: #
+                    master_cat['member'][counter] = 0         # member=0 for cluster MEMBERS
+                    for ii in range(len(mem_spec[0])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
+                            mem_spec[0][ii]+=1
+                else:
+                    for ii in range(len(lost_due_to_buffer_spec[0])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
+                            lost_due_to_buffer_spec[0][ii]+=1
         elif master_cat['type'][counter]==2:                # type=2 identifies Q sample
             if abs(master_cat['z_clusterspec'][counter]) > z_cutoff_field[0] and abs(master_cat['z_clusterphot'][counter]) > z_cutoff_field[1]:
                 if master_cat['z_peak'][counter] > z_field_bounds[0] and master_cat['z_peak'][counter] < z_field_bounds[1]:
-                    if cluster_field_inclusion_flag == 1:
-                        master_cat['member'][counter] = 1         # member=1 for FIELD
-                    elif cluster_field_inclusion_flag == 0:
-                        master_cat['member'][counter] = -99       # ember == -99 to remove this galaxy from further consideration and all further calculations
-                    for ii in range(len(field_spec[1])):
-                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
-                            field_spec[1][ii]+=1
+                    if master_cat['ang_dist'][counter] > ang_dist_TOL:
+                        if cluster_field_inclusion_flag == 1:
+                            master_cat['member'][counter] = 1         # member=1 for FIELD
+                        elif cluster_field_inclusion_flag == 0:
+                            master_cat['member'][counter] = -99       # ember == -99 to remove this galaxy from further consideration and all further calculations
+                        for ii in range(len(field_spec[1])):
+                            if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                                field_spec[1][ii]+=1
+                    else:
+                        if cluster_field_inclusion_flag == 1:
+                            master_cat['member'][counter] = 8         # member=1 for FIELD
+                        elif cluster_field_inclusion_flag == 0:
+                            master_cat['member'][counter] = -99
+                        for ii in range(len(field_spec[0])):
+                            if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                                tctc_spec[1][ii]+=1
                 else:
                     master_cat['member'][counter] = 4         # member=4 for FAR FIELD
                     for ii in range(len(far_field_spec[1])):
                         if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
                             far_field_spec[1][ii]+=1
-            elif abs(master_cat['z_clusterspec'][counter]) > z_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) < z_cutoff[1]: #Q_cutoff[1]: #
-                master_cat['member'][counter] = 2         # member=2 for FALSE POSITIVE
-                for ii in range(len(pos_spec[1])):
-                    if master_cat['cluster'][counter] == (ii+1):  # keep track of false pos by cluster
-                        pos_spec[1][ii]+=1
-            elif abs(master_cat['z_clusterspec'][counter]) < z_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) > z_cutoff[1]: #Q_cutoff[1]: #
-                master_cat['member'][counter] = 3         # member=3 for FALSE NEGATIVE
-                for ii in range(len(neg_spec[1])):
-                    if master_cat['cluster'][counter] == (ii+1):  # keep track of false neg by cluster
-                        neg_spec[1][ii]+=1
-            elif abs(master_cat['z_clusterspec'][counter]) < z_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) < z_cutoff[1]: #Q_cutoff[1]: #
-                master_cat['member'][counter] = 0         # member=0 for cluster MEMBERS
-                for ii in range(len(mem_spec[1])):
-                    if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
-                        mem_spec[1][ii]+=1
-            else:
-                for ii in range(len(lost_due_to_buffer_spec[1])):
-                    if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
-                        lost_due_to_buffer_spec[1][ii]+=1
+                            #
+                #
+            elif master_cat['lmass'][counter] < membership_correction_lower_mass:       # for the 1st two mass bins, do not apply spectroscopic cut at all. just phot cut, due to not applying the memberhsip correction to these bins due to insufficient spectroscopic completeness (<5%)
+                if abs(master_cat[counter]['z_clusterphot']) < z_cutoff_lo_mass:
+                    master_cat[counter]['member'] = 0           # member=0 is secure cluster member
+                    for ii in range(len(mem_spec[1])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                            mem_spec[1][ii]+=1
+                else:
+                    for ii in range(len(lost_due_to_buffer_spec[1])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
+                            lost_due_to_buffer_spec[1][ii]+=1
+            elif master_cat['lmass'][counter] >= membership_correction_lower_mass:
+                if abs(master_cat['z_clusterspec'][counter]) > z_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) < z_cutoff[1]: #Q_cutoff[1]: #
+                    master_cat['member'][counter] = 2         # member=2 for FALSE POSITIVE
+                    for ii in range(len(pos_spec[1])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of false pos by cluster
+                            pos_spec[1][ii]+=1
+                elif abs(master_cat['z_clusterspec'][counter]) < z_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) > z_cutoff[1]: #Q_cutoff[1]: #
+                    master_cat['member'][counter] = 3         # member=3 for FALSE NEGATIVE
+                    for ii in range(len(neg_spec[1])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of false neg by cluster
+                            neg_spec[1][ii]+=1
+                elif abs(master_cat['z_clusterspec'][counter]) < z_cutoff[0] and abs(master_cat['z_clusterphot'][counter]) < z_cutoff[1]: #Q_cutoff[1]: #
+                    master_cat['member'][counter] = 0         # member=0 for cluster MEMBERS
+                    for ii in range(len(mem_spec[1])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
+                            mem_spec[1][ii]+=1
+                else:
+                    for ii in range(len(lost_due_to_buffer_spec[1])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of cluster members by cluster
+                            lost_due_to_buffer_spec[1][ii]+=1
         else:
             for ii in range(len(mem_spec[1])):
                 if master_cat['cluster'][counter] == (ii+1):

@@ -262,14 +262,14 @@ counting_array4 = np.array([0]*6)    # counting array to track total number of o
 SF_field_uvc_list = []
 Q_field_uvc_list = []
 #
-## isolate all galaxies (SF & Q) in the redshift range ~0.3 < z < ~0.55, for the field sample of the SMF
+## isolate all galaxies (SF & Q) in the redshift range ~0.25 < z < ~0.75, for the field sample of the SMF
 for counter in range(len(master_cat_uvc)):
     if master_cat_uvc['USE'][counter] == 1:
         counting_array4[0]+=1
         if master_cat_uvc['z_peak'][counter] < z_field_bounds[1] and master_cat_uvc['z_peak'][counter] > z_field_bounds[0]:
             master_cat_uvc['member'][counter] = 1                                   # member=1: preliminary member of FIELD SAMPLE
             counting_array4[1]+=1     # count field sample
-            if master_cat_uvc['lmass'][counter] > limiting_mass_uvc:
+            if master_cat_uvc['lmass'][counter] >= limiting_mass_uvc:
                 counting_array4[2]+=1      #count above limiting mass
                 if master_cat_uvc['type'][counter] == 1:
                     counting_array4[3]+=1     # count SF

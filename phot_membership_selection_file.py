@@ -32,6 +32,7 @@ other_phot = 0      # objects not in sub=2 phot only subsample
 n_phot_only = 0     # number of objects in sub=2 subsample
 stars_outliers = 0  # number of objects in sub=0 or sub=3 subsamples
 field_outliers = np.array([[0]*6]*2)  # track field objects with very large (i.e. highly discrepant) redshifts, far outside the redshift range of the clusters
+tctc_phot = np.array([[0]*6]*2)
 n_SF = 0
 n_Q = 0
 lost_due_to_buffer_phot = np.array([[0]*6]*2)    # objects lost due to buffer b/w definition of cluster and field
@@ -46,14 +47,23 @@ for counter in range(len(master_cat)):
             n_SF+=1
             if abs(master_cat[counter]['z_clusterphot']) > z_cutoff_field[1]:     # identify field galaxies
                 if master_cat['z_peak'][counter] > z_field_bounds[0] and master_cat['z_peak'][counter] < z_field_bounds[1]:
-                    if cluster_field_inclusion_flag == 1:
-                        master_cat['member'][counter] = 1         # member=1 for FIELD
-                    elif cluster_field_inclusion_flag == 0:
-                        master_cat['member'][counter] = -99
-                    for ii in range(len(field_phot[0])):
-                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
-                            SF_field_list[ii].append(master_cat['lmass'][counter])
-                            field_phot[0][ii]+=1
+                    if master_cat['ang_dist'][counter] > ang_dist_TOL:
+                        if cluster_field_inclusion_flag == 1:
+                            master_cat['member'][counter] = 1         # member=1 for FIELD
+                        elif cluster_field_inclusion_flag == 0:
+                            master_cat['member'][counter] = -99
+                        for ii in range(len(field_phot[0])):
+                            if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                                SF_field_list[ii].append(master_cat['lmass'][counter])
+                                field_phot[0][ii]+=1
+                    else:
+                        if cluster_field_inclusion_flag == 1:
+                            master_cat['member'][counter] = 8         # member=1 for FIELD
+                        elif cluster_field_inclusion_flag == 0:
+                            master_cat['member'][counter] = -99
+                        for ii in range(len(field_phot[0])):
+                            if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                                tctc_phot[0][ii]+=1
                 else:
                     master_cat['member'][counter] = 4         # member=4 for FAR FIELD
                     for ii in range(len(far_field_phot[0])):
@@ -61,27 +71,47 @@ for counter in range(len(master_cat)):
                             far_field_phot[0][ii]+=1
                             #
                 #
-            elif abs(master_cat[counter]['z_clusterphot']) < z_cutoff[1]:
-                master_cat[counter]['member'] = 0           # member=0 is secure cluster member
-                for ii in range(len(mem_phot[0])):
-                    if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
-                        mem_phot[0][ii]+=1
-            else:
-                for ii in range(len(lost_due_to_buffer_phot[0])):
-                    if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
-                        lost_due_to_buffer_phot[0][ii]+=1
+            elif master_cat['lmass'][counter] < membership_correction_lower_mass:       # for the 1st 'n'' mass bins, do not apply spectroscopic cut at all. just phot cut, due to not applying the memberhsip correction to these bins due to insufficient spectroscopic completeness
+                if abs(master_cat[counter]['z_clusterphot']) < z_cutoff_lo_mass:
+                    master_cat[counter]['member'] = 0           # member=0 is secure cluster member
+                    for ii in range(len(mem_phot[0])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                            mem_phot[0][ii]+=1
+                else:
+                    for ii in range(len(lost_due_to_buffer_phot[0])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                            lost_due_to_buffer_phot[0][ii]+=1
+            elif master_cat['lmass'][counter] >= membership_correction_lower_mass:
+                if abs(master_cat[counter]['z_clusterphot']) < z_cutoff[1]:
+                    master_cat[counter]['member'] = 0           # member=0 is secure cluster member
+                    for ii in range(len(mem_phot[0])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                            mem_phot[0][ii]+=1
+                else:
+                    for ii in range(len(lost_due_to_buffer_phot[0])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                            lost_due_to_buffer_phot[0][ii]+=1
         elif master_cat[counter]['type'] ==2:       #Q
             n_Q+=1
             if abs(master_cat[counter]['z_clusterphot']) > z_cutoff_field[1]:     # identify field galaxies
                 if master_cat['z_peak'][counter] > z_field_bounds[0] and master_cat['z_peak'][counter] < z_field_bounds[1]:
-                    if cluster_field_inclusion_flag == 1:
-                        master_cat['member'][counter] = 1         # member=1 for FIELD
-                    elif cluster_field_inclusion_flag == 0:
-                        master_cat['member'][counter] = -99
-                    for ii in range(len(field_phot[1])):
-                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
-                            Q_field_list[ii].append(master_cat['lmass'][counter])
-                            field_phot[1][ii]+=1
+                    if master_cat['ang_dist'][counter] > ang_dist_TOL:
+                        if cluster_field_inclusion_flag == 1:
+                            master_cat['member'][counter] = 1         # member=1 for FIELD
+                        elif cluster_field_inclusion_flag == 0:
+                            master_cat['member'][counter] = -99
+                        for ii in range(len(field_phot[1])):
+                            if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                                Q_field_list[ii].append(master_cat['lmass'][counter])
+                                field_phot[1][ii]+=1
+                    else:
+                        if cluster_field_inclusion_flag == 1:
+                            master_cat['member'][counter] = 8         # member=1 for FIELD
+                        elif cluster_field_inclusion_flag == 0:
+                            master_cat['member'][counter] = -99
+                        for ii in range(len(field_phot[0])):
+                            if master_cat['cluster'][counter] == (ii+1):  # keep track of field objects by cluster
+                                tctc_phot[1][ii]+=1
                 else:
                     master_cat['member'][counter] = 4         # member=4 for FAR FIELD
                     for ii in range(len(far_field_phot[1])):
@@ -89,15 +119,26 @@ for counter in range(len(master_cat)):
                             far_field_phot[1][ii]+=1
                             #
                 #
-            elif abs(master_cat[counter]['z_clusterphot']) < z_cutoff[1]:
-                master_cat[counter]['member'] = 0           # member=0 is secure cluster member
-                for ii in range(len(mem_phot[1])):
-                    if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
-                        mem_phot[1][ii]+=1
-            else:
-                for ii in range(len(lost_due_to_buffer_phot[1])):
-                    if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
-                        lost_due_to_buffer_phot[1][ii]+=1
+            elif master_cat['lmass'][counter] < membership_correction_lower_mass:       # for the 1st two mass bins, do not apply spectroscopic cut at all. just phot cut, due to not applying the memberhsip correction to these bins due to insufficient spectroscopic completeness (<5%)
+                if abs(master_cat[counter]['z_clusterphot']) < z_cutoff_lo_mass:
+                    master_cat[counter]['member'] = 0           # member=0 is secure cluster member
+                    for ii in range(len(mem_phot[1])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                            mem_phot[1][ii]+=1
+                else:
+                    for ii in range(len(lost_due_to_buffer_phot[1])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                            lost_due_to_buffer_phot[1][ii]+=1
+            elif master_cat['lmass'][counter] >= membership_correction_lower_mass:
+                if abs(master_cat[counter]['z_clusterphot']) < z_cutoff[1]:
+                    master_cat[counter]['member'] = 0           # member=0 is secure cluster member
+                    for ii in range(len(mem_phot[1])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                            mem_phot[1][ii]+=1
+                else:
+                    for ii in range(len(lost_due_to_buffer_phot[1])):
+                        if master_cat['cluster'][counter] == (ii+1):  # keep track of field galaxies by cluster
+                            lost_due_to_buffer_phot[1][ii]+=1
     else:
         other_phot+=1
 #

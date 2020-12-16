@@ -718,6 +718,13 @@ if (plot_flag_3 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
 #
 #
 #
+## DIVERSION: fix limiting masses as though spectroscopic membership correction were applied to all (i.e. more restrictive definition of cluster membership) for certain clusters
+#
+if bins_exempt_from_membership_correction == 4 or bins_exempt_from_membership_correction == 0:
+    pass
+elif bins_exempt_from_membership_correction != 1:
+    limiting_mass = np.array([8.05,8.04,8.36,7.67,8.21,7.2])
+#
 ## SECTION (4): REMOVE all galaxies from cluster member sample which are below limiting mass (filter: from member=0(1) to member=6(7) for cluster(field) galaxies)
 #
 ##
