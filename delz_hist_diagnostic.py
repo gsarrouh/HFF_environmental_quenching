@@ -1,6 +1,6 @@
 # Created Sat Jul 04 16:42:27 2020
 #
-## This is a diagnostic file to investigate the distribution of del_z spec(phot) = z_spec(z_phot) - z_cluster / 1+z_spec(z_phot). It will produce histograms of the entire population of del_z's calculated separately for phot. & spec. 
+## This is a diagnostic file to investigate the distribution of del_z spec(phot) = z_spec(z_phot) - z_cluster / 1+z_spec(z_phot). It will produce histograms of the entire population of del_z's calculated separately for phot. & spec.
 #
 ###################     PROGRAM START     ###################
 #
@@ -53,7 +53,7 @@ delz_spec_plot = []
 for ii in range(len(delz_phot)):
     for jj in range(len(delz_phot[ii])):
         delz_phot_plot.append(delz_phot[ii][jj])
-    for kk in range(len(delz_spec[ii])):    
+    for kk in range(len(delz_spec[ii])):
         delz_spec_plot.append(delz_spec[ii][kk])
     #
 ####
@@ -68,18 +68,18 @@ if (plot_flag == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         plt.figure()
         n, bins, patches = plt.hist(x=np.abs(delz_spec_plot),bins=bins_phot1,color='deepskyblue',edgecolor='steelblue',alpha=0.7,rwidth=0.95,log=True)
         plt.grid(axis='y', alpha=0.75)
-        plt.xlabel('$z_{spec}$ - $z_{cluster}$ / 1 + $z_{spec}$',fontsize=12)
+        plt.xlabel('$z_{spec}$ - $z_{cluster}$ / 1 + $z_{spec}$',fontsize=20)
         plt.ylabel('# count',fontsize=12)
-        plt.title("|${\Delta}$z|$_{spec}$",fontsize=15)
+        plt.title("|${\Delta}$z|$_{spec}$",fontsize=25)
         plt.show()
         #
         ## PHOT
         plt.figure()
         n, bins, patches = plt.hist(x=np.abs(delz_phot_plot),bins=bins_phot1,color='deepskyblue',edgecolor='steelblue',alpha=0.7,rwidth=0.95,log=True)
         plt.grid(axis='y', alpha=0.75)
-        plt.xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=12)
+        plt.xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=20)
         plt.ylabel('# count',fontsize=12)
-        plt.title("|${\Delta}$z|$_{phot}$",fontsize=15)
+        plt.title("|${\Delta}$z|$_{phot}$",fontsize=25)
         plt.show()
 #
 #
@@ -91,9 +91,9 @@ if (plot_flag == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         plt.figure()
         n, bins, patches = plt.hist(x=np.abs(delz_phot_plot),bins=bins_phot2,color='deepskyblue',edgecolor='steelblue',alpha=0.7,rwidth=0.95,log=False)
         plt.grid(axis='y', alpha=0.75)
-        plt.xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=12)
+        plt.xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=20)
         plt.ylabel('# count',fontsize=12)
-        plt.title("|${\Delta}$z|$_{phot}$",fontsize=15)
+        plt.title("|${\Delta}$z|$_{phot}$",fontsize=25)
         plt.show()
 
 
@@ -124,15 +124,15 @@ if (plot_flag == 1 and project_plot_flag ==2) or project_plot_flag == 1:
                     ax.hist(np.abs(delz_phot[counter]),bins=bins_phot1,color='deepskyblue',edgecolor='steelblue',alpha=0.7)
                     ax.grid(axis='y', alpha=0.75)
                     ax.set_xlim([min(bins_phot1),max(bins_phot1)])
-                    ax.text(0.05,700,cluster_names[counter],fontsize=9)
+                    ax.text(0.05,700,cluster_names[counter],fontsize=20)
                     counter+=1
                     if jj == 1:      # put xlabels on 1st row
-                        ax.set_xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=10)
+                        ax.set_xlabel('$z_{phot}$ - $z_{cluster}$ / 1 + $z_{phot}$',fontsize=25)
                     if kk == 0:
-                        ax.set_ylabel('# count',fontsize=10)
-        #####            
-        #            
-        #            
+                        ax.set_ylabel('# count',fontsize=25)
+        #####
+        #
+        #
         plt.show()
     #
 #

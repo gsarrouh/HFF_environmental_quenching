@@ -755,10 +755,10 @@ if variational_anaylsis_master_flag == 1 or project_master_variational_flag == 1
     #
     ## these lists don't have a purpose but might come in handy later
     ## cluster mass lists to see false pos/neg by mass bin by cluster
-    #SF_pos = [[],[],[],[],[],[]]
-    #SF_neg = [[],[],[],[],[],[]]
-    #Q_pos = [[],[],[],[],[],[]]
-    #Q_neg = [[],[],[],[],[],[]]
+    #SF_pos = [[] for x in range(len(z_cluster))]
+    #SF_neg = [[] for x in range(len(z_cluster))]
+    #Q_pos = [[] for x in range(len(z_cluster))]
+    #Q_neg = [[] for x in range(len(z_cluster))]
     #
     #
     ## DIAGNOSTIC loop to test different values of z_cutoff STARTS here

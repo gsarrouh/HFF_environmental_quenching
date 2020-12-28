@@ -221,18 +221,18 @@ lim_mass_offset_flag = 1           #   0 = off, do not apply offset; 1 = on, app
 #
 ## MCMC FLAGS
 ## MAY NEED TO EDIT: choose whether to enter the MCMC simulation
-mcmc_flag = 0             #   0 = off - skip sim;   1 = on - perform MCMC sim & Exit program;
+mcmc_flag = 1             #   0 = off - skip sim;   1 = on - perform MCMC sim & Exit program;
 mcmc_field_flag = 1         # 0 = off - fit cluster SMFs;   1 = on - fit field SMFs
 ## Update the user on what this program will run
 #
 ## MAY NEED TO EDIT: choose if you want to include in the field sample galaxies drawn from the HFF cluster images (outside the redshift range of the image's respective cluster)
 cluster_field_inclusion_flag = 1            # 0 == off (NO), do NOT include galaxies from cluster images; 1 == on (YES), include them
-field_smf_schechter_flag = 1                # fitting the SF FIELD SMF with a schechter function:  1==single;   2==double
+field_smf_schechter_flag = 2                # fitting the SF FIELD SMF with a schechter function:  1==single;   2==double
 #
 ## MAY NEED TO EDIT: choose which populations to fit
-SF_flag = 0
+SF_flag = 1
 Q_flag = 1
-T_flag = 0
+T_flag = 1
 #
 #
 #
