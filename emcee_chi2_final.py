@@ -26,6 +26,8 @@
 #
 ## MODULES
 import pandas as pd
+import matplotlib.lines as mlines
+import matplotlib.pyplot as plt
 import emcee
 import time
 import scipy.optimize as op
@@ -68,41 +70,41 @@ if mcmc_field_flag == 1:
 ######
 #
 # initialize walkers
-ndim, nwalkers, max_nsteps = 3, 1000, 50000    # (# of parameters), (#walkers), (#steps/walker)
+ndim, nwalkers, max_nsteps = 3, 500, 50000    # (# of parameters), (#walkers), (#steps/walker)
 #
 #
-labels = ["M*","phi","alpha"]
+labels = ["M*","Phi","alpha"]
 ## FUNCTIONS
 #
 #
 # define likelihood function for SINGLE schechter function; based on Eq.(2) of VDB 2013 et al
 def lnlike(theta, midbins, smf, smf_error):
-    M_star, phi, alpha = theta
+    M_star, Phi, alpha = theta
     midbins = np.array(midbins)
     smf = np.array(smf)
     smf_error = np.array(smf_error)
-    model = np.array( np.log(10) * phi * (10**((midbins-M_star)*(1+alpha))) * np.exp(-10**(midbins-M_star)) )
+    model = np.array( np.log(10) * Phi * (10**((midbins-M_star)*(1+alpha))) * np.exp(-10**(midbins-M_star)) )
     return -0.5*np.sum( ( (smf - model) / smf_error)**2 )
 #
 ## define likelihood function for DOUBLE schechter function; based on Eq.(11) of Weigel et al 2016
 #def lnlike2(theta, midbins, smf, smf_error):
-#    M_star, phi1, alpha1, phi2, alpha2 = theta
-#    model = np.log(10)*np.exp(-10**(midbins-M_star))*((phi1*(10**((midbins-M_star)*(1+alpha1))))+(phi2*(10**((midbins-M_star)*(1+alpha2)))))
+#    M_star, Phi1, alpha1, Phi2, alpha2 = theta
+#    model = np.log(10)*np.exp(-10**(midbins-M_star))*((Phi1*(10**((midbins-M_star)*(1+alpha1))))+(Phi2*(10**((midbins-M_star)*(1+alpha2)))))
 #    return -0.5*np.sum((smf - model)**2 / smf_error**2)
 #
 #
 # define "prior" function - SINGLE schechter
 def lnprior(theta):
-    M_star, phi, alpha = theta
-    if (10 < M_star < 12.5) and (-50 < phi < 50) and (-3 < alpha < 2):
+    M_star, Phi, alpha = theta
+    if (10.0 < M_star < 11.5) and (0 < Phi < 1) and (-2 < alpha < 0):
         return 0.0
     else:
         return -np.inf
 #
 ## define "prior" function - DOUBLE schechter
 #def lnprior2(theta):
-#    M_star, phi1, alpha1, phi2, alpha2 = theta
-#    if 9.5 < M_star < 15 and -10 < phi1 < 30 and -2 < alpha1 < -0.5 and -10 < phi2 < 30 and -2 < alpha2 < -0.5:
+#    M_star, Phi1, alpha1, Phi2, alpha2 = theta
+#    if 9.5 < M_star < 15 and -10 < Phi1 < 30 and -2 < alpha1 < -0.5 and -10 < Phi2 < 30 and -2 < alpha2 < -0.5:
 #        return 0.0
 #    else:
 #        return -np.inf
@@ -176,15 +178,15 @@ Q_midbins_mcmc = Q_midbins_mcmc.reshape(len(Q_midbins_mcmc))
 #
 # define guesses for initial guesses - SINGLE schechter
 M_star_guess = 10.0
-phi_guess = 0.005
+Phi_guess = 0.005
 alpha_guess = -0.6
 #
-[M_star_guess,phi_guess,alpha_guess] = [1.05828184e+01,9.65982352e-04,-1.70834634e+00]
-theta_guess_SF = [M_star_guess,phi_guess,alpha_guess]
-[M_star_guess,phi_guess,alpha_guess] = [11.01427988,0.05569934,-1.13798742]
-theta_guess_Q = [M_star_guess,phi_guess,alpha_guess]
-[M_star_guess,phi_guess,alpha_guess] = [11.10677233,0.03700197,-1.27802838]
-theta_guess_T = [M_star_guess,phi_guess,alpha_guess]
+[M_star_guess,Phi_guess,alpha_guess] = [1.07672040e+01,4.01123411e-03,-1.50639438e+00]
+theta_guess_SF = [M_star_guess,Phi_guess,alpha_guess]
+[M_star_guess,Phi_guess,alpha_guess] = [11.08304502,0.07109424,-1.13096696]
+theta_guess_Q = [M_star_guess,Phi_guess,alpha_guess]
+[M_star_guess,Phi_guess,alpha_guess] = [11.1388822,0.06171816,-1.20479295]
+theta_guess_T = [M_star_guess,Phi_guess,alpha_guess]
 #
 #
 ## open a file to print to
@@ -211,7 +213,7 @@ elif mcmc_field_flag == 1:
 ## to be used in building strings throughout program
 delim = ','
 ## write a header for the file, start with hashtag to identify comment
-header1 = 'z_spec_cutoff'+delim+'z_phot_cutoff'+delim+'type'+delim+'M_star'+delim+'M_star_sgima'+delim+'phi'+delim+'phi_sigma'+delim+'alpha'+delim+'alpha_sigma\n'
+header1 = 'z_spec_cutoff'+delim+'z_phot_cutoff'+delim+'type'+delim+'M_star'+delim+'M_star_sgima'+delim+'Phi'+delim+'Phi_sigma'+delim+'alpha'+delim+'alpha_sigma\n'
 #
 f.write(header1)
 #
@@ -221,28 +223,28 @@ if SF_flag == 1:
     SF_nll = lambda *args: -lnlike(*args)       # single schechter fit - SF
     #
     ## fits to a single curve
-    SFresult = op.minimize(SF_nll,[M_star_guess, phi_guess, alpha_guess], args=(SF_midbins_mcmc, SF_smf_mcmc, SF_error_mcmc), method='Nelder-Mead')
-    SFM_ml, SFphi_ml, SFalpha_ml = SFresult['x']
+    SFresult = op.minimize(SF_nll,[M_star_guess, Phi_guess, alpha_guess], args=(SF_midbins_mcmc, SF_smf_mcmc, SF_error_mcmc), method='Nelder-Mead')
+    SFM_ml, SFPhi_ml, SFalpha_ml = SFresult['x']
     #
     print("SFResult - max. likelihood:")
     print(SFresult['x'])
     #
     # full fits
-    # SF_model_ml = np.log(10)*SFphi_ml*(10**((x-SFM_ml)*(1+SFalpha_ml)))*np.exp(-10**(x-SFM_ml))
+    # SF_model_ml = np.log(10)*SFPhi_ml*(10**((x-SFM_ml)*(1+SFalpha_ml)))*np.exp(-10**(x-SFM_ml))
 #
 if Q_flag ==1:
     # optimize Q
     Q_nll = lambda *args: -lnlike(*args)       # single schechter fit - Q
     #
     ## fits to a single curve
-    Qresult = op.minimize(Q_nll,[M_star_guess, phi_guess, alpha_guess], args=(Q_midbins_mcmc, Q_smf_mcmc, Q_error_mcmc), method='Nelder-Mead')
-    QM_ml, Qphi_ml, Qalpha_ml = Qresult['x']
+    Qresult = op.minimize(Q_nll,[M_star_guess, Phi_guess, alpha_guess], args=(Q_midbins_mcmc, Q_smf_mcmc, Q_error_mcmc), method='Nelder-Mead')
+    QM_ml, QPhi_ml, Qalpha_ml = Qresult['x']
     #
     print("\nQResult - max. likelihood:")
     print(Qresult['x'])
     #
     # full fits
-    # Q_model_ml = np.log(10)*Qphi_ml*(10**((x-QM_ml)*(1+Qalpha_ml)))*np.exp(-10**(x-QM_ml))
+    # Q_model_ml = np.log(10)*QPhi_ml*(10**((x-QM_ml)*(1+Qalpha_ml)))*np.exp(-10**(x-QM_ml))
 #
 #
 if T_flag ==1:
@@ -250,14 +252,14 @@ if T_flag ==1:
     T_nll = lambda *args: -lnlike(*args)       # single schechter fit - total
     #
     ## fits to a single curve
-    Tresult = op.minimize(T_nll,[M_star_guess, phi_guess, alpha_guess], args=(Q_midbins_mcmc, total_smf, total_error), method='Nelder-Mead')
-    TM_ml, Tphi_ml, Talpha_ml = Tresult['x']
+    Tresult = op.minimize(T_nll,[M_star_guess, Phi_guess, alpha_guess], args=(Q_midbins_mcmc, total_smf, total_error), method='Nelder-Mead')
+    TM_ml, TPhi_ml, Talpha_ml = Tresult['x']
     #
     print("\nTResult - max. likelihood:")
     print(Tresult['x'])
     #
     # full fits
-    # T_model_ml = np.log(10)*Tphi_ml*(10**((x-TM_ml)*(1+Talpha_ml)))*np.exp(-10**(x-TM_ml))
+    # T_model_ml = np.log(10)*TPhi_ml*(10**((x-TM_ml)*(1+Talpha_ml)))*np.exp(-10**(x-TM_ml))
 #
 #
 ## generate points to plot Schechter fit
@@ -301,7 +303,7 @@ if SF_flag ==1:
     # Now we'll sample for up to max_n steps
     for sample in SFsampler.sample(SFpos, iterations=max_nsteps, progress=True):
         # Only check convergence every 100 steps
-        if SFsampler.iteration % 100:
+        if SFsampler.iteration % 1000:
             continue
 
         # Compute the autocorrelation time so far
@@ -342,14 +344,14 @@ if SF_flag ==1:
     print('Creating corner plot & displaying results...')
     t0 = time.time()       # start timer to create corner plot
     ## create corner plots
-    SFfig = corner.corner(SFsamples, labels=["$M^*$", "$\phi^*$", "alpha"])#  SF
-    SFfig.suptitle('Star-forming')
-    if mcmc_field_flag == 0:
-        plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_SF_corner.png')
-    elif mcmc_field_flag == 1:
-        plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_SF_field_corner.png')
-    #
-    plt.close()
+    # SFfig = corner.corner(SFsamples, labels=["$M^*$", "$\Phi^*$", "alpha"],quantiles=[0.16, 0.5, 0.84],levels=(1-np.exp(-0.5),),title_kwargs={"fontsize": 25},show_titles=True)#  SF
+    # SFfig.suptitle('Star-forming')
+    # if mcmc_field_flag == 0:
+    #     plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_SF_corner.png')
+    # elif mcmc_field_flag == 1:
+    #     plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_SF_field_corner.png')
+    # #
+    # plt.close()
     # initialize result arrays - means
     SFresult_means = np.array([0.]*ndim)
     SFresult_means = SFsamples.mean(axis=0)
@@ -362,7 +364,7 @@ if SF_flag ==1:
     print('SF result:')
     print('Means: ',SFresult_means)
     #
-    SFM_star_mcmc, SFphi_mcmc, SFalpha_mcmc = SFsamples.mean(axis=0)
+    SFM_star_mcmc, SFPhi_mcmc, SFalpha_mcmc = SFsamples.mean(axis=0)
     #
     ## display result w/ 1-sigma uncertainty (16th, 50th, 86th percentiles)
     from IPython.display import display, Math
@@ -386,17 +388,17 @@ if SF_flag ==1:
     print("SF mean acceptance fraction: {0:.3f}".format(np.mean(SFsampler.acceptance_fraction)))
     #
     ## investigate movement of walkers
-    plt.figure()
-    plt.plot(SFsampler.get_chain()[:, 0, 0], "k", lw=0.5)
-    #plt.xlim(0, 5000)
-    #plt.ylim(-5.5, 5.5)
-    plt.title("SF move: StretchMove", fontsize=14)
-    plt.xlabel("step number")
-    plt.ylabel("x");
+    # plt.figure()
+    # plt.plot(SFsampler.get_chain()[:, 0, 0], "k", lw=0.5)
+    # #plt.xlim(0, 5000)
+    # #plt.ylim(-5.5, 5.5)
+    # plt.title("SF move: StretchMove", fontsize=14)
+    # plt.xlabel("step number")
+    # plt.ylabel("x");
     #
     #
     ## Print output to file
-    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(np.round(SFM_star_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[0],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[0],decimals=3))+delim+str(np.round(SFphi_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[1],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[1],decimals=3))+delim+str(np.round(SFalpha_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[2],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[2],decimals=3))
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'SF'+delim+str(np.round(SFM_star_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[0],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[0],decimals=3))+delim+str(np.round(SFPhi_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[1],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[1],decimals=3))+delim+str(np.round(SFalpha_mcmc,decimals=3))+delim+str(np.round(SFrestult_sigma_lower[2],decimals=3))+delim+str(np.round(SFrestult_sigma_upper[2],decimals=3))
     writer = '%s'%str(bin_entry1)+'\n'
     f.write(writer)
     #
@@ -442,7 +444,7 @@ if Q_flag ==1:
     # Now we'll sample for up to max_n steps
     for sample in Qsampler.sample(Qpos, iterations=max_nsteps, progress=True):
         # Only check convergence every 100 steps
-        if Qsampler.iteration % 100:
+        if Qsampler.iteration % 1000:
             continue
 
         # Compute the autocorrelation time so far
@@ -481,16 +483,16 @@ if Q_flag ==1:
     #
     print('Creating corner plot & displaying results...')
     t0 = time.time()       # start timer to create corner plot
-    ## create corner plots
-    Qfig = corner.corner(Qsamples, labels=["$M^*$", "$\phi$", "alpha"])#, "$\phi^*_2$", "$\alpha_2$"])#  Q
-    Qfig.suptitle('Quiescent')
-    #
-    if mcmc_field_flag == 0:
-        plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_Q_corner.png')
-    elif mcmc_field_flag == 1:
-        plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_Q_field_corner.png')
-    #
-    plt.close()
+    # ## create corner plots
+    # Qfig = corner.corner(Qsamples, labels=["$M^*$", "$\Phi$", "alpha"])#, "$\Phi^*_2$", "$\alpha_2$"])#  Q
+    # Qfig.suptitle('Quiescent')
+    # #
+    # if mcmc_field_flag == 0:
+    #     plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_Q_corner.png')
+    # elif mcmc_field_flag == 1:
+    #     plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_Q_field_corner.png')
+    # #
+    # plt.close()
     # initialize result arrays - means
     Qresult_means = np.array([0.]*ndim)
     Qresult_means = Qsamples.mean(axis=0)
@@ -503,7 +505,7 @@ if Q_flag ==1:
     print('Q result:')
     print('Means: ',Qresult_means)
     #
-    QM_star_mcmc, Qphi_mcmc, Qalpha_mcmc = Qsamples.mean(axis=0)
+    QM_star_mcmc, QPhi_mcmc, Qalpha_mcmc = Qsamples.mean(axis=0)
     #
     ## display result w/ 1-sigma uncertainty (16th, 50th, 86th percentiles)
     from IPython.display import display, Math
@@ -526,19 +528,19 @@ if Q_flag ==1:
     #
     print("Q mean acceptance fraction: {0:.3f}".format(np.mean(Qsampler.acceptance_fraction)))
     #
-    ## investigate movement of walkers
-    plt.figure()
-    plt.plot(Qsampler.get_chain()[:, 0, 0], "k", lw=0.5)
-    #plt.xlim(0, 5000)
-    #plt.ylim(-5.5, 5.5)
-    plt.title("Q move: StretchMove", fontsize=14)
-    plt.xlabel("step number")
-    plt.ylabel("x");
-    #
+    # ## investigate movement of walkers
+    # plt.figure()
+    # plt.plot(Qsampler.get_chain()[:, 0, 0], "k", lw=0.5)
+    # #plt.xlim(0, 5000)
+    # #plt.ylim(-5.5, 5.5)
+    # plt.title("Q move: StretchMove", fontsize=14)
+    # plt.xlabel("step number")
+    # plt.ylabel("x");
+    # #
     #
     ## print OUTPUT to file
     #
-    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(np.round(QM_star_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[0],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[0],decimals=3))+delim+str(np.round(Qphi_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[1],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[1],decimals=3))+delim+str(np.round(Qalpha_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[2],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[2],decimals=3))
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Q'+delim+str(np.round(QM_star_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[0],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[0],decimals=3))+delim+str(np.round(QPhi_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[1],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[1],decimals=3))+delim+str(np.round(Qalpha_mcmc,decimals=3))+delim+str(np.round(Qrestult_sigma_lower[2],decimals=3))+delim+str(np.round(Qrestult_sigma_upper[2],decimals=3))
     writer = '%s'%str(bin_entry1)+'\n'
     f.write(writer)
     #
@@ -586,7 +588,7 @@ if T_flag ==1:
     # Now we'll sample for up to max_n steps
     for sample in Tsampler.sample(Tpos, iterations=max_nsteps, progress=True):
         # Only check convergence every 100 steps
-        if Tsampler.iteration % 100:
+        if Tsampler.iteration % 1000:
             continue
 
         # Compute the autocorrelation time so far
@@ -624,16 +626,16 @@ if T_flag ==1:
     #
     print('Creating corner plot & displaying results...')
     t0 = time.time()       # start timer to create corner plot
-    ## create corner plots
-    Tfig = corner.corner(Tsamples, labels=["$M^*$", "$\phi^*$", "alpha"])#  total
-    Tfig.suptitle('Total')
-    #
-    if mcmc_field_flag == 0:
-        plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_total_corner.png')
-    elif mcmc_field_flag == 1:
-        plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_total_field_corner.png')
-    #
-    plt.close()
+    # ## create corner plots
+    # Tfig = corner.corner(Tsamples, labels=["$M^*$", "$\Phi^*$", "alpha"])#  total
+    # Tfig.suptitle('Total')
+    # #
+    # if mcmc_field_flag == 0:
+    #     plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_total_corner.png')
+    # elif mcmc_field_flag == 1:
+    #     plt.savefig('/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/SMF/corner_plots/z_spec_%.3f'%z_cutoff[0]+'_z_phot_%.3f'%z_cutoff[1]+'_walkers_%i'%nwalkers+'_steps_%i'%max_nsteps+'_total_field_corner.png')
+    # #
+    # plt.close()
     #
     # initialize result arrays - means
     Tresult_means = np.array([0.]*ndim)
@@ -647,7 +649,7 @@ if T_flag ==1:
     print('Total result:')
     print('Means: ',Tresult_means)
     #
-    TM_star_mcmc, Tphi_mcmc, Talpha_mcmc = Tsamples.mean(axis=0)
+    TM_star_mcmc, TPhi_mcmc, Talpha_mcmc = Tsamples.mean(axis=0)
     #
     ## display result w/ 1-sigma uncertainty (16th, 50th, 86th percentiles)
     from IPython.display import display, Math
@@ -670,15 +672,15 @@ if T_flag ==1:
     #
     print("Total mean acceptance fraction: {0:.3f}".format(np.mean(Tsampler.acceptance_fraction)))
     #
-    ## investigate movement of walkers
-    plt.figure()
-    plt.plot(Tsampler.get_chain()[:, 0, 0], "k", lw=0.5)
-    #plt.xlim(0, 5000)
-    #plt.ylim(-5.5, 5.5)
-    plt.title("Total move: StretchMove", fontsize=14)
-    plt.xlabel("step number")
-    plt.ylabel("x");
-    #
+    # ## investigate movement of walkers
+    # plt.figure()
+    # plt.plot(Tsampler.get_chain()[:, 0, 0], "k", lw=0.5)
+    # #plt.xlim(0, 5000)
+    # #plt.ylim(-5.5, 5.5)
+    # plt.title("Total move: StretchMove", fontsize=14)
+    # plt.xlabel("step number")
+    # plt.ylabel("x");
+    # #
     #
     ## investigate movement of walkers
     plt.figure()
@@ -692,7 +694,7 @@ if T_flag ==1:
     #
     ## print OUTPUT to file
     #
-    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Total'+delim+str(np.round(TM_star_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[0],decimals=3))+delim+str(np.round(Trestult_sigma_upper[0],decimals=3))+delim+str(np.round(Tphi_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[1],decimals=3))+delim+str(np.round(Trestult_sigma_upper[1],decimals=3))+delim+str(np.round(Talpha_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[2],decimals=3))+delim+str(np.round(Trestult_sigma_upper[2],decimals=3))
+    bin_entry1 = str(np.round(z_cutoff[0],decimals=3))+delim+str(np.round(z_cutoff[1],decimals=3))+delim+'Total'+delim+str(np.round(TM_star_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[0],decimals=3))+delim+str(np.round(Trestult_sigma_upper[0],decimals=3))+delim+str(np.round(TPhi_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[1],decimals=3))+delim+str(np.round(Trestult_sigma_upper[1],decimals=3))+delim+str(np.round(Talpha_mcmc,decimals=3))+delim+str(np.round(Trestult_sigma_lower[2],decimals=3))+delim+str(np.round(Trestult_sigma_upper[2],decimals=3))
     writer = '%s'%str(bin_entry1)+'\n'
     f.write(writer)
     #
@@ -714,6 +716,178 @@ if T_flag ==1:
 ## close the file
 f.close()
 #
+#
+## CREATE A SINGLE CORNER PLOT WITH ALL 3 RESULTS
+## the following is based off of source code from (https://stackoverflow.com/questions/60877259/plot-multiple-datasets-in-the-same-corner-plot).
+## i saved it locally as /Users/gsarrouh/Programs/Python/sample_code/multi_corner_plot.py
+#
+#
+CORNER_KWARGS = dict(
+    smooth=0.9,
+    labels=["$M^*$", "$\Phi$", "alpha"],
+    label_kwargs=dict(fontsize=16),
+    title_kwargs=dict(fontsize=16),
+    # quantiles=[0.16,0.5, 0.84],
+    # hist_kwargs=dict(edgecolor='k'),
+    levels=(1 - np.exp(-0.5), 1 - np.exp(-2), 1 - np.exp(-9 / 2.)),
+    plot_density=True,
+    plot_datapoints=False,
+    fill_contours=True,
+    show_titles=False,
+    max_n_ticks=5,
+)
+#
+truth_array = np.array([SFresult_medians,Qresult_medians,Tresult_medians])
+#
+def overlaid_corner(samples_list, sample_labels):
+    """Plots multiple corners on top of each other"""
+    # get some constants
+    n = len(samples_list)
+    _, ndim = samples_list[0].shape
+    max_len = max([len(s) for s in samples_list])
+#     cmap = plt.cm.get_cmap('gist_rainbow', n)
+    colors = ['k','b','r']
+
+    plot_range = []
+    for dim in range(ndim):
+        plot_range.append(
+            [
+                min([min(samples_list[i].T[dim]) for i in range(n)]),
+                max([max(samples_list[i].T[dim]) for i in range(n)]),
+            ]
+        )
+
+    CORNER_KWARGS.update(range=plot_range)
+
+    fig = corner.corner(
+        samples_list[0],
+        color=colors[0],
+        truths=truth_array[0],
+        truth_color='k',
+        **CORNER_KWARGS
+    )
+
+    for idx in range(1, n):
+        fig = corner.corner(
+            samples_list[idx],
+            fig=fig,
+            weights=get_normalisation_weight(len(samples_list[idx]), max_len),
+            color=colors[idx],
+            truths=truth_array[idx],
+            truth_color='k',
+            **CORNER_KWARGS
+        )
+
+    plt.legend(
+        handles=[
+            mlines.Line2D([], [], color=colors[i], label=sample_labels[i])
+            for i in range(n)
+        ],
+        fontsize=20, frameon=False,
+        bbox_to_anchor=(1, ndim), loc="upper right"
+    )
+
+    plt.show()
+#     plt.savefig("corner.png")
+#     plt.close()
+
+
+def get_normalisation_weight(len_current_samples, len_of_longest_samples):
+    return np.ones(len_current_samples) * (len_of_longest_samples / len_current_samples)
+
+
+
+
+overlaid_corner(
+    [Tsamples,SFsamples,Qsamples],
+    ["Total", "Star-forming", "Quiescent"]
+    )
+#
+#
+#
+#
+CORNER_KWARGS = dict(
+    smooth=0.9,
+    labels=["$M^*$", "$\Phi$", "alpha"],
+    label_kwargs=dict(fontsize=16),
+    title_kwargs=dict(fontsize=16),
+    # quantiles=[0.16,0.5, 0.84],
+    # hist_kwargs=dict(edgecolor='k'),
+    levels=(1 - np.exp(-0.5), 1 - np.exp(-2), 1 - np.exp(-9 / 2.)),
+    plot_density=True,
+    plot_datapoints=True,
+    fill_contours=True,
+    show_titles=False,
+    max_n_ticks=5,
+)
+#
+truth_array = np.array([SFresult_medians,Qresult_medians,Tresult_medians])
+#
+def overlaid_corner(samples_list, sample_labels):
+    """Plots multiple corners on top of each other"""
+    # get some constants
+    n = len(samples_list)
+    _, ndim = samples_list[0].shape
+    max_len = max([len(s) for s in samples_list])
+#     cmap = plt.cm.get_cmap('gist_rainbow', n)
+    colors = ['k','b','r']
+
+    plot_range = []
+    for dim in range(ndim):
+        plot_range.append(
+            [
+                min([min(samples_list[i].T[dim]) for i in range(n)]),
+                max([max(samples_list[i].T[dim]) for i in range(n)]),
+            ]
+        )
+
+    CORNER_KWARGS.update(range=plot_range)
+
+    fig = corner.corner(
+        samples_list[0],
+        color=colors[0],
+        truths=truth_array[0],
+        truth_color='k',
+        **CORNER_KWARGS
+    )
+
+    for idx in range(1, n):
+        fig = corner.corner(
+            samples_list[idx],
+            fig=fig,
+            weights=get_normalisation_weight(len(samples_list[idx]), max_len),
+            color=colors[idx],
+            truths=truth_array[idx],
+            truth_color='k',
+            **CORNER_KWARGS
+        )
+
+    plt.legend(
+        handles=[
+            mlines.Line2D([], [], color=colors[i], label=sample_labels[i])
+            for i in range(n)
+        ],
+        fontsize=20, frameon=False,
+        bbox_to_anchor=(1, ndim), loc="upper right"
+    )
+
+    plt.show()
+#     plt.savefig("corner.png")
+#     plt.close()
+
+
+def get_normalisation_weight(len_current_samples, len_of_longest_samples):
+    return np.ones(len_current_samples) * (len_of_longest_samples / len_current_samples)
+
+
+
+overlaid_corner(
+    [Tsamples,SFsamples,Qsamples],
+    ["Total", "Star-forming", "Quiescent"]
+    )
+#
+
+
 #
 print('\n\n"emcee_chi2_final.py"  terminated successfully.\n')
 #
