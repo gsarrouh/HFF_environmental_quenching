@@ -1,7 +1,7 @@
 # Created on Sun Dec 13 13:55:31 2020
 # Author: Ghassan T Sarrouh
 #
-########################### smf_comparison.py ###########################
+########################### smf_comparison_field.py ###########################
 #
 ### WHAT THIS PROGRAM DOES:
 ### creates figures comparing the SMF result produced in "master_smf_9_final.py"; comparison data values have been manually entered from the reference provided
@@ -26,6 +26,7 @@
 ## SECTION (0): import MODULES, set FLAGS, define FUNCTIONS
 #
 ## Import modules
+import pandas as pd
 import numpy as np
 import math
 import matplotlib as mpl
@@ -132,6 +133,57 @@ total_err_baldry2012 = np.array([4.2,2.8,3.0,1.2,2.6,1.7,0.6,0.55,0.41,0.37,0.35
 # units of 10^-3
 total_smf_baldry2012 = 1e-3*total_smf_baldry2012
 total_err_baldry2012 = 1e-3*total_err_baldry2012
+# import SF data from .csv files
+filename_SF = '/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/external_figures/baldry_SF_smf.csv'
+df_baldry2012 = pd.read_csv(filename_SF,delimiter=',')
+x_baldry2012_data_SF = df_baldry2012.X
+SF_smf_baldry2012 = df_baldry2012.Y
+SF_upper_err_baldry2012 = df_baldry2012.Y_err_upper
+SF_lower_err_baldry2012 = df_baldry2012.Y_err_lower
+SF_err_baldry2012 = np.array([SF_lower_err_baldry2012,SF_upper_err_baldry2012])
+# import Q data from .csv files
+filename_Q = '/Users/gsarrouh/Research/NSERC_2017_HFF/Plots/external_figures/baldry_Q_smf.csv'
+df_baldry2012 = pd.read_csv(filename_Q,delimiter=',')
+x_baldry2012_data_Q = df_baldry2012.X
+Q_smf_baldry2012 = df_baldry2012.Y
+Q_upper_err_baldry2012 = df_baldry2012.Y_err_upper
+Q_lower_err_baldry2012 = df_baldry2012.Y_err_lower
+Q_err_baldry2012 = np.array([Q_lower_err_baldry2012,Q_upper_err_baldry2012])
+
+#
+#
+## from mcleod et al 2020:
+#
+# x-values (mass bin midpoints)
+x_mcleod2020_data = np.arange(8.125,12.125,0.25)
+x_mcleod2020_data_Q = np.arange(8.125,12.125,0.25)
+#
+# SF population
+SF_smf_mcleod2020 = np.array([1.60,1.69,1.83,1.93,2.06,2.16,2.29,2.41,2.54,2.70,2.88,3.16,3.63,4.34,5.31,0])
+SF_lower_err_mcleod2020 = np.array([0.05,0.03,0.04,0.03,0.03,0.03,0.03,0.03,0.03,0.03,0.03,0.05,0.06,0.11,0.44,0])
+SF_upper_err_mcleod2020 = np.array([0.05,0.03,0.04,0.03,0.03,0.02,0.02,0.03,0.03,0.03,0.03,0.04,0.05,0.09,0.21,0])
+# in unit of log(phi) - i.e. 10^ - (SF_smf_mcleod2020)
+SF_upper_err_mcleod2020 = np.abs(10**(-1 * (SF_smf_mcleod2020 - SF_upper_err_mcleod2020)) - 10**(-1 * (SF_smf_mcleod2020)))
+SF_lower_err_mcleod2020 = np.abs(10**(-1 * (SF_smf_mcleod2020 + SF_lower_err_mcleod2020)) - 10**(-1 * (SF_smf_mcleod2020)))
+SF_smf_mcleod2020 = 10**(-1 * SF_smf_mcleod2020)
+SF_err_mcleod2020 = np.array([SF_lower_err_mcleod2020, SF_upper_err_mcleod2020])
+# Q population
+Q_smf_mcleod2020 = np.array([0,2.40,2.47,2.56,2.68,2.83,2.91,2.97,2.92,2.84,2.83,2.95,3.24,3.74,4.48,5.71])
+Q_lower_err_mcleod2020 = np.array([0,0.06,0.05,0.04,0.05,0.05,0.06,0.03,0.03,0.03,0.03,0.04,0.05,0.06,0.13,2.52])
+Q_upper_err_mcleod2020 = np.array([0,0.05,0.05,0.04,0.04,0.05,0.05,0.03,0.03,0.03,0.03,0.04,0.04,0.05,0.10,0.30])
+# in unit of log(phi) - i.e. 10^ - (SF_smf_mcleod2020)
+Q_upper_err_mcleod2020 = np.abs(10**(-1 * (Q_smf_mcleod2020 - Q_upper_err_mcleod2020)) - 10**(-1 * (Q_smf_mcleod2020)))
+Q_lower_err_mcleod2020 = np.abs(10**(-1 * (Q_smf_mcleod2020 + Q_lower_err_mcleod2020)) - 10**(-1 * (Q_smf_mcleod2020)))
+Q_smf_mcleod2020 = 10**(-1 * Q_smf_mcleod2020)
+Q_err_mcleod2020 = np.array([Q_lower_err_mcleod2020, Q_upper_err_mcleod2020])
+# TOTAL population = SF + Q
+total_smf_mcleod2020 = SF_smf_mcleod2020+Q_smf_mcleod2020
+total_lower_err_mcleod2020 = SF_lower_err_mcleod2020+Q_lower_err_mcleod2020
+total_upper_err_mcleod2020 = SF_upper_err_mcleod2020+Q_upper_err_mcleod2020
+total_err_mcleod2020 = np.array([total_lower_err_mcleod2020, total_upper_err_mcleod2020])
+
+
+#
 #
 #
 #
@@ -173,9 +225,9 @@ if plot_flag_1 == 1:
     # Total population
     ax0 = plt.subplot(gs[0])
     ax0.errorbar(x_vdb2018_data,total_smf_vdb2018,yerr=total_err_vdb2018,label='vdB 2018: 0.5 < z < 0.7',marker='o',color='magenta',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    ax0.errorbar(x_baldry2012_data,total_smf_baldry2012,yerr=total_err_baldry2012,label='baldry 2012: z < 0.06',marker='s',color='cyan',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    ax0.errorbar(x_tom2014_data,total_smf_tom2014_lo_z,yerr=total_err_tom2014_lo_z,label='tomczak 2014: 0.2 < z < 0.5',marker='<',color='orangered',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    ax0.errorbar(x_tom2014_data,total_smf_tom2014_hi_z,yerr=total_err_tom2014_hi_z,label='tomczak 2014: 0.5 < z < 0.75',marker='>',color='maroon',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    ax0.errorbar(x_baldry2012_data,total_smf_baldry2012,yerr=total_err_baldry2012,label='baldry 2012: z < 0.06',marker='s',color='navy',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    ax0.errorbar(x_tom2014_data,total_smf_tom2014_lo_z,yerr=total_err_tom2014_lo_z,label='tomczak 2014: 0.2 < z < 0.5',marker='<',color='lime',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    ax0.errorbar(x_tom2014_data,total_smf_tom2014_hi_z,yerr=total_err_tom2014_hi_z,label='tomczak 2014: 0.5 < z < 0.75',marker='>',color='darkgreen',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
     #Plot Schechter fits:
     ax0.plot(x_plot,total_model_field_mcmc_plot_double, '-k', linewidth=1.0)
     ax0.set_xscale('linear')
@@ -194,8 +246,8 @@ if plot_flag_1 == 1:
     # SF population
     ax1 = plt.subplot(gs[1])
     ax1.errorbar(x_vdb2018_data,SF_smf_vdb2018,yerr=SF_err_vdb2018,label='vdB 2018',marker='o',color='magenta',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    ax1.errorbar(x_tom2014_data,SF_smf_tom2014_lo_z,yerr=SF_err_tom2014_lo_z,label='tomczak 2014: 0.2 < z < 0.5',marker='<',color='orangered',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    ax1.errorbar(x_tom2014_data,SF_smf_tom2014_hi_z,yerr=SF_err_tom2014_hi_z,label='tomczak 2014: 0.5 < z < 0.75',marker='>',color='maroon',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    ax1.errorbar(x_tom2014_data,SF_smf_tom2014_lo_z,yerr=SF_err_tom2014_lo_z,label='tomczak 2014: 0.2 < z < 0.5',marker='<',color='lime',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    ax1.errorbar(x_tom2014_data,SF_smf_tom2014_hi_z,yerr=SF_err_tom2014_hi_z,label='tomczak 2014: 0.5 < z < 0.75',marker='>',color='darkgreen',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
     #
     #Plot Schechter fits:
     ax1.plot(x_plot,SF_model_field_mcmc_plot, '-k', linewidth=1.0)
@@ -215,8 +267,8 @@ if plot_flag_1 == 1:
     # Q population
     ax2 = plt.subplot(gs[2])
     ax2.errorbar(x_vdb2018_data,Q_smf_vdb2018,yerr=Q_err_vdb2018,label='vdB 2018',marker='o',color='magenta',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    ax2.errorbar(x_tom2014_data,Q_smf_tom2014_lo_z,yerr=Q_err_tom2014_lo_z,label='tomczak 2014: 0.2 < z < 0.5',marker = '<', color = 'orangered',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    ax2.errorbar(x_tom2014_data,Q_smf_tom2014_hi_z,yerr=Q_err_tom2014_hi_z,label='tomczak 2014: 0.5 < z < 0.75',marker = '>', color = 'maroon',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    ax2.errorbar(x_tom2014_data,Q_smf_tom2014_lo_z,yerr=Q_err_tom2014_lo_z,label='tomczak 2014: 0.2 < z < 0.5',marker = '<', color = 'lime',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    ax2.errorbar(x_tom2014_data,Q_smf_tom2014_hi_z,yerr=Q_err_tom2014_hi_z,label='tomczak 2014: 0.5 < z < 0.75',marker = '>', color = 'darkgreen',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
     #Plot Schechter fits:
     ax2.plot(x_plot,Q_model_field_mcmc_plot_double, '-k', linewidth=1.0)
     ax2.set_xscale('linear')
@@ -278,10 +330,10 @@ T_M_star_lower_err_muzzin_hi_z, T_phi1_lower_err_muzzin_hi_z, T_alpha1_lower_err
 ## Tomczak et al. 2014
 #
 # x vector for plotting
-x_tomczak2014_lo_z = np.arange(8.0,11.51,0.01)
-x_tomczak2014_hi_z = np.arange(8.25,11.51,0.01)
-x_tomczak2014_lo_z_Q = np.arange(8.25,11.51,0.01)
-x_tomczak2014_hi_z_Q = np.arange(8.50,11.51,0.01)
+x_tomczak2014_lo_z = np.arange(8.0,12.01,0.01)
+x_tomczak2014_hi_z = np.arange(8.25,12.01,0.01)
+x_tomczak2014_lo_z_Q = np.arange(8.25,12.01,0.01)
+x_tomczak2014_hi_z_Q = np.arange(8.50,12.01,0.01)
 # SF population
 # lo z
 SF_M_star_tomczak_lo_z, SF_phi1_tomczak_lo_z, SF_alpha1_tomczak_lo_z, SF_phi2_tomczak_lo_z, SF_alpha2_tomczak_lo_z = 10.59,10**(-2.67),-1.08,10**(-4.46),-2.00
@@ -310,10 +362,11 @@ T_M_star_tomczak_hi_z, T_phi1_tomczak_hi_z, T_alpha1_tomczak_hi_z, T_phi2_tomcza
 T_M_star_upper_err_tomczak_hi_z, T_phi1_upper_err_tomczak_hi_z, T_alpha1_upper_err_tomczak_hi_z, T_phi2_upper_err_tomczak_hi_z, T_alpha2_upper_err_tomczak_hi_z = 0.10,10**(-2.55+0.09),0.50,10**(-3.15+0.23),0.12
 T_M_star_lower_err_tomczak_hi_z, T_phi1_lower_err_tomczak_hi_z, T_alpha1_lower_err_tomczak_hi_z, T_phi2_lower_err_tomczak_hi_z, T_alpha2_lower_err_tomczak_hi_z = 0.10,10**(-2.55-0.09),0.50,10**(-3.15-0.23),0.12
 #
+
 ## van der Burg 2018
 #
 # x vector for plotting
-x_vdb2018 = np.arange(9.55,11.76,0.01)
+x_vdb2018 = np.arange(9.55,12.01,0.01)
 # SF population
 SF_M_star_vdb2018, SF_phi1_vdb2018, SF_alpha1_vdb2018 = 10.69,238.72e-5,-1.33
 SF_M_star_upper_err_vdb2018, SF_phi1_upper_err_vdb2018, SF_alpha1_upper_err_vdb2018 = 0.03,3.20e-5,0.03
@@ -330,8 +383,8 @@ T_M_star_lower_err_vdb2018, T_phi1_lower_err_vdb2018, T_alpha1_lower_err_vdb2018
 ## baldry+2012
 #
 # x vector for plotting
-x_baldry2012 = np.arange(8,11.61,0.01)
-x_baldry2012_Q = np.arange(8.4,11.61,0.01)
+x_baldry2012 = np.arange(8,12.01,0.01)
+x_baldry2012_Q = np.arange(8.4,12.01,0.01)
 # SF population
 SF_M_star_baldry2012, SF_phi1_baldry2012, SF_alpha1_baldry2012 = 10.72,0.71e-3,-1.45
 SF_M_star_upper_err_baldry2012, SF_phi1_upper_err_baldry2012, SF_alpha1_upper_err_baldry2012 = 0.,0.,0.
@@ -344,6 +397,25 @@ Q_M_star_lower_err_baldry2012, Q_phi1_lower_err_baldry2012, Q_alpha1_lower_err_b
 T_M_star_baldry2012, T_phi1_baldry2012, T_alpha1_baldry2012, T_phi2_baldry2012, T_alpha2_baldry2012 = 10.66,3.96e-3,-0.35,0.79e-3,-1.47
 T_M_star_upper_err_baldry2012, T_phi1_upper_err_baldry2012, T_alpha1_upper_err_baldry2012, T_phi2_upper_err_baldry2012, T_alpha2_upper_err_baldry2012 = 0.05,0.34e-3,0.18,0.23e-3,0.05
 T_M_star_lower_err_baldry2012, T_phi1_lower_err_baldry2012, T_alpha1_lower_err_baldry2012, T_phi2_lower_err_baldry2012, T_alpha2_lower_err_baldry2012 = 0.05,0.34e-3,0.18,0.23e-3,0.05
+#
+#
+## mcleod et al. 2020
+#
+# x vector for plotting
+x_mcleod2020 = np.arange(8.0,12,0.01)
+x_mcleod2020_Q = np.arange(8.25,12,0.01)
+# SF population
+SF_M_star_mcleod2020, SF_phi1_mcleod2020, SF_alpha1_mcleod2020 = 10.85,10**(-3.12),-1.42
+SF_M_star_upper_err_mcleod2020, SF_phi1_upper_err_mcleod2020, SF_alpha1_upper_err_mcleod2020 = 0.09,10**(-3.12+0.03),0.02
+SF_M_star_lower_err_mcleod2020, SF_phi1_lower_err_mcleod2020, SF_alpha1_lower_err_mcleod2020 = 0.02,10**(-3.12-0.03),0.02
+# Q population
+Q_M_star_mcleod2020, Q_phi1_mcleod2020, Q_alpha1_mcleod2020, Q_phi2_mcleod2020, Q_alpha2_mcleod2020 = 10.74,10**(-2.85),-0.21,10**(-4.01),-1.55
+Q_M_star_upper_err_mcleod2020, Q_phi1_upper_err_mcleod2020, Q_alpha1_upper_err_mcleod2020, Q_phi2_upper_err_mcleod2020, Q_alpha2_upper_err_mcleod2020 = 0.04,10**(-2.85+0.03),0.15,10**(-4.01+0.16),0.08
+Q_M_star_lower_err_mcleod2020, Q_phi1_lower_err_mcleod2020, Q_alpha1_lower_err_mcleod2020, Q_phi2_lower_err_mcleod2020, Q_alpha2_lower_err_mcleod2020 = 0.04,10**(-2.85-0.03),0.15,10**(-4.01-0.24),0.08
+# # TOTAL population
+T_M_star_mcleod2020, T_phi1_mcleod2020, T_alpha1_mcleod2020, T_phi2_mcleod2020, T_alpha2_mcleod2020 = 1.06965911e+01,1.50646329e-04,-1.67331178e+00,2.23332814e-03,-1.11086814e+00
+T_M_star_upper_err_mcleod2020, T_phi1_upper_err_mcleod2020, T_alpha1_upper_err_mcleod2020, T_phi2_upper_err_mcleod2020, T_alpha2_upper_err_mcleod2020 = 0.12562025,0.00633172,0.19310628,0.00752567,0.34988261
+T_M_star_lower_err_mcleod2020, T_phi1_lower_err_mcleod2020, T_alpha1_lower_err_mcleod2020, T_phi2_lower_err_mcleod2020, T_alpha2_lower_err_mcleod2020 = 0.19112659,0.00625182,0.09297201,0.00670374,0.94820759
 
 
 #
@@ -353,8 +425,13 @@ T_M_star_lower_err_baldry2012, T_phi1_lower_err_baldry2012, T_alpha1_lower_err_b
 #
 ## construct upper/lower uncertainty limits for MY FIT (Sarrouh & Muzzin 2021)
 #
-SF_model_field_upper =  np.log(10) * np.exp(-10**(x_plot-(SFM_star_mcmc_field+SFM_star_field_mcmc_upper_err))) * ((SFphi_mcmc_field+SFphi_field_mcmc_upper_err) * (10**(x_plot-(SFM_star_mcmc_field+SFM_star_field_mcmc_upper_err)))**(1+(SFalpha_mcmc_field-SFalpha_field_mcmc_upper_err)))
-SF_model_field_lower =  np.log(10) * np.exp(-10**(x_plot-(SFM_star_mcmc_field-SFM_star_field_mcmc_lower_err))) * ((SFphi_mcmc_field-SFphi_field_mcmc_lower_err) * (10**(x_plot-(SFM_star_mcmc_field-SFM_star_field_mcmc_lower_err)))**(1+(SFalpha_mcmc_field+SFalpha_field_mcmc_lower_err)))
+if field_smf_schechter_flag == 1:
+    SF_model_field_upper =  np.log(10) * np.exp(-10**(x_plot-(SFM_star_mcmc_field+SFM_star_field_mcmc_upper_err))) * ((SFphi_mcmc_field+SFphi_field_mcmc_upper_err) * (10**(x_plot-(SFM_star_mcmc_field+SFM_star_field_mcmc_upper_err)))**(1+(SFalpha_mcmc_field-SFalpha_field_mcmc_upper_err)))
+    SF_model_field_lower =  np.log(10) * np.exp(-10**(x_plot-(SFM_star_mcmc_field-SFM_star_field_mcmc_lower_err))) * ((SFphi_mcmc_field-SFphi_field_mcmc_lower_err) * (10**(x_plot-(SFM_star_mcmc_field-SFM_star_field_mcmc_lower_err)))**(1+(SFalpha_mcmc_field+SFalpha_field_mcmc_lower_err)))
+elif field_smf_schechter_flag == 2:
+    SF_model_field_upper =  np.log(10) * np.exp(-10**(x_plot-(SFM_star_mcmc_field+SFM_star_field_mcmc_upper_err))) * ( ((SFphi1_mcmc+SFphi1_field_mcmc_upper_err) * (10**(x_plot-(SFM_star_mcmc_field+SFM_star_field_mcmc_upper_err)))**(1+(SFalpha1_mcmc-SFalpha1_field_mcmc_upper_err)))  + ((SFphi2_mcmc+SFphi2_field_mcmc_upper_err)*(10**(x_plot-(SFM_star_mcmc_field+SFM_star_field_mcmc_upper_err)))**(1+(SFalpha2_mcmc-SFalpha2_field_mcmc_upper_err))) )
+    SF_model_field_lower =  np.log(10) * np.exp(-10**(x_plot-(SFM_star_mcmc_field-SFM_star_field_mcmc_lower_err))) * ( ((SFphi1_mcmc-SFphi1_field_mcmc_lower_err) * (10**(x_plot-(SFM_star_mcmc_field-SFM_star_field_mcmc_lower_err)))**(1+(SFalpha1_mcmc+SFalpha1_field_mcmc_lower_err)))  + ((SFphi2_mcmc-SFphi2_field_mcmc_lower_err)*(10**(x_plot-(SFM_star_mcmc_field-SFM_star_field_mcmc_lower_err)))**(1+(SFalpha2_mcmc+SFalpha2_field_mcmc_lower_err))) )
+
 Q_model_field_upper =  np.log(10) * np.exp(-10**(x_plot-(QM_star_mcmc_field+QM_star_field_mcmc_upper_err))) * ( ((Qphi1_mcmc+Qphi1_field_mcmc_upper_err) * (10**(x_plot-(QM_star_mcmc_field+QM_star_field_mcmc_upper_err)))**(1+(Qalpha1_mcmc-Qalpha1_field_mcmc_upper_err)))  + ((Qphi2_mcmc+Qphi2_field_mcmc_upper_err)*(10**(x_plot-(QM_star_mcmc_field+QM_star_field_mcmc_upper_err)))**(1+(Qalpha2_mcmc-Qalpha2_field_mcmc_upper_err))) )
 Q_model_field_lower =  np.log(10) * np.exp(-10**(x_plot-(QM_star_mcmc_field-QM_star_field_mcmc_lower_err))) * ( ((Qphi1_mcmc-Qphi1_field_mcmc_lower_err) * (10**(x_plot-(QM_star_mcmc_field-QM_star_field_mcmc_lower_err)))**(1+(Qalpha1_mcmc+Qalpha1_field_mcmc_lower_err)))  + ((Qphi2_mcmc-Qphi2_field_mcmc_lower_err)*(10**(x_plot-(QM_star_mcmc_field-QM_star_field_mcmc_lower_err)))**(1+(Qalpha2_mcmc+Qalpha2_field_mcmc_lower_err))) )
 total_model_field_upper =  np.log(10) * np.exp(-10**(x_plot-(TM_star_mcmc_field+TM_star_field_mcmc_upper_err))) * ( ((Tphi1_mcmc+Tphi1_field_mcmc_upper_err) * (10**(x_plot-(TM_star_mcmc_field+TM_star_field_mcmc_upper_err)))**(1+(Talpha1_mcmc-Talpha1_field_mcmc_upper_err)))  + ((Tphi2_mcmc+Tphi2_field_mcmc_upper_err)*(10**(x_plot-(TM_star_mcmc_field+TM_star_field_mcmc_upper_err)))**(1+(Talpha2_mcmc-Talpha2_field_mcmc_upper_err))) )
@@ -403,8 +480,7 @@ T_model_tomczak_upper_lo_z = np.log(10) * np.exp(-10**(x_tomczak2014_lo_z-(T_M_s
 # lower_error_bound
 SF_model_tomczak_lower_lo_z = np.log(10) * np.exp(-10**(x_tomczak2014_lo_z-(SF_M_star_tomczak_lo_z-SF_M_star_lower_err_tomczak_lo_z))) * ( (SF_phi1_lower_err_tomczak_lo_z*(10**(x_tomczak2014_lo_z-(SF_M_star_tomczak_lo_z-SF_M_star_lower_err_tomczak_lo_z)))**(1+(SF_alpha1_tomczak_lo_z+SF_alpha1_lower_err_tomczak_lo_z)))  + (SF_phi2_lower_err_tomczak_lo_z*(10**(x_tomczak2014_lo_z-(SF_M_star_tomczak_lo_z-SF_M_star_lower_err_tomczak_lo_z)))**(1+(SF_alpha2_tomczak_lo_z+SF_alpha1_lower_err_tomczak_lo_z))) )
 Q_model_tomczak_lower_lo_z = np.log(10) * np.exp(-10**(x_tomczak2014_lo_z_Q-(Q_M_star_tomczak_lo_z-Q_M_star_lower_err_tomczak_lo_z))) * ( (Q_phi1_lower_err_tomczak_lo_z*(10**(x_tomczak2014_lo_z_Q-(Q_M_star_tomczak_lo_z-Q_M_star_lower_err_tomczak_lo_z)))**(1+(Q_alpha1_tomczak_lo_z+Q_alpha1_lower_err_tomczak_lo_z)))  + (Q_phi2_lower_err_tomczak_lo_z*(10**(x_tomczak2014_lo_z_Q-(Q_M_star_tomczak_lo_z-Q_M_star_lower_err_tomczak_lo_z)))**(1+(Q_alpha2_tomczak_lo_z+Q_alpha1_lower_err_tomczak_lo_z))) )
-T_model_tomczak_lower_lo_z = np.log(10) * np.exp(-10**(x_tomczak2014_lo_z-(T_M_star_tomczak_lo_z-T_M_star_lower_err_tomczak_lo_z))) * ( (T_phi1_lower_err_tomczak_lo_z*(10**(x_tomczak2014_lo_z-(T_M_star_tomczak_lo_z-T_M_star_lower_err_tomczak_lo_z)))**(1+(T_alpha1_tomczak_lo_z+T_alpha1_lower_err_tomczak_lo_z)))  + (T_phi2_lower_err_tomczak_lo_z*(10**(x_tomczak2014_lo_z-(T_M_star_tomczak_lo_z-T_M_star_lower_err_tomczak_lo_z)))**(1+(T_alpha2_tomczak_lo_z+T_alpha1_lower_err_tomczak_lo_z))) )
-# tomczak+2014, hi z
+T_model_tomczak_lower_lo_z = np.log(10) * np.exp(-10**(x_tomczak2014_lo_z-(T_M_star_tomczak_lo_z+T_M_star_lower_err_tomczak_lo_z))) * ( (T_phi1_lower_err_tomczak_lo_z*(10**(x_tomczak2014_lo_z-(T_M_star_tomczak_lo_z+T_M_star_lower_err_tomczak_lo_z)))**(1+(T_alpha1_tomczak_lo_z-T_alpha1_lower_err_tomczak_lo_z)))  + (T_phi2_lower_err_tomczak_lo_z*(10**(x_tomczak2014_lo_z-(T_M_star_tomczak_lo_z+T_M_star_lower_err_tomczak_lo_z)))**(1+(T_alpha2_tomczak_lo_z-T_alpha1_lower_err_tomczak_lo_z))) )# tomczak+2014, hi z
 # SMFs
 SF_model_tomczak_hi_z = np.log(10) * np.exp(-10**(x_tomczak2014_hi_z-SF_M_star_tomczak_hi_z)) * ( (SF_phi1_tomczak_hi_z*(10**(x_tomczak2014_hi_z-SF_M_star_tomczak_hi_z))**(1+SF_alpha1_tomczak_hi_z))  + (SF_phi2_tomczak_hi_z*(10**(x_tomczak2014_hi_z-SF_M_star_tomczak_hi_z))**(1+SF_alpha2_tomczak_hi_z)) )
 Q_model_tomczak_hi_z = np.log(10) * np.exp(-10**(x_tomczak2014_hi_z_Q-Q_M_star_tomczak_hi_z)) * ( (Q_phi1_tomczak_hi_z*(10**(x_tomczak2014_hi_z_Q-Q_M_star_tomczak_hi_z))**(1+Q_alpha1_tomczak_hi_z))  + (Q_phi2_tomczak_hi_z*(10**(x_tomczak2014_hi_z_Q-Q_M_star_tomczak_hi_z))**(1+Q_alpha2_tomczak_hi_z)) )
@@ -433,6 +509,21 @@ T_model_upper_err_vdb2018 = np.log(10) * (T_phi1_vdb2018+T_phi1_upper_err_vdb201
 SF_model_lower_err_vdb2018 = np.log(10) * (SF_phi1_vdb2018-SF_phi1_lower_err_vdb2018) * (10**((x_vdb2018-(SF_M_star_vdb2018-SF_M_star_lower_err_vdb2018))*(1+(SF_alpha1_vdb2018+SF_alpha1_lower_err_vdb2018)))) * np.exp(-10**(x_vdb2018-(SF_M_star_vdb2018-SF_M_star_lower_err_vdb2018)))
 Q_model_lower_err_vdb2018 = np.log(10) * (Q_phi1_vdb2018-Q_phi1_lower_err_vdb2018) * (10**((x_vdb2018-(Q_M_star_vdb2018-Q_M_star_lower_err_vdb2018))*(1+(Q_alpha1_vdb2018+Q_alpha1_lower_err_vdb2018)))) * np.exp(-10**(x_vdb2018-(Q_M_star_vdb2018-Q_M_star_lower_err_vdb2018)))
 T_model_lower_err_vdb2018 = np.log(10) * (T_phi1_vdb2018-T_phi1_lower_err_vdb2018) * (10**((x_vdb2018-(T_M_star_vdb2018-T_M_star_lower_err_vdb2018))*(1+(T_alpha1_vdb2018+T_alpha1_lower_err_vdb2018)))) * np.exp(-10**(x_vdb2018-(T_M_star_vdb2018-T_M_star_lower_err_vdb2018)))
+#
+#
+# mcleod+2020
+# SMFs
+SF_model_mcleod2020 = np.log(10) * np.exp(-10**(x_mcleod2020-SF_M_star_mcleod2020)) * ( (SF_phi1_mcleod2020*(10**(x_mcleod2020-SF_M_star_mcleod2020))**(1+SF_alpha1_mcleod2020)) )
+Q_model_mcleod2020 = np.log(10) * np.exp(-10**(x_mcleod2020_Q-Q_M_star_mcleod2020)) * ( (Q_phi1_mcleod2020*(10**(x_mcleod2020_Q-Q_M_star_mcleod2020))**(1+Q_alpha1_mcleod2020))  + (Q_phi2_mcleod2020*(10**(x_mcleod2020_Q-Q_M_star_mcleod2020))**(1+Q_alpha2_mcleod2020)) )
+T_model_mcleod2020 = np.log(10) * np.exp(-10**(x_mcleod2020-T_M_star_mcleod2020)) * ( (T_phi1_mcleod2020*(10**(x_mcleod2020-T_M_star_mcleod2020))**(1+T_alpha1_mcleod2020))  + (T_phi2_mcleod2020*(10**(x_mcleod2020-T_M_star_mcleod2020))**(1+T_alpha2_mcleod2020)) )
+# upper_error_bound
+SF_model_upper_err_mcleod2020 = np.log(10) * np.exp(-10**(x_mcleod2020-(SF_M_star_mcleod2020+SF_M_star_upper_err_mcleod2020))) * ( (SF_phi1_upper_err_mcleod2020*(10**(x_mcleod2020-(SF_M_star_mcleod2020+SF_M_star_upper_err_mcleod2020)))**(1+(SF_alpha1_mcleod2020-SF_alpha1_upper_err_mcleod2020))) )
+Q_model_upper_err_mcleod2020 = np.log(10) * np.exp(-10**(x_mcleod2020_Q-(Q_M_star_mcleod2020+Q_M_star_upper_err_mcleod2020))) * ( (Q_phi1_upper_err_mcleod2020*(10**(x_mcleod2020_Q-(Q_M_star_mcleod2020+Q_M_star_upper_err_mcleod2020)))**(1+(Q_alpha1_mcleod2020-Q_alpha1_upper_err_mcleod2020)))  + (Q_phi2_upper_err_mcleod2020*(10**(x_mcleod2020_Q-(Q_M_star_mcleod2020+Q_M_star_upper_err_mcleod2020)))**(1+(Q_alpha2_mcleod2020-Q_alpha1_upper_err_mcleod2020))) )
+T_model_upper_err_mcleod2020 = np.log(10) * np.exp(-10**(x_mcleod2020-(T_M_star_mcleod2020+T_M_star_upper_err_mcleod2020))) * ( (T_phi1_upper_err_mcleod2020*(10**(x_mcleod2020-(T_M_star_mcleod2020+T_M_star_upper_err_mcleod2020)))**(1+(T_alpha1_mcleod2020-T_alpha1_upper_err_mcleod2020)))  + (T_phi2_upper_err_mcleod2020*(10**(x_mcleod2020-(T_M_star_mcleod2020+T_M_star_upper_err_mcleod2020)))**(1+(T_alpha2_mcleod2020-T_alpha1_upper_err_mcleod2020))) )
+# lower_error_bound
+SF_model_lower_err_mcleod2020 = np.log(10) * np.exp(-10**(x_mcleod2020-(SF_M_star_mcleod2020-SF_M_star_lower_err_mcleod2020))) * ( (SF_phi1_lower_err_mcleod2020*(10**(x_mcleod2020-(SF_M_star_mcleod2020-SF_M_star_lower_err_mcleod2020)))**(1+(SF_alpha1_mcleod2020+SF_alpha1_lower_err_mcleod2020))) )
+Q_model_lower_err_mcleod2020 = np.log(10) * np.exp(-10**(x_mcleod2020_Q-(Q_M_star_mcleod2020-Q_M_star_lower_err_mcleod2020))) * ( (Q_phi1_lower_err_mcleod2020*(10**(x_mcleod2020_Q-(Q_M_star_mcleod2020-Q_M_star_lower_err_mcleod2020)))**(1+(Q_alpha1_mcleod2020+Q_alpha1_lower_err_mcleod2020)))  + (Q_phi2_lower_err_mcleod2020*(10**(x_mcleod2020_Q-(Q_M_star_mcleod2020-Q_M_star_lower_err_mcleod2020)))**(1+(Q_alpha2_mcleod2020+Q_alpha1_lower_err_mcleod2020))) )
+T_model_lower_err_mcleod2020 = np.log(10) * np.exp(-10**(x_mcleod2020-(T_M_star_mcleod2020-T_M_star_lower_err_mcleod2020))) * ( ((T_phi1_mcleod2020+T_phi1_lower_err_mcleod2020)*(10**(x_mcleod2020-(T_M_star_mcleod2020-T_M_star_lower_err_mcleod2020)))**(1+(T_alpha1_mcleod2020+T_alpha1_lower_err_mcleod2020)))  + ((T_phi2_mcleod2020+T_phi2_lower_err_mcleod2020)*(10**(x_mcleod2020-(T_M_star_mcleod2020-T_M_star_lower_err_mcleod2020)))**(1+(T_alpha2_mcleod2020+T_alpha1_lower_err_mcleod2020))) )
 #
 #
 # baldry+2012
@@ -466,33 +557,33 @@ if plot_flag_2 == 1:
     ax0 = plt.subplot(gs[0])
     #Plot Schechter fits:
     # my fits
-    ax0.plot(x_plot,total_model_field_mcmc_plot_double,color='black',linestyle='-',label='this work', linewidth=1.0)
+    ax0.plot(x_plot,total_model_field_mcmc_plot_double,color='black',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
     ax0.plot(x_plot,total_model_field_upper, color='grey', linestyle='--',linewidth=1.0,alpha=0.3)
     ax0.plot(x_plot,total_model_field_lower, color='grey', linestyle='--',linewidth=1.0,alpha=0.3)
     ax0.fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
     ax0.fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
     # muzzin+2013
-    ax0.plot(x_muzzin2013_lo_z,T_model_muzzin_lo_z, color='cornflowerblue', linestyle='-',label='Muzzin+13: 0.2 < z < 0.5', linewidth=1.0)
-    ax0.plot(x_muzzin2013_lo_z,T_model_muzzin_upper_lo_z, color='cornflowerblue', linestyle='--',linewidth=1.0,alpha=0.3)
-    ax0.plot(x_muzzin2013_lo_z,T_model_muzzin_lower_lo_z, color='cornflowerblue', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax0.fill_between(x_muzzin2013_lo_z,T_model_muzzin_lo_z,T_model_muzzin_upper_lo_z,facecolor='cornflowerblue',interpolate=True,alpha=0.1)
-    ax0.fill_between(x_muzzin2013_lo_z,T_model_muzzin_lo_z,T_model_muzzin_lower_lo_z,facecolor='cornflowerblue',interpolate=True,alpha=0.1)
-    ax0.plot(x_muzzin2013_hi_z,T_model_muzzin_hi_z, color='navy', linestyle='-',label='Muzzin+13: 0.5 < z < 1.0', linewidth=1.0)
-    ax0.plot(x_muzzin2013_hi_z,T_model_muzzin_upper_hi_z, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax0.plot(x_muzzin2013_hi_z,T_model_muzzin_lower_hi_z, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax0.fill_between(x_muzzin2013_hi_z,T_model_muzzin_hi_z,T_model_muzzin_upper_hi_z,facecolor='navy',interpolate=True,alpha=0.1)
-    ax0.fill_between(x_muzzin2013_hi_z,T_model_muzzin_hi_z,T_model_muzzin_lower_hi_z,facecolor='navy',interpolate=True,alpha=0.1)
+    ax0.plot(x_muzzin2013_lo_z,T_model_muzzin_lo_z, color='goldenrod', linestyle='-',label='Muzzin+13: 0.2 < z < 0.5', linewidth=1.0)
+    ax0.plot(x_muzzin2013_lo_z,T_model_muzzin_upper_lo_z, color='goldenrod', linestyle='--',linewidth=1.0,alpha=0.3)
+    ax0.plot(x_muzzin2013_lo_z,T_model_muzzin_lower_lo_z, color='goldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax0.fill_between(x_muzzin2013_lo_z,T_model_muzzin_lo_z,T_model_muzzin_upper_lo_z,facecolor='goldenrod',interpolate=True,alpha=0.1)
+    ax0.fill_between(x_muzzin2013_lo_z,T_model_muzzin_lo_z,T_model_muzzin_lower_lo_z,facecolor='goldenrod',interpolate=True,alpha=0.1)
+    ax0.plot(x_muzzin2013_hi_z,T_model_muzzin_hi_z, color='darkgoldenrod', linestyle='-',label='Muzzin+13: 0.5 < z < 1.0', linewidth=1.0)
+    ax0.plot(x_muzzin2013_hi_z,T_model_muzzin_upper_hi_z, color='darkgoldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax0.plot(x_muzzin2013_hi_z,T_model_muzzin_lower_hi_z, color='darkgoldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax0.fill_between(x_muzzin2013_hi_z,T_model_muzzin_hi_z,T_model_muzzin_upper_hi_z,facecolor='darkgoldenrod',interpolate=True,alpha=0.1)
+    ax0.fill_between(x_muzzin2013_hi_z,T_model_muzzin_hi_z,T_model_muzzin_lower_hi_z,facecolor='darkgoldenrod',interpolate=True,alpha=0.1)
     #tomczak+2014
-    ax0.plot(x_tomczak2014_lo_z,T_model_tomczak_lo_z, color='orangered', linestyle='-',label='tomczak+13: 0.2 < z < 0.5', linewidth=1.0)
-    ax0.plot(x_tomczak2014_lo_z,T_model_tomczak_upper_lo_z, color='orangered', linestyle='--',linewidth=1.0,alpha=0.3)
-    ax0.plot(x_tomczak2014_lo_z,T_model_tomczak_lower_lo_z, color='orangered', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax0.fill_between(x_tomczak2014_lo_z,T_model_tomczak_lo_z,T_model_tomczak_upper_lo_z,facecolor='orangered',interpolate=True,alpha=0.1)
-    ax0.fill_between(x_tomczak2014_lo_z,T_model_tomczak_lo_z,T_model_tomczak_lower_lo_z,facecolor='orangered',interpolate=True,alpha=0.1)
-    ax0.plot(x_tomczak2014_hi_z,T_model_tomczak_hi_z, color='maroon', linestyle='-',label='tomczak+13: 0.5 < z < 1.0', linewidth=1.0)
-    ax0.plot(x_tomczak2014_hi_z,T_model_tomczak_upper_hi_z, color='maroon', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax0.plot(x_tomczak2014_hi_z,T_model_tomczak_lower_hi_z, color='maroon', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax0.fill_between(x_tomczak2014_hi_z,T_model_tomczak_hi_z,T_model_tomczak_upper_hi_z,facecolor='maroon',interpolate=True,alpha=0.1)
-    ax0.fill_between(x_tomczak2014_hi_z,T_model_tomczak_hi_z,T_model_tomczak_lower_hi_z,facecolor='maroon',interpolate=True,alpha=0.1)
+    ax0.plot(x_tomczak2014_lo_z,T_model_tomczak_lo_z, color='lime', linestyle='-',label='tomczak+13: 0.2 < z < 0.5', linewidth=1.0)
+    ax0.plot(x_tomczak2014_lo_z,T_model_tomczak_upper_lo_z, color='lime', linestyle='--',linewidth=1.0,alpha=0.3)
+    ax0.plot(x_tomczak2014_lo_z,T_model_tomczak_lower_lo_z, color='lime', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax0.fill_between(x_tomczak2014_lo_z,T_model_tomczak_lo_z,T_model_tomczak_upper_lo_z,facecolor='lime',interpolate=True,alpha=0.1)
+    ax0.fill_between(x_tomczak2014_lo_z,T_model_tomczak_lo_z,T_model_tomczak_lower_lo_z,facecolor='lime',interpolate=True,alpha=0.1)
+    ax0.plot(x_tomczak2014_hi_z,T_model_tomczak_hi_z, color='darkgreen', linestyle='-',label='tomczak+13: 0.5 < z < 1.0', linewidth=1.0)
+    ax0.plot(x_tomczak2014_hi_z,T_model_tomczak_upper_hi_z, color='darkgreen', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax0.plot(x_tomczak2014_hi_z,T_model_tomczak_lower_hi_z, color='darkgreen', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax0.fill_between(x_tomczak2014_hi_z,T_model_tomczak_hi_z,T_model_tomczak_upper_hi_z,facecolor='darkgreen',interpolate=True,alpha=0.1)
+    ax0.fill_between(x_tomczak2014_hi_z,T_model_tomczak_hi_z,T_model_tomczak_lower_hi_z,facecolor='darkgreen',interpolate=True,alpha=0.1)
     # vdb+2018
     ax0.plot(x_vdb2018,T_model_vdb2018, color='magenta', linestyle='-',label='vdB+2018: 0.5 < z < 0.7', linewidth=1.0)
     ax0.plot(x_vdb2018,T_model_upper_err_vdb2018, color='magenta', linestyle='--',linewidth=1.0,alpha=0.3)
@@ -500,11 +591,11 @@ if plot_flag_2 == 1:
     ax0.fill_between(x_vdb2018,T_model_vdb2018,T_model_upper_err_vdb2018,facecolor='magenta',interpolate=True,alpha=0.1)
     ax0.fill_between(x_vdb2018,T_model_vdb2018,T_model_lower_err_vdb2018,facecolor='magenta',interpolate=True,alpha=0.1)
     # baldry+2012
-    ax0.plot(x_baldry2012,T_model_baldry2012, color='cyan', linestyle='-',label='baldry+2012: z < 0.06', linewidth=1.0)
-    ax0.plot(x_baldry2012,T_model_upper_err_baldry2012, color='cyan', linestyle='--',linewidth=1.0,alpha=0.3)
-    ax0.plot(x_baldry2012,T_model_lower_err_baldry2012, color='cyan', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax0.fill_between(x_baldry2012,T_model_baldry2012,T_model_upper_err_baldry2012,facecolor='cyan',interpolate=True,alpha=0.1)
-    ax0.fill_between(x_baldry2012,T_model_baldry2012,T_model_lower_err_baldry2012,facecolor='cyan',interpolate=True,alpha=0.1)
+    ax0.plot(x_baldry2012,T_model_baldry2012, color='navy', linestyle='-',label='baldry+2012: z < 0.06', linewidth=1.0)
+    ax0.plot(x_baldry2012,T_model_upper_err_baldry2012, color='navy', linestyle='--',linewidth=1.0,alpha=0.3)
+    ax0.plot(x_baldry2012,T_model_lower_err_baldry2012, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax0.fill_between(x_baldry2012,T_model_baldry2012,T_model_upper_err_baldry2012,facecolor='navy',interpolate=True,alpha=0.1)
+    ax0.fill_between(x_baldry2012,T_model_baldry2012,T_model_lower_err_baldry2012,facecolor='navy',interpolate=True,alpha=0.1)
     #
     ax0.set_xscale('linear')
     ax0.set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -528,27 +619,27 @@ if plot_flag_2 == 1:
     ax1.fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
     ax1.fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
     # muzzin+2013
-    ax1.plot(x_muzzin2013_lo_z,SF_model_muzzin_lo_z, color='cornflowerblue', linestyle='-',label='Muzzin+13: 0.2 < z < 0.5', linewidth=1.0)
-    ax1.plot(x_muzzin2013_lo_z,SF_model_muzzin_upper_lo_z, color='cornflowerblue', linestyle='--',linewidth=1.0,alpha=0.3)
-    ax1.plot(x_muzzin2013_lo_z,SF_model_muzzin_lower_lo_z, color='cornflowerblue', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax1.fill_between(x_muzzin2013_lo_z,SF_model_muzzin_lo_z,SF_model_muzzin_upper_lo_z,facecolor='cornflowerblue',interpolate=True,alpha=0.1)
-    ax1.fill_between(x_muzzin2013_lo_z,SF_model_muzzin_lo_z,SF_model_muzzin_lower_lo_z,facecolor='cornflowerblue',interpolate=True,alpha=0.1)
-    ax1.plot(x_muzzin2013_hi_z,SF_model_muzzin_hi_z, color='navy', linestyle='-',label='Muzzin+13: 0.5 < z < 1.0', linewidth=1.0)
-    ax1.plot(x_muzzin2013_hi_z,SF_model_muzzin_upper_hi_z, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax1.plot(x_muzzin2013_hi_z,SF_model_muzzin_lower_hi_z, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax1.fill_between(x_muzzin2013_hi_z,SF_model_muzzin_hi_z,SF_model_muzzin_upper_hi_z,facecolor='navy',interpolate=True,alpha=0.1)
-    ax1.fill_between(x_muzzin2013_hi_z,SF_model_muzzin_hi_z,SF_model_muzzin_lower_hi_z,facecolor='navy',interpolate=True,alpha=0.1)
+    ax1.plot(x_muzzin2013_lo_z,SF_model_muzzin_lo_z, color='goldenrod', linestyle='-',label='Muzzin+13: 0.2 < z < 0.5', linewidth=1.0)
+    ax1.plot(x_muzzin2013_lo_z,SF_model_muzzin_upper_lo_z, color='goldenrod', linestyle='--',linewidth=1.0,alpha=0.3)
+    ax1.plot(x_muzzin2013_lo_z,SF_model_muzzin_lower_lo_z, color='goldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax1.fill_between(x_muzzin2013_lo_z,SF_model_muzzin_lo_z,SF_model_muzzin_upper_lo_z,facecolor='goldenrod',interpolate=True,alpha=0.1)
+    ax1.fill_between(x_muzzin2013_lo_z,SF_model_muzzin_lo_z,SF_model_muzzin_lower_lo_z,facecolor='goldenrod',interpolate=True,alpha=0.1)
+    ax1.plot(x_muzzin2013_hi_z,SF_model_muzzin_hi_z, color='darkgoldenrod', linestyle='-',label='Muzzin+13: 0.5 < z < 1.0', linewidth=1.0)
+    ax1.plot(x_muzzin2013_hi_z,SF_model_muzzin_upper_hi_z, color='darkgoldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax1.plot(x_muzzin2013_hi_z,SF_model_muzzin_lower_hi_z, color='darkgoldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax1.fill_between(x_muzzin2013_hi_z,SF_model_muzzin_hi_z,SF_model_muzzin_upper_hi_z,facecolor='darkgoldenrod',interpolate=True,alpha=0.1)
+    ax1.fill_between(x_muzzin2013_hi_z,SF_model_muzzin_hi_z,SF_model_muzzin_lower_hi_z,facecolor='darkgoldenrod',interpolate=True,alpha=0.1)
     # tomczak+2014
-    ax1.plot(x_tomczak2014_lo_z,SF_model_tomczak_lo_z, color='orangered', linestyle='-',label='tomczak+13: 0.2 < z < 0.5', linewidth=1.0)
-    ax1.plot(x_tomczak2014_lo_z,SF_model_tomczak_upper_lo_z, color='orangered', linestyle='--',linewidth=1.0,alpha=0.3)
-    ax1.plot(x_tomczak2014_lo_z,SF_model_tomczak_lower_lo_z, color='orangered', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax1.fill_between(x_tomczak2014_lo_z,SF_model_tomczak_lo_z,SF_model_tomczak_upper_lo_z,facecolor='orangered',interpolate=True,alpha=0.1)
-    ax1.fill_between(x_tomczak2014_lo_z,SF_model_tomczak_lo_z,SF_model_tomczak_lower_lo_z,facecolor='orangered',interpolate=True,alpha=0.1)
-    ax1.plot(x_tomczak2014_hi_z,SF_model_tomczak_hi_z, color='maroon', linestyle='-',label='tomczak+13: 0.5 < z < 1.0', linewidth=1.0)
-    ax1.plot(x_tomczak2014_hi_z,SF_model_tomczak_upper_hi_z, color='maroon', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax1.plot(x_tomczak2014_hi_z,SF_model_tomczak_lower_hi_z, color='maroon', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax1.fill_between(x_tomczak2014_hi_z,SF_model_tomczak_hi_z,SF_model_tomczak_upper_hi_z,facecolor='maroon',interpolate=True,alpha=0.1)
-    ax1.fill_between(x_tomczak2014_hi_z,SF_model_tomczak_hi_z,SF_model_tomczak_lower_hi_z,facecolor='maroon',interpolate=True,alpha=0.1)
+    ax1.plot(x_tomczak2014_lo_z,SF_model_tomczak_lo_z, color='lime', linestyle='-',label='tomczak+13: 0.2 < z < 0.5', linewidth=1.0)
+    ax1.plot(x_tomczak2014_lo_z,SF_model_tomczak_upper_lo_z, color='lime', linestyle='--',linewidth=1.0,alpha=0.3)
+    ax1.plot(x_tomczak2014_lo_z,SF_model_tomczak_lower_lo_z, color='lime', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax1.fill_between(x_tomczak2014_lo_z,SF_model_tomczak_lo_z,SF_model_tomczak_upper_lo_z,facecolor='lime',interpolate=True,alpha=0.1)
+    ax1.fill_between(x_tomczak2014_lo_z,SF_model_tomczak_lo_z,SF_model_tomczak_lower_lo_z,facecolor='lime',interpolate=True,alpha=0.1)
+    ax1.plot(x_tomczak2014_hi_z,SF_model_tomczak_hi_z, color='darkgreen', linestyle='-',label='tomczak+13: 0.5 < z < 1.0', linewidth=1.0)
+    ax1.plot(x_tomczak2014_hi_z,SF_model_tomczak_upper_hi_z, color='darkgreen', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax1.plot(x_tomczak2014_hi_z,SF_model_tomczak_lower_hi_z, color='darkgreen', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax1.fill_between(x_tomczak2014_hi_z,SF_model_tomczak_hi_z,SF_model_tomczak_upper_hi_z,facecolor='darkgreen',interpolate=True,alpha=0.1)
+    ax1.fill_between(x_tomczak2014_hi_z,SF_model_tomczak_hi_z,SF_model_tomczak_lower_hi_z,facecolor='darkgreen',interpolate=True,alpha=0.1)
     # vdb+2018
     ax1.plot(x_vdb2018,SF_model_vdb2018, color='magenta', linestyle='-',label='vdB+2018: 0.5 < z < 0.7', linewidth=1.0)
     ax1.plot(x_vdb2018,SF_model_upper_err_vdb2018, color='magenta', linestyle='--',linewidth=1.0,alpha=0.3)
@@ -556,11 +647,11 @@ if plot_flag_2 == 1:
     ax1.fill_between(x_vdb2018,SF_model_vdb2018,SF_model_upper_err_vdb2018,facecolor='magenta',interpolate=True,alpha=0.1)
     ax1.fill_between(x_vdb2018,SF_model_vdb2018,SF_model_lower_err_vdb2018,facecolor='magenta',interpolate=True,alpha=0.1)
     # baldry+2012
-    ax1.plot(x_baldry2012,SF_model_baldry2012, color='cyan', linestyle='-',label='baldry+2012: z < 0.06', linewidth=1.0)
-    ax1.plot(x_baldry2012,SF_model_upper_err_baldry2012, color='cyan', linestyle='--',linewidth=1.0,alpha=0.3)
-    ax1.plot(x_baldry2012,SF_model_lower_err_baldry2012, color='cyan', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax1.fill_between(x_baldry2012,SF_model_baldry2012,SF_model_upper_err_baldry2012,facecolor='cyan',interpolate=True,alpha=0.1)
-    ax1.fill_between(x_baldry2012,SF_model_baldry2012,SF_model_lower_err_baldry2012,facecolor='cyan',interpolate=True,alpha=0.1)
+    ax1.plot(x_baldry2012,SF_model_baldry2012, color='navy', linestyle='-',label='baldry+2012: z < 0.06', linewidth=1.0)
+    ax1.plot(x_baldry2012,SF_model_upper_err_baldry2012, color='navy', linestyle='--',linewidth=1.0,alpha=0.3)
+    ax1.plot(x_baldry2012,SF_model_lower_err_baldry2012, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax1.fill_between(x_baldry2012,SF_model_baldry2012,SF_model_upper_err_baldry2012,facecolor='navy',interpolate=True,alpha=0.1)
+    ax1.fill_between(x_baldry2012,SF_model_baldry2012,SF_model_lower_err_baldry2012,facecolor='navy',interpolate=True,alpha=0.1)
     #
     ax1.set_xscale('linear')
     ax1.set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -577,33 +668,33 @@ if plot_flag_2 == 1:
     # Q population
     #Plot Schechter fits:
     ax2 = plt.subplot(gs[2])
-    ax2.plot(x_plot,Q_model_field_mcmc_plot_double,color='black',linestyle='-',label='this work', linewidth=1.0)
+    ax2.plot(x_plot,Q_model_field_mcmc_plot_double,color='black',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
     ax2.plot(x_plot,Q_model_field_upper,color='grey',linestyle='--', linewidth=1.0)
     ax2.plot(x_plot,Q_model_field_lower,color='grey',linestyle='--',linewidth=1.0)
     ax2.fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
     ax2.fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
     # muzzin+2013
-    ax2.plot(x_muzzin2013_lo_z,Q_model_muzzin_lo_z, color='cornflowerblue', linestyle='-',label='Muzzin+2013: 0.2 < z < 0.5', linewidth=1.0)
-    ax2.plot(x_muzzin2013_lo_z,Q_model_muzzin_upper_lo_z, color='cornflowerblue', linestyle='--',linewidth=1.0,alpha=0.3)
-    ax2.plot(x_muzzin2013_lo_z,Q_model_muzzin_lower_lo_z, color='cornflowerblue', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax2.fill_between(x_muzzin2013_lo_z,Q_model_muzzin_lo_z,Q_model_muzzin_upper_lo_z,facecolor='cornflowerblue',interpolate=True,alpha=0.1)
-    ax2.fill_between(x_muzzin2013_lo_z,Q_model_muzzin_lo_z,Q_model_muzzin_lower_lo_z,facecolor='cornflowerblue',interpolate=True,alpha=0.1)
-    ax2.plot(x_muzzin2013_hi_z,Q_model_muzzin_hi_z, color='navy', linestyle='-',label='Muzzin+2013: 0.5 < z < 1.0', linewidth=1.0)
-    ax2.plot(x_muzzin2013_hi_z,Q_model_muzzin_upper_hi_z, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax2.plot(x_muzzin2013_hi_z,Q_model_muzzin_lower_hi_z, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax2.fill_between(x_muzzin2013_hi_z,Q_model_muzzin_hi_z,Q_model_muzzin_upper_hi_z,facecolor='navy',interpolate=True,alpha=0.1)
-    ax2.fill_between(x_muzzin2013_hi_z,Q_model_muzzin_hi_z,Q_model_muzzin_lower_hi_z,facecolor='navy',interpolate=True,alpha=0.1)
+    ax2.plot(x_muzzin2013_lo_z,Q_model_muzzin_lo_z, color='goldenrod', linestyle='-',label='Muzzin+2013: 0.2 < z < 0.5', linewidth=1.0)
+    ax2.plot(x_muzzin2013_lo_z,Q_model_muzzin_upper_lo_z, color='goldenrod', linestyle='--',linewidth=1.0,alpha=0.3)
+    ax2.plot(x_muzzin2013_lo_z,Q_model_muzzin_lower_lo_z, color='goldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax2.fill_between(x_muzzin2013_lo_z,Q_model_muzzin_lo_z,Q_model_muzzin_upper_lo_z,facecolor='goldenrod',interpolate=True,alpha=0.1)
+    ax2.fill_between(x_muzzin2013_lo_z,Q_model_muzzin_lo_z,Q_model_muzzin_lower_lo_z,facecolor='goldenrod',interpolate=True,alpha=0.1)
+    ax2.plot(x_muzzin2013_hi_z,Q_model_muzzin_hi_z, color='darkgoldenrod', linestyle='-',label='Muzzin+2013: 0.5 < z < 1.0', linewidth=1.0)
+    ax2.plot(x_muzzin2013_hi_z,Q_model_muzzin_upper_hi_z, color='darkgoldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax2.plot(x_muzzin2013_hi_z,Q_model_muzzin_lower_hi_z, color='darkgoldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax2.fill_between(x_muzzin2013_hi_z,Q_model_muzzin_hi_z,Q_model_muzzin_upper_hi_z,facecolor='darkgoldenrod',interpolate=True,alpha=0.1)
+    ax2.fill_between(x_muzzin2013_hi_z,Q_model_muzzin_hi_z,Q_model_muzzin_lower_hi_z,facecolor='darkgoldenrod',interpolate=True,alpha=0.1)
     # tomczak+2014
-    ax2.plot(x_tomczak2014_lo_z_Q,Q_model_tomczak_lo_z, color='orangered', linestyle='-',label='tomczak+2014: 0.2 < z < 0.5', linewidth=1.0)
-    ax2.plot(x_tomczak2014_lo_z_Q,Q_model_tomczak_upper_lo_z, color='orangered', linestyle='--',linewidth=1.0,alpha=0.3)
-    ax2.plot(x_tomczak2014_lo_z_Q,Q_model_tomczak_lower_lo_z, color='orangered', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax2.fill_between(x_tomczak2014_lo_z_Q,Q_model_tomczak_lo_z,Q_model_tomczak_upper_lo_z,facecolor='orangered',interpolate=True,alpha=0.1)
-    ax2.fill_between(x_tomczak2014_lo_z_Q,Q_model_tomczak_lo_z,Q_model_tomczak_lower_lo_z,facecolor='orangered',interpolate=True,alpha=0.1)
-    ax2.plot(x_tomczak2014_hi_z_Q,Q_model_tomczak_hi_z, color='maroon', linestyle='-',label='tomczak+2014: 0.5 < z < 0.75', linewidth=1.0)
-    ax2.plot(x_tomczak2014_hi_z_Q,Q_model_tomczak_upper_hi_z, color='maroon', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax2.plot(x_tomczak2014_hi_z_Q,Q_model_tomczak_lower_hi_z, color='maroon', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax2.fill_between(x_tomczak2014_hi_z_Q,Q_model_tomczak_hi_z,Q_model_tomczak_upper_hi_z,facecolor='maroon',interpolate=True,alpha=0.1)
-    ax2.fill_between(x_tomczak2014_hi_z_Q,Q_model_tomczak_hi_z,Q_model_tomczak_lower_hi_z,facecolor='maroon',interpolate=True,alpha=0.1)
+    ax2.plot(x_tomczak2014_lo_z_Q,Q_model_tomczak_lo_z, color='lime', linestyle='-',label='tomczak+2014: 0.2 < z < 0.5', linewidth=1.0)
+    ax2.plot(x_tomczak2014_lo_z_Q,Q_model_tomczak_upper_lo_z, color='lime', linestyle='--',linewidth=1.0,alpha=0.3)
+    ax2.plot(x_tomczak2014_lo_z_Q,Q_model_tomczak_lower_lo_z, color='lime', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax2.fill_between(x_tomczak2014_lo_z_Q,Q_model_tomczak_lo_z,Q_model_tomczak_upper_lo_z,facecolor='lime',interpolate=True,alpha=0.1)
+    ax2.fill_between(x_tomczak2014_lo_z_Q,Q_model_tomczak_lo_z,Q_model_tomczak_lower_lo_z,facecolor='lime',interpolate=True,alpha=0.1)
+    ax2.plot(x_tomczak2014_hi_z_Q,Q_model_tomczak_hi_z, color='darkgreen', linestyle='-',label='tomczak+2014: 0.5 < z < 0.75', linewidth=1.0)
+    ax2.plot(x_tomczak2014_hi_z_Q,Q_model_tomczak_upper_hi_z, color='darkgreen', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax2.plot(x_tomczak2014_hi_z_Q,Q_model_tomczak_lower_hi_z, color='darkgreen', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax2.fill_between(x_tomczak2014_hi_z_Q,Q_model_tomczak_hi_z,Q_model_tomczak_upper_hi_z,facecolor='darkgreen',interpolate=True,alpha=0.1)
+    ax2.fill_between(x_tomczak2014_hi_z_Q,Q_model_tomczak_hi_z,Q_model_tomczak_lower_hi_z,facecolor='darkgreen',interpolate=True,alpha=0.1)
     # vdb+2018
     ax2.plot(x_vdb2018,Q_model_vdb2018, color='magenta', linestyle='-',label='vdB+2018: 0.5 < z < 0.7', linewidth=1.0)
     ax2.plot(x_vdb2018,Q_model_upper_err_vdb2018, color='magenta', linestyle='--',linewidth=1.0,alpha=0.3)
@@ -611,11 +702,11 @@ if plot_flag_2 == 1:
     ax2.fill_between(x_vdb2018,Q_model_vdb2018,Q_model_upper_err_vdb2018,facecolor='magenta',interpolate=True,alpha=0.1)
     ax2.fill_between(x_vdb2018,Q_model_vdb2018,Q_model_lower_err_vdb2018,facecolor='magenta',interpolate=True,alpha=0.1)
     # baldry+2012
-    ax2.plot(x_baldry2012_Q,Q_model_baldry2012, color='cyan', linestyle='-',label='baldry+2012: z < 0.06', linewidth=1.0)
-    ax2.plot(x_baldry2012_Q,Q_model_upper_err_baldry2012, color='cyan', linestyle='--',linewidth=1.0,alpha=0.3)
-    ax2.plot(x_baldry2012_Q,Q_model_lower_err_baldry2012, color='cyan', linestyle='--', linewidth=1.0,alpha=0.3)
-    ax2.fill_between(x_baldry2012_Q,Q_model_baldry2012,Q_model_upper_err_baldry2012,facecolor='cyan',interpolate=True,alpha=0.1)
-    ax2.fill_between(x_baldry2012_Q,Q_model_baldry2012,Q_model_lower_err_baldry2012,facecolor='cyan',interpolate=True,alpha=0.1)
+    ax2.plot(x_baldry2012_Q,Q_model_baldry2012, color='navy', linestyle='-',label='baldry+2012: z < 0.06', linewidth=1.0)
+    ax2.plot(x_baldry2012_Q,Q_model_upper_err_baldry2012, color='navy', linestyle='--',linewidth=1.0,alpha=0.3)
+    ax2.plot(x_baldry2012_Q,Q_model_lower_err_baldry2012, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
+    ax2.fill_between(x_baldry2012_Q,Q_model_baldry2012,Q_model_upper_err_baldry2012,facecolor='navy',interpolate=True,alpha=0.1)
+    ax2.fill_between(x_baldry2012_Q,Q_model_baldry2012,Q_model_lower_err_baldry2012,facecolor='navy',interpolate=True,alpha=0.1)
     #
     ax2.set_xscale('linear')
     ax2.set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -645,18 +736,18 @@ if plot_flag_3 == 1:
     fig.suptitle('Field: Total',fontsize=30)
     # Panel 1: Baldry+2012
     # my fits
-    axs[0,0].plot(x_plot,total_model_field_mcmc_plot_double,color='black',linestyle='-',label='this work', linewidth=1.0)
-    axs[0,0].plot(x_plot,total_model_field_upper, color='grey', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,0].plot(x_plot,total_model_field_lower, color='grey', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,0].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
-    axs[0,0].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
+    axs[0,0].plot(x_plot,total_model_field_mcmc_plot_double,color='black',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
+    axs[0,0].plot(x_plot,total_model_field_upper, color='black', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[0,0].plot(x_plot,total_model_field_lower, color='black', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[0,0].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_upper,facecolor='black',interpolate=True,alpha=0.1)
+    axs[0,0].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_lower,facecolor='black',interpolate=True,alpha=0.1)
     # baldry+2012 data pts + schechter fits
-    axs[0,0].errorbar(x_baldry2012_data,total_smf_baldry2012,yerr=total_err_baldry2012,marker='s',color='cyan',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    axs[0,0].plot(x_baldry2012,T_model_baldry2012, color='cyan', linestyle='-',label='baldry+2012: z < 0.06\n(GAMA)', linewidth=1.0)
-    axs[0,0].plot(x_baldry2012,T_model_upper_err_baldry2012, color='cyan', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,0].plot(x_baldry2012,T_model_lower_err_baldry2012, color='cyan', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[0,0].fill_between(x_baldry2012,T_model_baldry2012,T_model_upper_err_baldry2012,facecolor='cyan',interpolate=True,alpha=0.1)
-    axs[0,0].fill_between(x_baldry2012,T_model_baldry2012,T_model_lower_err_baldry2012,facecolor='cyan',interpolate=True,alpha=0.1)
+    axs[0,0].errorbar(x_baldry2012_data,total_smf_baldry2012,yerr=total_err_baldry2012,marker='s',color='navy',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[0,0].plot(x_baldry2012,T_model_baldry2012, color='navy', linestyle='-',label='baldry+2012: z < 0.06\n(GAMA)', linewidth=1.0)
+    axs[0,0].plot(x_baldry2012,T_model_upper_err_baldry2012, color='navy', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[0,0].plot(x_baldry2012,T_model_lower_err_baldry2012, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[0,0].fill_between(x_baldry2012,T_model_baldry2012,T_model_upper_err_baldry2012,facecolor='navy',interpolate=True,alpha=0.1)
+    axs[0,0].fill_between(x_baldry2012,T_model_baldry2012,T_model_lower_err_baldry2012,facecolor='navy',interpolate=True,alpha=0.1)
     # fig parameters
     axs[0,0].set_xscale('linear')
     axs[0,0].set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -665,29 +756,29 @@ if plot_flag_3 == 1:
     axs[0,0].set_ylim(1e-6,0.2)
     axs[0,0].minorticks_on()
     axs[0,0].tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright=False, labelleft=True,labelbottom=False,labelsize=18)
-    axs[0,0].yaxis.set_label_position("right")
+    axs[0,0].yaxis.set_label_position("left")
     axs[0,0].set_ylabel('${\phi}$ [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
     # axs[0,0].set_title('Quiescent')
-    axs[0,0].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'medium')
+    axs[0,0].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'large')
     #
     # Panel 2: Muzzin+2013
     # my fits
-    axs[0,1].plot(x_plot,total_model_field_mcmc_plot_double,color='black',linestyle='-',label='this work', linewidth=1.0)
-    axs[0,1].plot(x_plot,total_model_field_upper, color='grey', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,1].plot(x_plot,total_model_field_lower, color='grey', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,1].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
-    axs[0,1].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
+    axs[0,1].plot(x_plot,total_model_field_mcmc_plot_double,color='black',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
+    axs[0,1].plot(x_plot,total_model_field_upper, color='black', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[0,1].plot(x_plot,total_model_field_lower, color='black', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[0,1].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_upper,facecolor='black',interpolate=True,alpha=0.1)
+    axs[0,1].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_lower,facecolor='black',interpolate=True,alpha=0.1)
     # muzzin+2013 data + fits
-    axs[0,1].plot(x_muzzin2013_lo_z,T_model_muzzin_lo_z, color='cornflowerblue', linestyle='-',label='muzzin+2013: 0.2 < z < 0.5', linewidth=1.0)
-    axs[0,1].plot(x_muzzin2013_lo_z,T_model_muzzin_upper_lo_z, color='cornflowerblue', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,1].plot(x_muzzin2013_lo_z,T_model_muzzin_lower_lo_z, color='cornflowerblue', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[0,1].fill_between(x_muzzin2013_lo_z,T_model_muzzin_lo_z,T_model_muzzin_upper_lo_z,facecolor='cornflowerblue',interpolate=True,alpha=0.1)
-    axs[0,1].fill_between(x_muzzin2013_lo_z,T_model_muzzin_lo_z,T_model_muzzin_lower_lo_z,facecolor='cornflowerblue',interpolate=True,alpha=0.1)
-    axs[0,1].plot(x_muzzin2013_hi_z,T_model_muzzin_hi_z, color='navy', linestyle='-',label='muzzin+2013: 0.5 < z < 1.0\n(COSMOS/UltraVISTA)', linewidth=1.0)
-    axs[0,1].plot(x_muzzin2013_hi_z,T_model_muzzin_upper_hi_z, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[0,1].plot(x_muzzin2013_hi_z,T_model_muzzin_lower_hi_z, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[0,1].fill_between(x_muzzin2013_hi_z,T_model_muzzin_hi_z,T_model_muzzin_upper_hi_z,facecolor='navy',interpolate=True,alpha=0.1)
-    axs[0,1].fill_between(x_muzzin2013_hi_z,T_model_muzzin_hi_z,T_model_muzzin_lower_hi_z,facecolor='navy',interpolate=True,alpha=0.1)
+    axs[0,1].plot(x_muzzin2013_lo_z,T_model_muzzin_lo_z, color='goldenrod', linestyle='-',label='muzzin+2013: 0.2 < z < 0.5', linewidth=1.0)
+    axs[0,1].plot(x_muzzin2013_lo_z,T_model_muzzin_upper_lo_z, color='goldenrod', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[0,1].plot(x_muzzin2013_lo_z,T_model_muzzin_lower_lo_z, color='goldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[0,1].fill_between(x_muzzin2013_lo_z,T_model_muzzin_lo_z,T_model_muzzin_upper_lo_z,facecolor='goldenrod',interpolate=True,alpha=0.1)
+    axs[0,1].fill_between(x_muzzin2013_lo_z,T_model_muzzin_lo_z,T_model_muzzin_lower_lo_z,facecolor='goldenrod',interpolate=True,alpha=0.1)
+    axs[0,1].plot(x_muzzin2013_hi_z,T_model_muzzin_hi_z, color='darkgoldenrod', linestyle='-',label='muzzin+2013: 0.5 < z < 1.0\n(COSMOS/UltraVISTA)', linewidth=1.0)
+    axs[0,1].plot(x_muzzin2013_hi_z,T_model_muzzin_upper_hi_z, color='darkgoldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[0,1].plot(x_muzzin2013_hi_z,T_model_muzzin_lower_hi_z, color='darkgoldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[0,1].fill_between(x_muzzin2013_hi_z,T_model_muzzin_hi_z,T_model_muzzin_upper_hi_z,facecolor='darkgoldenrod',interpolate=True,alpha=0.1)
+    axs[0,1].fill_between(x_muzzin2013_hi_z,T_model_muzzin_hi_z,T_model_muzzin_lower_hi_z,facecolor='darkgoldenrod',interpolate=True,alpha=0.1)
     # fig parameters
     axs[0,1].set_xscale('linear')
     axs[0,1].set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -699,28 +790,28 @@ if plot_flag_3 == 1:
     axs[0,1].yaxis.set_label_position("right")
     axs[0,1].set_ylabel('${\phi}$ [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
     # axs[0,1].set_title('Quiescent')
-    axs[0,1].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'medium')
+    axs[0,1].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'large')
     #
     # Panel 3: Tomczak+2014
     # my fits
-    axs[1,0].plot(x_plot,total_model_field_mcmc_plot_double,color='black',linestyle='-',label='this work', linewidth=1.0)
-    axs[1,0].plot(x_plot,total_model_field_upper, color='grey', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,0].plot(x_plot,total_model_field_lower, color='grey', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,0].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
-    axs[1,0].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
+    axs[1,0].plot(x_plot,total_model_field_mcmc_plot_double,color='black',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
+    axs[1,0].plot(x_plot,total_model_field_upper, color='black', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[1,0].plot(x_plot,total_model_field_lower, color='black', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[1,0].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_upper,facecolor='black',interpolate=True,alpha=0.1)
+    axs[1,0].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_lower,facecolor='black',interpolate=True,alpha=0.1)
     # tomczak+2014 data + fits
-    axs[1,0].errorbar(x_tom2014_data,total_smf_tom2014_lo_z,yerr=total_err_tom2014_lo_z,marker='<',color='orangered',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    axs[1,0].errorbar(x_tom2014_data,total_smf_tom2014_hi_z,yerr=total_err_tom2014_hi_z,marker='>',color='maroon',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    axs[1,0].plot(x_tomczak2014_lo_z,T_model_tomczak_lo_z, color='orangered', linestyle='-',label='tomczak+2014: 0.2 < z < 0.5', linewidth=1.0)
-    axs[1,0].plot(x_tomczak2014_lo_z,T_model_tomczak_upper_lo_z, color='orangered', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,0].plot(x_tomczak2014_lo_z,T_model_tomczak_lower_lo_z, color='orangered', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[1,0].fill_between(x_tomczak2014_lo_z,T_model_tomczak_lo_z,T_model_tomczak_upper_lo_z,facecolor='orangered',interpolate=True,alpha=0.1)
-    axs[1,0].fill_between(x_tomczak2014_lo_z,T_model_tomczak_lo_z,T_model_tomczak_lower_lo_z,facecolor='orangered',interpolate=True,alpha=0.1)
-    axs[1,0].plot(x_tomczak2014_hi_z,T_model_tomczak_hi_z, color='maroon', linestyle='-',label='tomczak+2014: 0.5 < z < 0.75\n(ZFOURGE/CANDELS)', linewidth=1.0)
-    axs[1,0].plot(x_tomczak2014_hi_z,T_model_tomczak_upper_hi_z, color='maroon', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[1,0].plot(x_tomczak2014_hi_z,T_model_tomczak_lower_hi_z, color='maroon', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[1,0].fill_between(x_tomczak2014_hi_z,T_model_tomczak_hi_z,T_model_tomczak_upper_hi_z,facecolor='maroon',interpolate=True,alpha=0.1)
-    axs[1,0].fill_between(x_tomczak2014_hi_z,T_model_tomczak_hi_z,T_model_tomczak_lower_hi_z,facecolor='maroon',interpolate=True,alpha=0.1)
+    axs[1,0].errorbar(x_tom2014_data,total_smf_tom2014_lo_z,yerr=total_err_tom2014_lo_z,marker='<',color='lime',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[1,0].errorbar(x_tom2014_data,total_smf_tom2014_hi_z,yerr=total_err_tom2014_hi_z,marker='>',color='darkgreen',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[1,0].plot(x_tomczak2014_lo_z,T_model_tomczak_lo_z, color='lime', linestyle='-',label='tomczak+2014: 0.2 < z < 0.5', linewidth=1.0)
+    axs[1,0].plot(x_tomczak2014_lo_z,T_model_tomczak_upper_lo_z, color='lime', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[1,0].plot(x_tomczak2014_lo_z,T_model_tomczak_lower_lo_z, color='lime', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[1,0].fill_between(x_tomczak2014_lo_z,T_model_tomczak_lo_z,T_model_tomczak_upper_lo_z,facecolor='lime',interpolate=True,alpha=0.1)
+    axs[1,0].fill_between(x_tomczak2014_lo_z,T_model_tomczak_lo_z,T_model_tomczak_lower_lo_z,facecolor='lime',interpolate=True,alpha=0.1)
+    axs[1,0].plot(x_tomczak2014_hi_z,T_model_tomczak_hi_z, color='darkgreen', linestyle='-',label='tomczak+2014: 0.5 < z < 0.75\n(ZFOURGE/CANDELS)', linewidth=1.0)
+    axs[1,0].plot(x_tomczak2014_hi_z,T_model_tomczak_upper_hi_z, color='darkgreen', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[1,0].plot(x_tomczak2014_hi_z,T_model_tomczak_lower_hi_z, color='darkgreen', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[1,0].fill_between(x_tomczak2014_hi_z,T_model_tomczak_hi_z,T_model_tomczak_upper_hi_z,facecolor='darkgreen',interpolate=True,alpha=0.1)
+    axs[1,0].fill_between(x_tomczak2014_hi_z,T_model_tomczak_hi_z,T_model_tomczak_lower_hi_z,facecolor='darkgreen',interpolate=True,alpha=0.1)
     # fig parameters
     axs[1,0].set_xscale('linear')
     axs[1,0].set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -729,25 +820,25 @@ if plot_flag_3 == 1:
     axs[1,0].set_ylim(1e-6,0.2)
     axs[1,0].minorticks_on()
     axs[1,0].tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright=False, labelleft=True,labelbottom=True,labelsize=18)
-    axs[1,0].yaxis.set_label_position("right")
+    axs[1,0].yaxis.set_label_position("left")
     axs[1,0].set_ylabel('${\phi}$ [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
     # axs[1,0].set_title('Quiescent')
-    axs[1,0].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'medium')
+    axs[1,0].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'large')
     #
-    # Panel 4: vanderBurg+2018
+    # Panel 4: mcleod+2020
     # my fits
-    axs[1,1].plot(x_plot,total_model_field_mcmc_plot_double,color='black',linestyle='-',label='this work', linewidth=1.0)
-    axs[1,1].plot(x_plot,total_model_field_upper, color='grey', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,1].plot(x_plot,total_model_field_lower, color='grey', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,1].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
-    axs[1,1].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
-    # baldry+2012 data pts + schechter fits
-    axs[1,1].errorbar(x_vdb2018_data,total_smf_vdb2018,yerr=total_err_vdb2018,marker='s',color='magenta',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    axs[1,1].plot(x_vdb2018,T_model_vdb2018, color='magenta', linestyle='-',label='vdB+2018: 0.5 < z < 0.7\n(COSMOS/UltraVISTA)', linewidth=1.0)
-    axs[1,1].plot(x_vdb2018,T_model_upper_err_vdb2018, color='magenta', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,1].plot(x_vdb2018,T_model_lower_err_vdb2018, color='magenta', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[1,1].fill_between(x_vdb2018,T_model_vdb2018,T_model_upper_err_vdb2018,facecolor='magenta',interpolate=True,alpha=0.1)
-    axs[1,1].fill_between(x_vdb2018,T_model_vdb2018,T_model_lower_err_vdb2018,facecolor='magenta',interpolate=True,alpha=0.1)
+    axs[1,1].plot(x_plot,total_model_field_mcmc_plot_double,color='black',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
+    axs[1,1].plot(x_plot,total_model_field_upper, color='black', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[1,1].plot(x_plot,total_model_field_lower, color='black', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[1,1].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_upper,facecolor='black',interpolate=True,alpha=0.1)
+    axs[1,1].fill_between(x_plot,total_model_field_mcmc_plot_double,total_model_field_lower,facecolor='black',interpolate=True,alpha=0.1)
+    # mcleod+2020 data pts + schechter fits
+    axs[1,1].errorbar(x_mcleod2020_data,total_smf_mcleod2020,yerr=total_err_mcleod2020,marker='s',color='magenta',label='mcleod+2020: 0.25 < z < 0.75\n(UKIDSS UDS/COSMOS/CFHTLS-D1)',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    # axs[1,1].plot(x_mcleod2020,T_model_mcleod2020, color='magenta', linestyle='-',label='mcleod+2020: 0.25 < z < 0.75\n(UKIDSS UDS/COSMOS/CFHTLS-D1)', linewidth=1.0)
+    # axs[1,1].plot(x_mcleod2020,T_model_upper_err_mcleod2020, color='magenta', linestyle='--',linewidth=1.0,alpha=0.3)
+    # axs[1,1].plot(x_mcleod2020,T_model_lower_err_mcleod2020, color='magenta', linestyle='--', linewidth=1.0,alpha=0.3)
+    # axs[1,1].fill_between(x_mcleod2020,T_model_mcleod2020,T_model_upper_err_mcleod2020,facecolor='magenta',interpolate=True,alpha=0.1)
+    # axs[1,1].fill_between(x_mcleod2020,T_model_mcleod2020,T_model_lower_err_mcleod2020,facecolor='magenta',interpolate=True,alpha=0.1)
     # fig parameters
     axs[1,1].set_xscale('linear')
     axs[1,1].set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -759,7 +850,7 @@ if plot_flag_3 == 1:
     axs[1,1].yaxis.set_label_position("right")
     axs[1,1].set_ylabel('${\phi}$ [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
     # axs[1,1].set_title('Quiescent')
-    axs[1,1].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'medium')
+    axs[1,1].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'large')
     #
     #
     #
@@ -771,18 +862,19 @@ if plot_flag_3 == 1:
     fig.suptitle('Field: Star-forming',fontsize=30)
     # Panel 1: Baldry+2012
     # my fits
-    axs[0,0].plot(x_plot,SF_model_field_mcmc_plot,color='b',linestyle='-',label='this work', linewidth=1.0)
+    axs[0,0].plot(x_plot,SF_model_field_mcmc_plot,color='b',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
     axs[0,0].plot(x_plot,SF_model_field_upper, color='b', linestyle='--',linewidth=1.0,alpha=0.3)
     axs[0,0].plot(x_plot,SF_model_field_lower, color='b', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,0].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
-    axs[0,0].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
+    axs[0,0].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_upper,facecolor='b',interpolate=True,alpha=0.1)
+    axs[0,0].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_lower,facecolor='b',interpolate=True,alpha=0.1)
     # baldry+2012 data pts + schechter fits
-    # axs[0,0].errorbar(x_baldry2012_data,total_smf_baldry2012,yerr=total_err_baldry2012,marker='s',color='cyan',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    axs[0,0].plot(x_baldry2012,SF_model_baldry2012, color='cyan', linestyle='-',label='baldry+2012: z < 0.06\n(GAMA)', linewidth=1.0)
-    axs[0,0].plot(x_baldry2012,SF_model_upper_err_baldry2012, color='cyan', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,0].plot(x_baldry2012,SF_model_lower_err_baldry2012, color='cyan', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[0,0].fill_between(x_baldry2012,SF_model_baldry2012,SF_model_upper_err_baldry2012,facecolor='cyan',interpolate=True,alpha=0.1)
-    axs[0,0].fill_between(x_baldry2012,SF_model_baldry2012,SF_model_lower_err_baldry2012,facecolor='cyan',interpolate=True,alpha=0.1)
+    # axs[0,0].errorbar(x_baldry2012_data,total_smf_baldry2012,yerr=total_err_baldry2012,marker='s',color='navy',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[0,0].errorbar(x_baldry2012_data_SF,SF_smf_baldry2012,yerr=SF_err_baldry2012,marker='s',color='navy',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[0,0].plot(x_baldry2012,SF_model_baldry2012, color='navy', linestyle='-',label='baldry+2012: z < 0.06\n(GAMA)', linewidth=1.0)
+    axs[0,0].plot(x_baldry2012,SF_model_upper_err_baldry2012, color='navy', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[0,0].plot(x_baldry2012,SF_model_lower_err_baldry2012, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[0,0].fill_between(x_baldry2012,SF_model_baldry2012,SF_model_upper_err_baldry2012,facecolor='navy',interpolate=True,alpha=0.1)
+    axs[0,0].fill_between(x_baldry2012,SF_model_baldry2012,SF_model_lower_err_baldry2012,facecolor='navy',interpolate=True,alpha=0.1)
     # fig parameters
     axs[0,0].set_xscale('linear')
     axs[0,0].set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -791,29 +883,29 @@ if plot_flag_3 == 1:
     axs[0,0].set_ylim(1e-6,0.2)
     axs[0,0].minorticks_on()
     axs[0,0].tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright=False, labelleft=True,labelbottom=False,labelsize=18)
-    axs[0,0].yaxis.set_label_position("right")
+    axs[0,0].yaxis.set_label_position("left")
     axs[0,0].set_ylabel('${\phi}$ [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
     # axs[0,0].set_title('Quiescent')
-    axs[0,0].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'medium')
+    axs[0,0].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'large')
     #
     # Panel 2: Muzzin+2013
     # my fits
-    axs[0,1].plot(x_plot,SF_model_field_mcmc_plot,color='b',linestyle='-',label='this work', linewidth=1.0)
+    axs[0,1].plot(x_plot,SF_model_field_mcmc_plot,color='b',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
     axs[0,1].plot(x_plot,SF_model_field_upper, color='b', linestyle='--',linewidth=1.0,alpha=0.3)
     axs[0,1].plot(x_plot,SF_model_field_lower, color='b', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,1].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
-    axs[0,1].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
+    axs[0,1].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_upper,facecolor='b',interpolate=True,alpha=0.1)
+    axs[0,1].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_lower,facecolor='b',interpolate=True,alpha=0.1)
     # muzzin+2013 data + fits
-    axs[0,1].plot(x_muzzin2013_lo_z,SF_model_muzzin_lo_z, color='cornflowerblue', linestyle='-',label='muzzin+2013: 0.2 < z < 0.5', linewidth=1.0)
-    axs[0,1].plot(x_muzzin2013_lo_z,SF_model_muzzin_upper_lo_z, color='cornflowerblue', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,1].plot(x_muzzin2013_lo_z,SF_model_muzzin_lower_lo_z, color='cornflowerblue', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[0,1].fill_between(x_muzzin2013_lo_z,SF_model_muzzin_lo_z,SF_model_muzzin_upper_lo_z,facecolor='cornflowerblue',interpolate=True,alpha=0.1)
-    axs[0,1].fill_between(x_muzzin2013_lo_z,SF_model_muzzin_lo_z,SF_model_muzzin_lower_lo_z,facecolor='cornflowerblue',interpolate=True,alpha=0.1)
-    axs[0,1].plot(x_muzzin2013_hi_z,SF_model_muzzin_hi_z, color='navy', linestyle='-',label='muzzin+2013: 0.5 < z < 1.0\n(COSMOS/UltraVISTA)', linewidth=1.0)
-    axs[0,1].plot(x_muzzin2013_hi_z,SF_model_muzzin_upper_hi_z, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[0,1].plot(x_muzzin2013_hi_z,SF_model_muzzin_lower_hi_z, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[0,1].fill_between(x_muzzin2013_hi_z,SF_model_muzzin_hi_z,SF_model_muzzin_upper_hi_z,facecolor='navy',interpolate=True,alpha=0.1)
-    axs[0,1].fill_between(x_muzzin2013_hi_z,SF_model_muzzin_hi_z,SF_model_muzzin_lower_hi_z,facecolor='navy',interpolate=True,alpha=0.1)
+    axs[0,1].plot(x_muzzin2013_lo_z,SF_model_muzzin_lo_z, color='goldenrod', linestyle='-',label='muzzin+2013: 0.2 < z < 0.5', linewidth=1.0)
+    axs[0,1].plot(x_muzzin2013_lo_z,SF_model_muzzin_upper_lo_z, color='goldenrod', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[0,1].plot(x_muzzin2013_lo_z,SF_model_muzzin_lower_lo_z, color='goldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[0,1].fill_between(x_muzzin2013_lo_z,SF_model_muzzin_lo_z,SF_model_muzzin_upper_lo_z,facecolor='goldenrod',interpolate=True,alpha=0.1)
+    axs[0,1].fill_between(x_muzzin2013_lo_z,SF_model_muzzin_lo_z,SF_model_muzzin_lower_lo_z,facecolor='goldenrod',interpolate=True,alpha=0.1)
+    axs[0,1].plot(x_muzzin2013_hi_z,SF_model_muzzin_hi_z, color='darkgoldenrod', linestyle='-',label='muzzin+2013: 0.5 < z < 1.0\n(COSMOS/UltraVISTA)', linewidth=1.0)
+    axs[0,1].plot(x_muzzin2013_hi_z,SF_model_muzzin_upper_hi_z, color='darkgoldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[0,1].plot(x_muzzin2013_hi_z,SF_model_muzzin_lower_hi_z, color='darkgoldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[0,1].fill_between(x_muzzin2013_hi_z,SF_model_muzzin_hi_z,SF_model_muzzin_upper_hi_z,facecolor='darkgoldenrod',interpolate=True,alpha=0.1)
+    axs[0,1].fill_between(x_muzzin2013_hi_z,SF_model_muzzin_hi_z,SF_model_muzzin_lower_hi_z,facecolor='darkgoldenrod',interpolate=True,alpha=0.1)
     # fig parameters
     axs[0,1].set_xscale('linear')
     axs[0,1].set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -825,28 +917,28 @@ if plot_flag_3 == 1:
     axs[0,1].yaxis.set_label_position("right")
     axs[0,1].set_ylabel('${\phi}$ [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
     # axs[0,1].set_title('Quiescent')
-    axs[0,1].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'medium')
+    axs[0,1].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'large')
     #
     # Panel 3: Tomczak+2014
     # my fits
-    axs[1,0].plot(x_plot,SF_model_field_mcmc_plot,color='b',linestyle='-',label='this work', linewidth=1.0)
+    axs[1,0].plot(x_plot,SF_model_field_mcmc_plot,color='b',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
     axs[1,0].plot(x_plot,SF_model_field_upper, color='b', linestyle='--',linewidth=1.0,alpha=0.3)
     axs[1,0].plot(x_plot,SF_model_field_lower, color='b', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,0].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
-    axs[1,0].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
+    axs[1,0].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_upper,facecolor='b',interpolate=True,alpha=0.1)
+    axs[1,0].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_lower,facecolor='b',interpolate=True,alpha=0.1)
     # tomczak+2014 data + fits
-    axs[1,0].errorbar(x_tom2014_data,SF_smf_tom2014_lo_z,yerr=SF_err_tom2014_lo_z,marker='<',color='orangered',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    axs[1,0].errorbar(x_tom2014_data,SF_smf_tom2014_hi_z,yerr=SF_err_tom2014_hi_z,marker='>',color='maroon',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    axs[1,0].plot(x_tomczak2014_lo_z,SF_model_tomczak_lo_z, color='orangered', linestyle='-',label='tomczak+2014: 0.2 < z < 0.5', linewidth=1.0)
-    axs[1,0].plot(x_tomczak2014_lo_z,SF_model_tomczak_upper_lo_z, color='orangered', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,0].plot(x_tomczak2014_lo_z,SF_model_tomczak_lower_lo_z, color='orangered', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[1,0].fill_between(x_tomczak2014_lo_z,SF_model_tomczak_lo_z,SF_model_tomczak_upper_lo_z,facecolor='orangered',interpolate=True,alpha=0.1)
-    axs[1,0].fill_between(x_tomczak2014_lo_z,SF_model_tomczak_lo_z,SF_model_tomczak_lower_lo_z,facecolor='orangered',interpolate=True,alpha=0.1)
-    axs[1,0].plot(x_tomczak2014_hi_z,SF_model_tomczak_hi_z, color='maroon', linestyle='-',label='tomczak+2014: 0.5 < z < 0.75\n(ZFOURGE/CANDELS)', linewidth=1.0)
-    axs[1,0].plot(x_tomczak2014_hi_z,SF_model_tomczak_upper_hi_z, color='maroon', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[1,0].plot(x_tomczak2014_hi_z,SF_model_tomczak_lower_hi_z, color='maroon', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[1,0].fill_between(x_tomczak2014_hi_z,SF_model_tomczak_hi_z,SF_model_tomczak_upper_hi_z,facecolor='maroon',interpolate=True,alpha=0.1)
-    axs[1,0].fill_between(x_tomczak2014_hi_z,SF_model_tomczak_hi_z,SF_model_tomczak_lower_hi_z,facecolor='maroon',interpolate=True,alpha=0.1)
+    axs[1,0].errorbar(x_tom2014_data,SF_smf_tom2014_lo_z,yerr=SF_err_tom2014_lo_z,marker='<',color='lime',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[1,0].errorbar(x_tom2014_data,SF_smf_tom2014_hi_z,yerr=SF_err_tom2014_hi_z,marker='>',color='darkgreen',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[1,0].plot(x_tomczak2014_lo_z,SF_model_tomczak_lo_z, color='lime', linestyle='-',label='tomczak+2014: 0.2 < z < 0.5', linewidth=1.0)
+    axs[1,0].plot(x_tomczak2014_lo_z,SF_model_tomczak_upper_lo_z, color='lime', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[1,0].plot(x_tomczak2014_lo_z,SF_model_tomczak_lower_lo_z, color='lime', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[1,0].fill_between(x_tomczak2014_lo_z,SF_model_tomczak_lo_z,SF_model_tomczak_upper_lo_z,facecolor='lime',interpolate=True,alpha=0.1)
+    axs[1,0].fill_between(x_tomczak2014_lo_z,SF_model_tomczak_lo_z,SF_model_tomczak_lower_lo_z,facecolor='lime',interpolate=True,alpha=0.1)
+    axs[1,0].plot(x_tomczak2014_hi_z,SF_model_tomczak_hi_z, color='darkgreen', linestyle='-',label='tomczak+2014: 0.5 < z < 0.75\n(ZFOURGE/CANDELS)', linewidth=1.0)
+    axs[1,0].plot(x_tomczak2014_hi_z,SF_model_tomczak_upper_hi_z, color='darkgreen', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[1,0].plot(x_tomczak2014_hi_z,SF_model_tomczak_lower_hi_z, color='darkgreen', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[1,0].fill_between(x_tomczak2014_hi_z,SF_model_tomczak_hi_z,SF_model_tomczak_upper_hi_z,facecolor='darkgreen',interpolate=True,alpha=0.1)
+    axs[1,0].fill_between(x_tomczak2014_hi_z,SF_model_tomczak_hi_z,SF_model_tomczak_lower_hi_z,facecolor='darkgreen',interpolate=True,alpha=0.1)
     # fig parameters
     axs[1,0].set_xscale('linear')
     axs[1,0].set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -855,25 +947,25 @@ if plot_flag_3 == 1:
     axs[1,0].set_ylim(1e-6,0.2)
     axs[1,0].minorticks_on()
     axs[1,0].tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright=False, labelleft=True,labelbottom=True,labelsize=18)
-    axs[1,0].yaxis.set_label_position("right")
+    axs[1,0].yaxis.set_label_position("left")
     axs[1,0].set_ylabel('${\phi}$ [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
     # axs[1,0].set_title('Quiescent')
-    axs[1,0].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'medium')
+    axs[1,0].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'large')
     #
-    # Panel 4: vanderBurg+2018
+    # Panel 4: mcleod+2020
     # my fits
-    axs[1,1].plot(x_plot,SF_model_field_mcmc_plot,color='b',linestyle='-',label='this work', linewidth=1.0)
+    axs[1,1].plot(x_plot,SF_model_field_mcmc_plot,color='b',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
     axs[1,1].plot(x_plot,SF_model_field_upper, color='b', linestyle='--',linewidth=1.0,alpha=0.3)
     axs[1,1].plot(x_plot,SF_model_field_lower, color='b', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,1].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
-    axs[1,1].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
-    # vdb+2018 data pts + schechter fits
-    axs[1,1].errorbar(x_vdb2018_data,SF_smf_vdb2018,yerr=total_err_vdb2018,marker='s',color='magenta',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    axs[1,1].plot(x_vdb2018,SF_model_vdb2018, color='magenta', linestyle='-',label='vdB+2018: 0.5 < z < 0.7\n(COSMOS/UltraVISTA)', linewidth=1.0)
-    axs[1,1].plot(x_vdb2018,SF_model_upper_err_vdb2018, color='magenta', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,1].plot(x_vdb2018,SF_model_lower_err_vdb2018, color='magenta', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[1,1].fill_between(x_vdb2018,SF_model_vdb2018,SF_model_upper_err_vdb2018,facecolor='magenta',interpolate=True,alpha=0.1)
-    axs[1,1].fill_between(x_vdb2018,SF_model_vdb2018,SF_model_lower_err_vdb2018,facecolor='magenta',interpolate=True,alpha=0.1)
+    axs[1,1].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_upper,facecolor='b',interpolate=True,alpha=0.1)
+    axs[1,1].fill_between(x_plot,SF_model_field_mcmc_plot,SF_model_field_lower,facecolor='b',interpolate=True,alpha=0.1)
+    # mcleod+2020 data pts + schechter fits
+    axs[1,1].errorbar(x_mcleod2020_data,SF_smf_mcleod2020,yerr=total_err_mcleod2020,marker='s',color='magenta',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[1,1].plot(x_mcleod2020,SF_model_mcleod2020, color='magenta', linestyle='-',label='mcleod+2020: 0.25 < z < 0.75\n(UKIDSS UDS/COSMOS/CFHTLS-D1)', linewidth=1.0)
+    axs[1,1].plot(x_mcleod2020,SF_model_upper_err_mcleod2020, color='magenta', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[1,1].plot(x_mcleod2020,SF_model_lower_err_mcleod2020, color='magenta', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[1,1].fill_between(x_mcleod2020,SF_model_mcleod2020,SF_model_upper_err_mcleod2020,facecolor='magenta',interpolate=True,alpha=0.1)
+    axs[1,1].fill_between(x_mcleod2020,SF_model_mcleod2020,SF_model_lower_err_mcleod2020,facecolor='magenta',interpolate=True,alpha=0.1)
     # fig parameters
     axs[1,1].set_xscale('linear')
     axs[1,1].set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -885,7 +977,7 @@ if plot_flag_3 == 1:
     axs[1,1].yaxis.set_label_position("right")
     axs[1,1].set_ylabel('${\phi}$ [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
     # axs[1,1].set_title('Quiescent')
-    axs[1,1].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'medium')
+    axs[1,1].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'large')
     #
     #
     #
@@ -896,18 +988,19 @@ if plot_flag_3 == 1:
     fig.suptitle('Field: Quiescent',fontsize=30)
     # Panel 1: Baldry+2012
     # my fits
-    axs[0,0].plot(x_plot,Q_model_field_mcmc_plot_double,color='r',linestyle='-',label='this work', linewidth=1.0)
+    axs[0,0].plot(x_plot,Q_model_field_mcmc_plot_double,color='r',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
     axs[0,0].plot(x_plot,Q_model_field_upper, color='r', linestyle='--',linewidth=1.0,alpha=0.3)
     axs[0,0].plot(x_plot,Q_model_field_lower, color='r', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,0].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
-    axs[0,0].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
+    axs[0,0].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_upper,facecolor='r',interpolate=True,alpha=0.1)
+    axs[0,0].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_lower,facecolor='r',interpolate=True,alpha=0.1)
     # baldry+2012 data pts + schechter fits
-    # axs[0,0].errorbar(x_baldry2012_data,total_smf_baldry2012,yerr=total_err_baldry2012,marker='s',color='cyan',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    axs[0,0].plot(x_baldry2012_Q,Q_model_baldry2012, color='cyan', linestyle='-',label='baldry+2012: z < 0.06\n(GAMA)', linewidth=1.0)
-    axs[0,0].plot(x_baldry2012_Q,Q_model_upper_err_baldry2012, color='cyan', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,0].plot(x_baldry2012_Q,Q_model_lower_err_baldry2012, color='cyan', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[0,0].fill_between(x_baldry2012_Q,Q_model_baldry2012,Q_model_upper_err_baldry2012,facecolor='cyan',interpolate=True,alpha=0.1)
-    axs[0,0].fill_between(x_baldry2012_Q,Q_model_baldry2012,Q_model_lower_err_baldry2012,facecolor='cyan',interpolate=True,alpha=0.1)
+    # axs[0,0].errorbar(x_baldry2012_data,total_smf_baldry2012,yerr=total_err_baldry2012,marker='s',color='navy',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[0,0].errorbar(x_baldry2012_data_Q,Q_smf_baldry2012,yerr=Q_err_baldry2012,marker='s',color='navy',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[0,0].plot(x_baldry2012_Q,Q_model_baldry2012, color='navy', linestyle='-',label='baldry+2012: z < 0.06\n(GAMA)', linewidth=1.0)
+    axs[0,0].plot(x_baldry2012_Q,Q_model_upper_err_baldry2012, color='navy', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[0,0].plot(x_baldry2012_Q,Q_model_lower_err_baldry2012, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[0,0].fill_between(x_baldry2012_Q,Q_model_baldry2012,Q_model_upper_err_baldry2012,facecolor='navy',interpolate=True,alpha=0.1)
+    axs[0,0].fill_between(x_baldry2012_Q,Q_model_baldry2012,Q_model_lower_err_baldry2012,facecolor='navy',interpolate=True,alpha=0.1)
     # fig parameters
     axs[0,0].set_xscale('linear')
     axs[0,0].set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -916,29 +1009,29 @@ if plot_flag_3 == 1:
     axs[0,0].set_ylim(1e-6,0.2)
     axs[0,0].minorticks_on()
     axs[0,0].tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright=False, labelleft=True,labelbottom=False,labelsize=18)
-    axs[0,0].yaxis.set_label_position("right")
+    axs[0,0].yaxis.set_label_position("left")
     axs[0,0].set_ylabel('${\phi}$ [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
     # axs[0,0].set_title('Quiescent')
-    axs[0,0].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'medium')
+    axs[0,0].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'large')
     #
     # Panel 2: Muzzin+2013
     # my fits
-    axs[0,1].plot(x_plot,Q_model_field_mcmc_plot_double,color='r',linestyle='-',label='this work', linewidth=1.0)
+    axs[0,1].plot(x_plot,Q_model_field_mcmc_plot_double,color='r',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
     axs[0,1].plot(x_plot,Q_model_field_upper, color='r', linestyle='--',linewidth=1.0,alpha=0.3)
     axs[0,1].plot(x_plot,Q_model_field_lower, color='r', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,1].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
-    axs[0,1].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
+    axs[0,1].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_upper,facecolor='r',interpolate=True,alpha=0.1)
+    axs[0,1].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_lower,facecolor='r',interpolate=True,alpha=0.1)
     # muzzin+2013 data + fits
-    axs[0,1].plot(x_muzzin2013_lo_z,Q_model_muzzin_lo_z, color='cornflowerblue', linestyle='-',label='muzzin+2013: 0.2 < z < 0.5', linewidth=1.0)
-    axs[0,1].plot(x_muzzin2013_lo_z,Q_model_muzzin_upper_lo_z, color='cornflowerblue', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[0,1].plot(x_muzzin2013_lo_z,Q_model_muzzin_lower_lo_z, color='cornflowerblue', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[0,1].fill_between(x_muzzin2013_lo_z,Q_model_muzzin_lo_z,Q_model_muzzin_upper_lo_z,facecolor='cornflowerblue',interpolate=True,alpha=0.1)
-    axs[0,1].fill_between(x_muzzin2013_lo_z,Q_model_muzzin_lo_z,Q_model_muzzin_lower_lo_z,facecolor='cornflowerblue',interpolate=True,alpha=0.1)
-    axs[0,1].plot(x_muzzin2013_hi_z,Q_model_muzzin_hi_z, color='navy', linestyle='-',label='muzzin+2013: 0.5 < z < 1.0\n(COSMOS/UltraVISTA)', linewidth=1.0)
-    axs[0,1].plot(x_muzzin2013_hi_z,Q_model_muzzin_upper_hi_z, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[0,1].plot(x_muzzin2013_hi_z,Q_model_muzzin_lower_hi_z, color='navy', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[0,1].fill_between(x_muzzin2013_hi_z,Q_model_muzzin_hi_z,Q_model_muzzin_upper_hi_z,facecolor='navy',interpolate=True,alpha=0.1)
-    axs[0,1].fill_between(x_muzzin2013_hi_z,Q_model_muzzin_hi_z,Q_model_muzzin_lower_hi_z,facecolor='navy',interpolate=True,alpha=0.1)
+    axs[0,1].plot(x_muzzin2013_lo_z,Q_model_muzzin_lo_z, color='goldenrod', linestyle='-',label='muzzin+2013: 0.2 < z < 0.5', linewidth=1.0)
+    axs[0,1].plot(x_muzzin2013_lo_z,Q_model_muzzin_upper_lo_z, color='goldenrod', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[0,1].plot(x_muzzin2013_lo_z,Q_model_muzzin_lower_lo_z, color='goldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[0,1].fill_between(x_muzzin2013_lo_z,Q_model_muzzin_lo_z,Q_model_muzzin_upper_lo_z,facecolor='goldenrod',interpolate=True,alpha=0.1)
+    axs[0,1].fill_between(x_muzzin2013_lo_z,Q_model_muzzin_lo_z,Q_model_muzzin_lower_lo_z,facecolor='goldenrod',interpolate=True,alpha=0.1)
+    axs[0,1].plot(x_muzzin2013_hi_z,Q_model_muzzin_hi_z, color='darkgoldenrod', linestyle='-',label='muzzin+2013: 0.5 < z < 1.0\n(COSMOS/UltraVISTA)', linewidth=1.0)
+    axs[0,1].plot(x_muzzin2013_hi_z,Q_model_muzzin_upper_hi_z, color='darkgoldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[0,1].plot(x_muzzin2013_hi_z,Q_model_muzzin_lower_hi_z, color='darkgoldenrod', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[0,1].fill_between(x_muzzin2013_hi_z,Q_model_muzzin_hi_z,Q_model_muzzin_upper_hi_z,facecolor='darkgoldenrod',interpolate=True,alpha=0.1)
+    axs[0,1].fill_between(x_muzzin2013_hi_z,Q_model_muzzin_hi_z,Q_model_muzzin_lower_hi_z,facecolor='darkgoldenrod',interpolate=True,alpha=0.1)
     # fig parameters
     axs[0,1].set_xscale('linear')
     axs[0,1].set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -950,28 +1043,28 @@ if plot_flag_3 == 1:
     axs[0,1].yaxis.set_label_position("right")
     axs[0,1].set_ylabel('${\phi}$ [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
     # axs[0,1].set_title('Quiescent')
-    axs[0,1].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'medium')
+    axs[0,1].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'large')
     #
     # Panel 3: Tomczak+2014
     # my fits
-    axs[1,0].plot(x_plot,Q_model_field_mcmc_plot_double,color='r',linestyle='-',label='this work', linewidth=1.0)
+    axs[1,0].plot(x_plot,Q_model_field_mcmc_plot_double,color='r',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
     axs[1,0].plot(x_plot,Q_model_field_upper, color='r', linestyle='--',linewidth=1.0,alpha=0.3)
     axs[1,0].plot(x_plot,Q_model_field_lower, color='r', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,0].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
-    axs[1,0].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
+    axs[1,0].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_upper,facecolor='r',interpolate=True,alpha=0.1)
+    axs[1,0].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_lower,facecolor='r',interpolate=True,alpha=0.1)
     # tomczak+2014 data + fits
-    axs[1,0].errorbar(x_tom2014_data,Q_smf_tom2014_lo_z,yerr=Q_err_tom2014_lo_z,marker='<',color='orangered',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    axs[1,0].errorbar(x_tom2014_data,Q_smf_tom2014_hi_z,yerr=Q_err_tom2014_hi_z,marker='>',color='maroon',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    axs[1,0].plot(x_tomczak2014_lo_z_Q,Q_model_tomczak_lo_z, color='orangered', linestyle='-',label='tomczak+2014: 0.2 < z < 0.5', linewidth=1.0)
-    axs[1,0].plot(x_tomczak2014_lo_z_Q,Q_model_tomczak_upper_lo_z, color='orangered', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,0].plot(x_tomczak2014_lo_z_Q,Q_model_tomczak_lower_lo_z, color='orangered', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[1,0].fill_between(x_tomczak2014_lo_z_Q,Q_model_tomczak_lo_z,Q_model_tomczak_upper_lo_z,facecolor='orangered',interpolate=True,alpha=0.1)
-    axs[1,0].fill_between(x_tomczak2014_lo_z_Q,Q_model_tomczak_lo_z,Q_model_tomczak_lower_lo_z,facecolor='orangered',interpolate=True,alpha=0.1)
-    axs[1,0].plot(x_tomczak2014_hi_z_Q,Q_model_tomczak_hi_z, color='maroon', linestyle='-',label='tomczak+2014: 0.5 < z < 0.75\n(ZFOURGE/CANDELS)', linewidth=1.0)
-    axs[1,0].plot(x_tomczak2014_hi_z_Q,Q_model_tomczak_upper_hi_z, color='maroon', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[1,0].plot(x_tomczak2014_hi_z_Q,Q_model_tomczak_lower_hi_z, color='maroon', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[1,0].fill_between(x_tomczak2014_hi_z_Q,Q_model_tomczak_hi_z,Q_model_tomczak_upper_hi_z,facecolor='maroon',interpolate=True,alpha=0.1)
-    axs[1,0].fill_between(x_tomczak2014_hi_z_Q,Q_model_tomczak_hi_z,Q_model_tomczak_lower_hi_z,facecolor='maroon',interpolate=True,alpha=0.1)
+    axs[1,0].errorbar(x_tom2014_data,Q_smf_tom2014_lo_z,yerr=Q_err_tom2014_lo_z,marker='<',color='lime',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[1,0].errorbar(x_tom2014_data,Q_smf_tom2014_hi_z,yerr=Q_err_tom2014_hi_z,marker='>',color='darkgreen',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[1,0].plot(x_tomczak2014_lo_z_Q,Q_model_tomczak_lo_z, color='lime', linestyle='-',label='tomczak+2014: 0.2 < z < 0.5', linewidth=1.0)
+    axs[1,0].plot(x_tomczak2014_lo_z_Q,Q_model_tomczak_upper_lo_z, color='lime', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[1,0].plot(x_tomczak2014_lo_z_Q,Q_model_tomczak_lower_lo_z, color='lime', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[1,0].fill_between(x_tomczak2014_lo_z_Q,Q_model_tomczak_lo_z,Q_model_tomczak_upper_lo_z,facecolor='lime',interpolate=True,alpha=0.1)
+    axs[1,0].fill_between(x_tomczak2014_lo_z_Q,Q_model_tomczak_lo_z,Q_model_tomczak_lower_lo_z,facecolor='lime',interpolate=True,alpha=0.1)
+    axs[1,0].plot(x_tomczak2014_hi_z_Q,Q_model_tomczak_hi_z, color='darkgreen', linestyle='-',label='tomczak+2014: 0.5 < z < 0.75\n(ZFOURGE/CANDELS)', linewidth=1.0)
+    axs[1,0].plot(x_tomczak2014_hi_z_Q,Q_model_tomczak_upper_hi_z, color='darkgreen', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[1,0].plot(x_tomczak2014_hi_z_Q,Q_model_tomczak_lower_hi_z, color='darkgreen', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[1,0].fill_between(x_tomczak2014_hi_z_Q,Q_model_tomczak_hi_z,Q_model_tomczak_upper_hi_z,facecolor='darkgreen',interpolate=True,alpha=0.1)
+    axs[1,0].fill_between(x_tomczak2014_hi_z_Q,Q_model_tomczak_hi_z,Q_model_tomczak_lower_hi_z,facecolor='darkgreen',interpolate=True,alpha=0.1)
     # fig parameters
     axs[1,0].set_xscale('linear')
     axs[1,0].set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -980,25 +1073,25 @@ if plot_flag_3 == 1:
     axs[1,0].set_ylim(1e-6,0.2)
     axs[1,0].minorticks_on()
     axs[1,0].tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright=False, labelleft=True,labelbottom=True,labelsize=18)
-    axs[1,0].yaxis.set_label_position("right")
+    axs[1,0].yaxis.set_label_position("left")
     axs[1,0].set_ylabel('${\phi}$ [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
     # axs[1,0].set_title('Quiescent')
-    axs[1,0].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'medium')
+    axs[1,0].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'large')
     #
-    # Panel 4: vanderBurg+2018
+    # Panel 4: mcleod+2020
     # my fits
-    axs[1,1].plot(x_plot,Q_model_field_mcmc_plot_double,color='r',linestyle='-',label='this work', linewidth=1.0)
+    axs[1,1].plot(x_plot,Q_model_field_mcmc_plot_double,color='r',linestyle='-',label='this work: 0.25 < z < 0.75', linewidth=1.0)
     axs[1,1].plot(x_plot,Q_model_field_upper, color='r', linestyle='--',linewidth=1.0,alpha=0.3)
     axs[1,1].plot(x_plot,Q_model_field_lower, color='r', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,1].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_upper,facecolor='grey',interpolate=True,alpha=0.1)
-    axs[1,1].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_lower,facecolor='grey',interpolate=True,alpha=0.1)
-    # vdb+2018 data pts + schechter fits
-    axs[1,1].errorbar(x_vdb2018_data,Q_smf_vdb2018,yerr=total_err_vdb2018,marker='s',color='magenta',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    axs[1,1].plot(x_vdb2018,Q_model_vdb2018, color='magenta', linestyle='-',label='vdB+2018: 0.5 < z < 0.7\n(COSMOS/UltraVISTA)', linewidth=1.0)
-    axs[1,1].plot(x_vdb2018,Q_model_upper_err_vdb2018, color='magenta', linestyle='--',linewidth=1.0,alpha=0.3)
-    axs[1,1].plot(x_vdb2018,Q_model_lower_err_vdb2018, color='magenta', linestyle='--', linewidth=1.0,alpha=0.3)
-    axs[1,1].fill_between(x_vdb2018,Q_model_vdb2018,Q_model_upper_err_vdb2018,facecolor='magenta',interpolate=True,alpha=0.1)
-    axs[1,1].fill_between(x_vdb2018,Q_model_vdb2018,Q_model_lower_err_vdb2018,facecolor='magenta',interpolate=True,alpha=0.1)
+    axs[1,1].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_upper,facecolor='r',interpolate=True,alpha=0.1)
+    axs[1,1].fill_between(x_plot,Q_model_field_mcmc_plot_double,Q_model_field_lower,facecolor='r',interpolate=True,alpha=0.1)
+    # mcleod+2020 data pts + schechter fits
+    axs[1,1].errorbar(x_mcleod2020_data,Q_smf_mcleod2020,yerr=total_err_mcleod2020,marker='s',color='magenta',fillstyle='none',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    axs[1,1].plot(x_mcleod2020_Q,Q_model_mcleod2020, color='magenta', linestyle='-',label='mcleod+2020: 0.25 < z < 0.75\n(UKIDSS UDS/COSMOS/CFHTLS-D1)', linewidth=1.0)
+    axs[1,1].plot(x_mcleod2020_Q,Q_model_upper_err_mcleod2020, color='magenta', linestyle='--',linewidth=1.0,alpha=0.3)
+    axs[1,1].plot(x_mcleod2020_Q,Q_model_lower_err_mcleod2020, color='magenta', linestyle='--', linewidth=1.0,alpha=0.3)
+    axs[1,1].fill_between(x_mcleod2020_Q,Q_model_mcleod2020,Q_model_upper_err_mcleod2020,facecolor='magenta',interpolate=True,alpha=0.1)
+    axs[1,1].fill_between(x_mcleod2020_Q,Q_model_mcleod2020,Q_model_lower_err_mcleod2020,facecolor='magenta',interpolate=True,alpha=0.1)
     # fig parameters
     axs[1,1].set_xscale('linear')
     axs[1,1].set_xlabel('log($M_{*}$/$M_{\odot}$)',fontsize=20)
@@ -1010,7 +1103,7 @@ if plot_flag_3 == 1:
     axs[1,1].yaxis.set_label_position("right")
     axs[1,1].set_ylabel('${\phi}$ [$Mpc^{-3}$ $dex^{-1}$]',fontsize=20)
     # axs[1,1].set_title('Quiescent')
-    axs[1,1].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'medium')
+    axs[1,1].legend(scatterpoints=1,loc='upper right', frameon=False, fontsize = 'large')
     #
 
     #
