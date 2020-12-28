@@ -2,9 +2,9 @@
 #
 #
 ### WHAT THIS PROGRAM DOES:
-### This script reads in all data for the Hubble Frontier Fields images and prepares data for plotting and analysis. Key information is summarized in the tables: 
+### This script reads in all data for the Hubble Frontier Fields images and prepares data for plotting and analysis. Key information is summarized in the tables:
 #
-#  
+#
 ### This program creates plots for the master data catalogue, containing:
 ### Fig. 1: photometric v specroscopic redshift;   Fig. 2: delta-z (member/field/false pos/false neg segregation);   Fig. 3: UVJ diagram( "colour-colour" plot)
 #
@@ -33,7 +33,7 @@ if time_flag == 1:
 #
 # this next line is specific to jupyter notebook, and allows for Figure editting in a GUI, instead of inline
 ###%matplotlib qt
-#  
+#
 # import modules
 import numpy as np
 import matplotlib as mpl
@@ -57,8 +57,8 @@ def delz_bound(x):
 ## SECTION (0): set PLOT_FLAGS    # 0=off (i.e. don't make plot), 1=on (i.e. make plot)
 ### MAY NEED TO EDIT ### plot_flag_*/time_flag_*/diag_flag_*
 #
-plot_flag_1 = 0           # Fig.1 - z_spec v z_phot plot
-plot_flag_2 = 1           # Fig.2 - del_z plot
+plot_flag_1 = 1           # Fig.1 - z_spec v z_phot plot
+plot_flag_2 = 0           # Fig.2 - del_z plot
 #
 time_flag_1 = 0
 time_flag_2 = 0
@@ -92,16 +92,16 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         Q_scatter = []
         stars = 0             # count total # of outliers
         count_mem = 0               # count the rest
-        count_outlier = 0 
+        count_outlier = 0
         for counter in range(len(master_cat)):
             if master_cat['sub'][counter] == 1:    # sub=1 for (spec+phot) subsample
                 if master_cat['type'][counter] == 3:    # type=3 for outliers
-                    outz = ax1.scatter(master_cat['z_spec'][counter],master_cat['z_peak'][counter],c='r',marker='v',alpha=0.6,linewidths = 0)
+                    outz = ax1.scatter(master_cat['z_spec'][counter],master_cat['z_peak'][counter],c='r',marker='v',alpha=0.6,linewidths=0,s=50)
                     outlier_scatter.append(np.abs(master_cat['del_z'][counter]))
                     count_outlier+=1
                     #print('Outlier: %s'%master_cat['type'][counter])
                 elif master_cat['type'][counter] !=0 :
-                    memz = ax1.scatter(master_cat['z_spec'][counter],master_cat['z_peak'][counter],c='b', marker='^',alpha=0.25,linewidths = 0)
+                    memz = ax1.scatter(master_cat['z_spec'][counter],master_cat['z_peak'][counter],c='b', marker='^',alpha=0.25,linewidths=0,s=50)
                     count_mem+=1
                     if master_cat['type'][counter] == 1:         # type=1 for SF
                         SF_scatter.append(np.abs(master_cat['del_z'][counter]))
@@ -144,20 +144,20 @@ if (plot_flag_1 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ## construct a string to plot the outlier fraction & std dev ('scatter')
         string = 'Median |$\Delta$z|: %.3f'%mean_abs_delz[0]+'\n$\sigma_{|\Delta z|}$ = %.3f'%std_abs_delz[0]+'\nOutliers: %.2f'%outlier_fraction+'%'
         ## add text to plot
-        ax1.text(0.17,1.085,string, fontsize=15)
+        ax1.text(0.165,0.98,string, fontsize=30)
         ax1.plot([0,2],[0,2],'--k', linewidth=2)
         ax1.plot(x_bound,y_upper_bound,':k', linewidth=1.75)
         ax1.plot(x_bound,y_lower_bound,':k', linewidth=1.75)
-        ax1.set_xlabel("$z_{spec}$", fontsize=30)
+        ax1.set_xlabel("$z_{spec}$", fontsize=40)
         ax1.set_xscale('linear')
         ax1.set_xlim(0,1.5)
-        ax1.set_ylabel("$z_{phot}$", fontsize=30)
+        ax1.set_ylabel("$z_{phot}$", fontsize=40)
         ax1.set_yscale('linear')
         ax1.set_ylim(0,1.5)
         #ax1.set_title("$z_{spec} vs. z_{phot}$")
-        ax1.legend((memz,outz),('Spec. subsample: %i'%count_mem,'Outliers: %i'%count_outlier),scatterpoints=1,fontsize=15,loc='upper left', frameon=False)
+        ax1.legend((memz,outz),('Spec. subsample: %i'%count_mem,'Outliers: %i'%count_outlier),scatterpoints=1,loc='upper left',frameon=False,fontsize=30,markerscale=3.5)
         #plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = ':')
-        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False,labelsize=20)
+        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False,labelsize=30)
         ax1.minorticks_on()
         plt.show()
         #
@@ -206,7 +206,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
                     elif master_cat['type'][counter] == 2:       # type=2: Q
                         Q_fields[0].append(master_cat[counter]['z_clusterspec'])
                         Q_fields[1].append(master_cat[counter]['z_clusterphot'])
-                        Q_fields[2].append(master_cat[counter]['lmass'])                    
+                        Q_fields[2].append(master_cat[counter]['lmass'])
                         Q_counting_array[1]+=1
                 elif master_cat[counter]['member'] == 2:                                   # member=2: false pos
                     if master_cat['type'][counter] == 1:       # type=1: SF
@@ -248,7 +248,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
             print('Q - members: %s'%np.sum(mem[1]),'; fields: %s'%np.sum(field[1]),'; false pos: %s'%np.sum(pos[1]),'; false neg: %s'%np.sum(neg[1]))
             print('\n"master_zplots*.py" REPORTS:\nSF - members: %s'%SF_counting_array[0],'; fields: %s'%SF_counting_array[1],'; false pos: %s'%SF_counting_array[2],'; false neg: %s'%SF_counting_array[3])
             print('Q - members: %s'%Q_counting_array[0],'; fields: %s'%Q_counting_array[1],'; false pos: %s'%Q_counting_array[2],'; false neg: %s'%Q_counting_array[3])
-        #    
+        #
         ## Make figure
         fig, (ax1, ax2) = plt.subplots(1, 2)
         fig.subplots_adjust(wspace=0,hspace=0)
@@ -262,7 +262,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax1.plot([-0.5,1],[z_cutoff[1],z_cutoff[1]],':k', linewidth=3)  # horizontal cuts (phot)
         ax1.plot([-0.5,1],[-z_cutoff[1],-z_cutoff[1]],':k', linewidth=3)
         ax1.plot([-z_cutoff[0],-z_cutoff[0]],[-0.5,1],':k', linewidth=3)  #vertical cuts
-        ax1.plot([z_cutoff[0],z_cutoff[0]],[-0.5,1],':k', linewidth=3)  
+        ax1.plot([z_cutoff[0],z_cutoff[0]],[-0.5,1],':k', linewidth=3)
         # add details
         ax1.set_title('Star-forming',fontsize=45)
         ax1.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$',fontsize=40)
@@ -270,7 +270,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax1.set_ylabel('$(z_{phot} - z_{cluster})/(1+z_{phot})$',fontsize=40)
         ax1.set_ylim(-0.25,0.25)
         ax1.grid(b=False)
-        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True, labeltop=False,labelbottom=True,labelsize=25)
+        ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=False, labelleft=True, labeltop=False,labelbottom=True,labelsize=30)
         ax1.minorticks_on()
         ax1.legend(loc='upper left', frameon=False, fontsize=25, markerscale=2)
         #
@@ -284,7 +284,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax2.plot([-0.5,1],[z_cutoff[1],z_cutoff[1]],':k', linewidth=3)  # horizontal cuts (phot)
         ax2.plot([-0.5,1],[-z_cutoff[1],-z_cutoff[1]],':k', linewidth=3)
         ax2.plot([-z_cutoff[0],-z_cutoff[0]],[-0.5,1],':k', linewidth=3)  #vertical cuts
-        ax2.plot([z_cutoff[0],z_cutoff[0]],[-0.5,1],':k', linewidth=3)  
+        ax2.plot([z_cutoff[0],z_cutoff[0]],[-0.5,1],':k', linewidth=3)
         # add details
         ax2.set_title('Quiescent',fontsize=45)
         ax2.set_xlabel('$(z_{spec} - z_{cluster})/(1+z_{spec})$',fontsize=40)
@@ -293,14 +293,14 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
         ax2.yaxis.set_label_position('right')
         ax2.set_ylim(-0.25,0.25)
         ax2.grid(b=False)
-        ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True, labelleft=False, labeltop=False,labelbottom=True,labelsize=25)
-        ax2.minorticks_on()                        
+        ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True, labelleft=False, labeltop=False,labelbottom=True,labelsize=30)
+        ax2.minorticks_on()
         #
         #
         plt.show()
-    #####    
-    #    
-#   
+    #####
+    #
+#
 #
 #
 ## TIME_FLAG END
@@ -322,5 +322,5 @@ print('\n\n"master_zplots_2_final.py"  terminated successfully.\n')
 #
 #
 #
-#                        
+#
 ###### PROGRAM END ######

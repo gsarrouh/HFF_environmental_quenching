@@ -578,7 +578,7 @@ if (plot_flag_2 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
             total_mem = np.sum([mem_phot[0][cluster],mem_phot[1][cluster],mem_spec[0][cluster],mem_spec[1][cluster]])
             mem_shown = len(plotting_array_temp[0])
             #
-            members_string = '# cluster members(F160W+F814W): %s'%total_mem+'(%s'%mem_shown+')'
+            members_string = '# cluster members: %s'%total_mem#+'(%s'%mem_shown+')'
             ## Compute std. dev. of cluster objects
             std_dev = np.std(plotting_array_temp[1])
             #
@@ -643,7 +643,7 @@ if (plot_flag_3 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
             total_mem = np.sum([mem_phot[0][cluster],mem_phot[1][cluster],mem_spec[0][cluster],mem_spec[1][cluster]])
             mem_shown = len(plotting_array_temp[0])
             #
-            members_string = '$M^{*}_{lim}$: %s'%limiting_mass[cluster]+'\n# cluster members(F160W): %s'%total_mem+'(%s'%mem_shown+')\nz$_{cluster}$ = %s'%z_cluster[cluster]
+            members_string = '$M^{*}_{lim}$: %s'%limiting_mass[cluster]+'\n# cluster members: %s'%total_mem+'\nz$_{cluster}$ = %s'%z_cluster[cluster]
             ## Compute std. dev. of cluster objects
             std_dev = np.std(plotting_array_temp[1])
             #
@@ -670,15 +670,15 @@ if (plot_flag_3 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
             ax1.plot([0,35],[max_min_mass[cluster][1],max_min_mass[cluster][1]], color='k', linestyle='--',linewidth=2.5)
             #
             ax1.grid(axis='both', alpha=0.75)
-            ax1.set_xlim([17,30])
+            ax1.set_xlim([17,29.1])
             ax1.set_xlabel('m$_{F160W}$',fontsize=20)
             ax1.set_ylim([5,13])
             ax1.set_ylabel('$log_{10}$(M/M$_{\odot})$',fontsize=20)
             ax1.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=False,labelright=False, labelleft=True,labelsize=20)
             #
             ## label locations
-            ax1.text(20.1,12.1,cluster_names[cluster],fontsize=25)
-            ax1.text(20.1,11.0,members_string,fontsize=20)
+            ax1.text(20.1,11.2,cluster_names[cluster]+'\n'+members_string,fontsize=20)
+            # ax1.text(20.1,11.0,members_string,fontsize=20)
             #
             #
             # zoom in
@@ -705,13 +705,14 @@ if (plot_flag_3 == 1 and project_plot_flag ==2) or project_plot_flag == 1:
             sm.set_array([])
             sm.set_clim([0,z_cutoff[1]])
             ax2.grid(axis='both', alpha=0.75)
-            ax2.set_xlim([25.5,27.5])
+            ax2.set_xlim([25.4,27.5])
             ax2.set_xlabel('m$_{F160W}$',fontsize=20)
             ax2.set_ylim([(max_min_mass[cluster][1]-0.2),9])
             circle(mag_of_limiting_mass[cluster],limiting_mass[cluster])
             ax2.tick_params(axis='both', which='both',direction='in',color='k',top=True,right=True,labelright=True, labelleft=False,labelsize=20)
-            cbar = fig.colorbar(sm, ax=ax2)#,location='right')#, vmin=0.0, vmax=z_cutoff[1])
+            cbar = fig.colorbar(sm, ax=axs[:],location='right')#, vmin=0.0, vmax=z_cutoff[1])
             cbar.ax.set_title("|${\Delta}$z|$_{phot}$",fontsize=20)
+            cbar.ax.tick_params(labelsize=20)
             #
             plt.show()
 
