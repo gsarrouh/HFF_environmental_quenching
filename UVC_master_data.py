@@ -69,7 +69,7 @@ if time_flag == 1:
 ## DEFINITIONS
 #
 ## MAY NEED TO EDIT
-limiting_mass_uvc = 9.0
+limiting_mass_uvc = 9.2
 #
 ## FLAGS !!!
 ## MAY NEED TO EDIT
