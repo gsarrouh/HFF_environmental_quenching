@@ -224,25 +224,42 @@ def interpolate_errors(ratios,ratios_err,correction_factors,ratio_bins,mass_bins
 #
 def red_chi_sq_clu(midbins, M_star, phi, alpha, smf, smf_error):
     nu = 3
-    midbins = np.array(midbins)
-    smf = np.array(smf)
-    smf_error = np.array(smf_error)
     red_chi_sq = np.array([0.]*len(M_star))
+    adjusted_smf = np.array([0.])
+    adjusted_error = np.array([0.])
     for ii in range(len(M_star)):
-        model = np.array( np.log(10) * phi[ii] * (10**((midbins-M_star[ii])*(1+alpha[ii]))) * np.exp(-10**(midbins-M_star[ii])) )
-        red_chi_sq[ii] = np.sum( ( (smf - model) / smf_error)**2 ) / nu
+        adjusted_smf = np.array(smf[ii][smf[ii] != 0])
+        adjusted_error = np.array(smf_error[ii][smf_error[ii] != 0])
+        #
+        if np.count_nonzero(smf[ii]==0) != 0:
+            bins_to_delete = np.count_nonzero(smf[ii]==0) * -1
+            adjusted_midbins = midbins[:bins_to_delete]
+        else:
+            adjusted_midbins = midbins
+        #
+        model = np.array( np.log(10) * phi[ii] * ( 10**((adjusted_midbins-M_star[ii])*(1+alpha[ii])) ) * np.exp(-10**(adjusted_midbins-M_star[ii])) )
+        red_chi_sq[ii] = np.sum( ( (adjusted_smf - np.transpose(model)) / adjusted_error)**2 ) / (len(adjusted_smf) - nu)
+    #
     return red_chi_sq
 #
 #
 def red_chi_sq_field(midbins, M_star, phi1, alpha1, phi2, alpha2, smf, smf_error):
     nu = 5
-    midbins = np.array(midbins)
-    smf = np.array(smf)
-    smf_error = np.array(smf_error)
     red_chi_sq = np.array([0.]*len(M_star))
+    adjusted_smf = np.array([0.])
+    adjusted_error = np.array([0.])
     for ii in range(len(M_star)):
-        model =  np.log(10) * np.exp(-10**(midbins-M_star[ii])) * ( (phi1[ii]*(10**((midbins-M_star[ii])*(1+alpha1[ii]))))  + (phi2[ii]*(10**((midbins-M_star[ii])*(1+alpha2[ii])))) )
-        red_chi_sq[ii] = np.sum( ( (smf - model) / smf_error)**2 ) / nu
+        adjusted_smf = np.array(smf[ii][smf[ii] != 0])
+        adjusted_error = np.array(smf_error[ii][smf_error[ii] != 0])
+        #
+        if np.count_nonzero(smf[ii]==0) != 0:
+            bins_to_delete = np.count_nonzero(smf[ii]==0) * -1
+            adjusted_midbins = midbins[:bins_to_delete]
+        else:
+            adjusted_midbins = midbins
+        #
+        model =  np.log(10) * np.exp(-10**(adjusted_midbins-M_star[ii])) * ( (phi1[ii]*(10**((adjusted_midbins-M_star[ii])*(1+alpha1[ii]))))  + (phi2[ii]*(10**((adjusted_midbins-M_star[ii])*(1+alpha2[ii])))) )
+        red_chi_sq[ii] = np.sum( ( (adjusted_smf - np.transpose(model)) / adjusted_error)**2 ) / (len(adjusted_smf) - nu)
     return red_chi_sq
 #
 #
@@ -250,7 +267,7 @@ def red_chi_sq_field(midbins, M_star, phi1, alpha1, phi2, alpha2, smf, smf_error
 #
 #
 ### TEMPORARY WRITING FLAG - comments out all code past the point where the flag is invoked; should be set to ==0
-where_im_at_flag = 0
+where_im_at_flag = 1
 #
 #
 ## MAY NEED TO EDIT: NORMALIZATION FLAG
@@ -277,7 +294,7 @@ diag_flag_6 = 1            # display diagnostics before/after normalization
 summary_flag_1 = 1         # initial Summary Table: ensure lists agree w/ "master_data*.py"
 summary_flag_2 = 1
 #
-plot_flag_1 = 1            # spec completeness correction factors
+plot_flag_1 = 0            # spec completeness correction factors
 plot_flag_2 = 1           # SMF
 cluster_only_plot_flag = 0  # create a plot of just the cluster data alone
 field_only_plot_flag = 0  # create a plot of just the field data alone
@@ -285,6 +302,7 @@ field_construction_flag = 0 # create plots of HFF field and UVC field separately
 UVC_fit_flag = 0            # create plot fitting just the UVC sample to a schechter function
 schechter_plot_flag = 1     # plot the best-fitting schechter function: 0==off;  1==on
 plot_SMF_data_flag = 0      # adds various info to figure (e.g. MCMC results, lim masses, etc...)
+smf_points_flag = 0
 #
 ## SECTION (1): collect objects above limiting mass by cluster into a single array in order to plot
 ## SF_*/Q_*, and track sublists of objects which have spec vs those which only have phot, separately for SF/Q; creates list of samples to be binned & plotted as histogram/scatterplot
@@ -1143,9 +1161,10 @@ if field_construction_flag == 1:
     ax.grid(b=False)#, which='major', axis='both', color = 'k', linestyle = '--')
 #
 #
+print('SMF_UVC pre-SOME_FLAG:\nSF: %s'%SF_field_smf_UVC+'\nQ: %s'%Q_field_smf_UVC)
 #
 #
-some_flag = 1           # 1== avg over 3 points near UVC cutoff; 2 == hard transition from HFF curve to UVC curve
+some_flag = 1           # 1== avg over N points near UVC cutoff, initially N=2; 2 == hard transition from HFF curve to UVC curve
 if some_flag == 1:
     ## COMBINE HFF & UVC into a single SMF: start by finding the index corresponding to the first midbin with mass >10^9. Then cut the two lists above/below that bin index, then add the two together
     #
@@ -1204,12 +1223,12 @@ elif some_flag == 2:
     #
     ## set all entries in HFF >index to zero, and all entries <index to zero for UVC
     for ii in range(len(SF_field_smf_HFF)):
-        if ii > index:
+        if ii > (index+1):
             SF_field_smf_HFF[ii] = 0
             Q_field_smf_HFF[ii] = 0
             SF_field_smf_relerr_HFF[ii] = 0
             Q_field_smf_relerr_HFF[ii] = 0
-        elif ii < index:
+        elif ii < (index+1):
             SF_field_smf_UVC[ii] = 0
             Q_field_smf_UVC[ii] = 0
             SF_field_smf_relerr_UVC[ii] = 0
@@ -2359,13 +2378,43 @@ reduced_chi_sq_field = red_chi_sq_field(SF_midbins, M_star_cluster, phi1_field, 
 #
 ## display results
 #
-print('\nCLU: reduced chi-squared [SF, Q, Total] = %s'%reduced_chi_sq_clu ')
-print('\nFIELD: reduced chi-squared [SF, Q, Total] = %s'%reduced_chi_sq_field ')
+print('\nCLU: reduced chi-squared [SF, Q, Total] = %s'%reduced_chi_sq_clu)
+print('\nFIELD: reduced chi-squared [SF, Q, Total] = %s'%reduced_chi_sq_field)
 #
 #
+if smf_points_flag == 1:
+    ## display stats to put in paper
+    ## clusters
+    # SF
+    print('\nCLUSTER RESULTS\nSF SMF: %s'%SF_smf)
+    print('SF error: %s'%SF_error)
+    print('SF spec: %s'%np.sum(SF_spec_smf,axis=0))
+    print('SF raw: %s'%np.sum(SF_raw_smf,axis=0))
+    print('SF spec / SF raw: %s'%(np.sum(SF_spec_smf,axis=0) / np.sum(SF_raw_smf,axis=0)))
+    # Q
+    print('\nQ SMF: %s'%Q_smf)
+    print('Q error: %s'%Q_error)
+    print('Q spec: %s'%np.sum(Q_spec_smf,axis=0))
+    print('Q raw: %s'%np.sum(Q_raw_smf,axis=0))
+    print('Q spec / Q raw: %s'%(np.sum(Q_spec_smf,axis=0) / np.sum(Q_raw_smf,axis=0)))
+    # Total
+    print('\ntotal SMF: %s'%total_smf)
+    print('total error: %s'%total_error)
+    print('total spec / total raw: %s'%((np.sum(SF_spec_smf,axis=0)+np.sum(Q_spec_smf,axis=0)) / (np.sum(SF_raw_smf,axis=0)+np.sum(Q_raw_smf,axis=0))))
+    #
+    ## field
+    # SF
+    print('\FIELD RESULTS\nSF SMF: %s'%(SF_field_smf*1e4))
+    print('SF error: %s'%(SF_field_error*1e4))
+    # Q
+    print('\nQ SMF: %s'%(Q_field_smf*1e4))
+    print('Q error: %s'%(Q_field_error*1e4))
+    # Total
+    print('\ntotal SMF: %s'%(total_field_smf*1e4))
+    print('total error: %s'%(total_field_error*1e4))
+
 #
-#
-#
+##
 #
 #
 #
@@ -2393,145 +2442,23 @@ if where_im_at_flag == 1:
     #
     #
     #
-    ## SECTION (7): create PLOTS for SMF
-    #
-    #
-    ### MAY NEED TO EDIT: plot_flag
-    ## upper: SMF for cluster, field;       lower: fractions of SF/Q in cluster, field
-    #
-    plt.close()
-    SMF = plt.figure(num=1)
-    smf = gridspec.GridSpec(2,2, wspace=0, hspace=0, width_ratios=[1,1], height_ratios=[2,1])   #make a tiled-plot like vdB2013 w/ fractions below, this line sets the proporitons of plots in the figure
-    #gs = gridspec.GridSpec(2,3, width_ratios=[1,1,1], height_ratios=[2,1])   #make a tiled-plot like vdB2013 w/ fractions below, this line sets the proporitons of plots in the figure
-    # Cluster
-    cluster = plt.subplot(gs[0])
-    xa = plt.errorbar(SF_midbins,SF_smf,yerr=SF_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)#yerr=SF_error,
-    xb = plt.errorbar(Q_midbins,Q_smf,yerr=Q_error,fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    xc = plt.errorbar(SF_midbins,total_smf,yerr=total_error,fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    ## Plot Schechter fits:  (uncomment 5 hashtags when fits complete)
-    ######plt.plot(x_plot_Q,Q_model_ml_plot, ':r')
-    #####plt.plot(x_plot_Q,Q_model_mcmc_plot, '--r')
-    ######plt.plot(x_plot_SF,SF_model_ml_plot, ':c', label = 'Max. Likelihood', linewidth = 0.5)
-    #####plt.plot(x_plot_SF,SF_model_mcmc_plot, '--b', label = 'MCMC', linewidth = 0.5)
-    #####plt.plot(x_plot_T,T_model_mcmc_plot, 'k')
-    plt.xscale('linear')
-    plt.xlim=(8,12.25)
-    plt.yscale('log')
-    plt.ylim=(1,1e3)
-    cluster.minorticks_on()
-    cluster.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='off',labelbottom='off')
-    cluster.yaxis.set_label_position("left")
-    plt.ylabel('# count')
-    plt.title('Cluster SMF')
-    plt.legend((xa,xb,xc),('Star-forming','Quiescent','Total'),scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
-    plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = '--')
-    #
-    # Parallel field
-    #cluster = plt.subplot(gs[1])
-    #plt.plot(SF_midbins,Q_smf_par,'.r',linewidth=0.5)#Qx_new, Qy_new,'-r',linewidth=0.5)
-    #plt.plot(SF_midbins,total_smf_par,'.k',linewidth=0.5)#totalx_new, totaly_new,'-k',linewidth=0.5)
-    #plt.errorbar(SF_midbins,SF_smf_par,fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)#yerr=SF_error,
-    #plt.xscale('linear')
-    #plt.xlabel('log(M/M_sol)')
-    #plt.xlim(7,12.5)
-    #plt.yscale('log')
-    #cluster.minorticks_on()
-    #cluster.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='off',labelleft='off',labelbottom='off')
-    #cluster.yaxis.set_label_position("left")
-    #plt.ylabel('logarthmic # count')
-    #plt.ylim(0,750)
-    #plt.title('Parallel SMF')
-    #plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = '--')
-    #
-    ## Field
-    field = plt.subplot(gs[1])      #make a tiled-plot like vdB2013 w/ fractions below
-    plt.errorbar(SF_midbins,SF_field_smf,yerr=SF_field_error, fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    plt.errorbar(Q_midbins,Q_field_smf,yerr=Q_field_error, fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    plt.errorbar(SF_midbins,total_field_smf,yerr=total_field_error, fmt='.k',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    #
-    #Plot Schechter fits:
-    #plt.plot(x,FQ_model, 'r')
-    #plt.plot(x,FT_model, 'k')
-    ###plt.plot(x,FSF_model, 'b')
-    #
-    plt.xscale('linear')
-    #plt.xlabel('log(M/M_sol)')
-    plt.xlim=(8,12.25)
-    plt.yscale('log')
-    plt.ylabel('# count')
-    plt.ylim=(1,1001)
-    field.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright=True,labelleft=False,labelbottom=False)
-    field.minorticks_on()
-    field.yaxis.set_label_position("right")
-    plt.title('Field SMF')
-    plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = '--')
-    #plt.text()      #this could replace the legend to avoid visual clutter
-    #
-    ## cluster fraction
-    fr_cl = plt.subplot(gs[2])
-    #plt.plot(SF_midbins,frac_smf[0],'.b',linewidth=0.5)
-    #plt.plot(SF_midbins,frac_smf[1],'.r',linewidth=0.5)
-    plt.errorbar(SF_midbins,frac_smf[0],yerr=frac_error[0], fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    plt.errorbar(SF_midbins,frac_smf[1],yerr=frac_error[1], fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    plt.xscale('linear')
-    plt.xlabel('$log(M/M_{\odot})$')
-    plt.xlim=(8,12.25)
-    plt.yscale('linear')
-    plt.ylim=(-0.3,1.3)
-    fr_cl.minorticks_on()
-    fr_cl.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='off')
-    fr_cl.yaxis.set_label_position("left")
-    plt.ylabel('Galaxy type fraction')
-    #plt.ylim(1,190)
-    #plt.title('relative fraction SF & Q')
-    #
-    ## parallel fraction
-    #fr_cl = plt.subplot(gs[4])
-    #plt.plot(SF_midbins,frac_smf_par[0],'.b',linewidth=0.5)
-    #plt.plot(SF_midbins,frac_smf_par[1],'.r',linewidth=0.5)
-    #plt.errorbar(SF_midbins,frac_smf[0],yerr=frac_error[0], fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    #plt.errorbar(SF_midbins,frac_smf[1],yerr=frac_error[1], fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    #plt.xscale('linear')
-    #plt.xlabel('$log(M/M_{\odot})$')
-    #plt.xlim(7,12.5)
-    #plt.yscale('linear')
-    #plt.ylim(-0.1,1.1)
-    #fr_cl.minorticks_on()
-    #fr_cl.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='off',labelleft='off')
-    #fr_cl.yaxis.set_label_position("left")
-    #plt.ylabel('Galaxy type fraction')
-    #plt.ylim(1,190)
-    #
-    ## field fraction
-    fr_fld = plt.subplot(gs[3])
-    plt.errorbar(SF_midbins,frac_field_smf[0],yerr=frac_field_error[0], fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)  #,yerr=frac_field_error[0] insert after x,y at beginning of arguement
-    plt.errorbar(SF_midbins,frac_field_smf[1],yerr=frac_field_error[1], fmt='.r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5) #,yerr=frac_field_error[1]
-    plt.xscale('linear')
-    plt.xlabel('$log(M/M_{\odot})$')
-    plt.xlim=(8,12.25)
-    plt.yscale('linear')
-    plt.ylim=(-0.3,1.3)
-    fr_fld.minorticks_on()
-    fr_fld.tick_params(axis='both', which='both',direction='in',color='k',top='on',right='on',labelright='on',labelleft='off')
-    fr_fld.yaxis.set_label_position("right")
-    plt.ylabel('Galaxy type fraction')
-    #
-    plt.show()
-    ########
-    ########
-    #
     #
     #
     ## SECTION (????): compare CLUSTERvFIELD BY POPULATION
     #
-    ########
-    # Plot: compare environments by populatin (i.e. plot Cluster vs Field for Total, SF, & Q)
-    plt.close()
-    SMF = plt.figure(num=1)
-    gs = gridspec.GridSpec(1,3, wspace=0, hspace=0, width_ratios=[1,1,1])   #make a tiled-plot
-    # Total population
-    cluster = plt.subplot(gs[0])
-    xa = plt.errorbar(SF_midbins,total_smf,yerr=total_error,fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    #
+    #
+    ## TOTAL population
+    fig, axs = plt.subplots(1,3, sharex=False,sharey=True,gridspec_kw={'hspace': 0,'wspace': 0})
+    #
+    # fig.suptitle('Field: Total',fontsize=30)
+    #
+    ax1 = axs[0]
+    ax1.plot(x_plot,total_model_mcmc_plot, '-k',  linewidth = 3.0,label = 'Cluster')#,
+    ax1.plot(x_plot,total_model_field_mcmc_plot_double, '--k',  linewidth = 3.0,label = 'Cluster')#,
+
+
+
     xb = plt.errorbar(SF_midbins,total_field_smf,yerr=total_field_error, fmt='.g',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
     #Plot Schechter fits:
     plt.plot(x_plot_T,T_model_mcmc_plot, '--b')
@@ -2546,7 +2473,7 @@ if where_im_at_flag == 1:
     plt.ylabel('???')
     plt.title('Total')
     plt.legend((xa,xb),('Cluster','Field'),scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
-    plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = '--')
+    plt.grid(b=False, which='major', axis='both', color = 'k', linestyle = '--')
     #
     # SF population
     cluster = plt.subplot(gs[1])
@@ -2565,12 +2492,12 @@ if where_im_at_flag == 1:
     #plt.ylabel('???')
     plt.title('Star-Forming')
     #plt.legend((xa,xb),('Cluster','Field'),scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
-    plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = '--')
+    plt.grid(b=False, which='major', axis='both', color = 'k', linestyle = '--')
     #
     # Q population
     cluster = plt.subplot(gs[2])
-    xa = plt.errorbar(SF_midbins,Q_smf,yerr=Q_error,fmt='.b',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
-    xb = plt.errorbar(SF_midbins,Q_field_smf,yerr=Q_field_error, fmt='.g',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    xa = plt.errorbar(SF_midbins,Q_smf,yerr=Q_error,fmt='-r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
+    xb = plt.errorbar(SF_midbins,Q_field_smf,yerr=Q_field_error, fmt='--r',lolims=False, uplims=False, linewidth=0.0, elinewidth=0.5)
     #Plot Schechter fits:
     plt.plot(x_plot_Q,Q_model_mcmc_plot, '--b', label = 'MCMC', linewidth = 0.5)
     plt.xscale('linear')
@@ -2584,7 +2511,7 @@ if where_im_at_flag == 1:
     plt.ylabel('???')
     plt.title('Quiescent')
     #plt.legend((xa,xb),('Cluster','Field'),scatterpoints=1,loc='lower left', frameon=False, fontsize = 'x-small')
-    plt.grid(b=True, which='major', axis='both', color = 'k', linestyle = '--')
+    plt.grid(b=False, which='major', axis='both', color = 'k', linestyle = '--')
     #
     #
     #

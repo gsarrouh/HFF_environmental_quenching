@@ -210,6 +210,8 @@ section_6_flag = 0                 # UVJ diagram
 section_61_flag = 0                # UVJ diagram for UltraVISTA catalogue
 section_7_flag = 0                 # velocity dispersion, r_200, M_200 calculation - DEPRECATED; should always be set to ==0
 section_8_flag = 1                 # SMF
+section_9_flag = 1                 # SMF_comparison CLUSTER
+section_10_flag = 0                 # SMF_comparison FIELD
 #
 ## Update the user on what this program will run
 #
@@ -221,7 +223,7 @@ lim_mass_offset_flag = 1           #   0 = off, do not apply offset; 1 = on, app
 #
 ## MCMC FLAGS
 ## MAY NEED TO EDIT: choose whether to enter the MCMC simulation
-mcmc_flag = 1             #   0 = off - skip sim;   1 = on - perform MCMC sim & Exit program;
+mcmc_flag = 0             #   0 = off - skip sim;   1 = on - perform MCMC sim & Exit program;
 mcmc_field_flag = 1         # 0 = off - fit cluster SMFs;   1 = on - fit field SMFs
 ## Update the user on what this program will run
 #
@@ -276,6 +278,17 @@ if section_7_flag == 1:
 if section_8_flag == 1:
     print('Section 8: Produce SMF ("master_smf*.py")')
 #
+#
+#
+if section_9_flag == 1:
+    print('Section 9: Produce SMF comparison for CLUSTER ("smf_comparison_cluster.py")')
+#
+#
+#
+if section_10_flag == 1:
+    print('Section 10: Produce SMF_comparison for FIELD ("smf-comparison_field.py")')
+#
+
 print('\nNotes:')
 if z_field_bounds_flag == 0:
     print('z_field_bounds fixed at: %s'%np.round(z_field_bounds,decimals=3))

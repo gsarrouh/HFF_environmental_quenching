@@ -476,23 +476,29 @@ if Q_flag ==1:
     # Now we'll sample for up to max_n steps
     for sample in Qsampler.sample(Qpos, iterations=max_nsteps, progress=True):
         # Only check convergence every 100 steps
-        if Qsampler.iteration % 1000:
+        if Qsampler.iteration % 1000 and Qsampler.iteration > 20000:
             continue
 
         # Compute the autocorrelation time so far
         # Using tol=0 means that we'll always get an estimate even
         # if it isn't trustworthy
-        tau = Qsampler.get_autocorr_time(tol=0)
+        tau = Qsampler.get_autocorr_time(tol=0, discard=500)
         autocorr[index] = np.mean(tau)
         index += 1
+        print('\nIteration #: %i'%Qsampler.iteration)
+        print('Autocorrelation time [# of steps]: ')
+        print(Qsampler.get_autocorr_time(tol=0))
+        print('tau: %s'%tau)
         #
         # Check convergence
         converged = np.all( (tau * 100) < Qsampler.iteration)
+        coverged_check = (np.abs(old_tau - tau) / tau)
         converged &= np.all( (np.abs(old_tau - tau) / tau) < 0.01)
         if converged:
             print('# of iterations: %i'%Qsampler.iteration)
             break
         old_tau = tau
+        print('converged_check (percent) = %s'%coverged_check)
     #
     #
     # Qsampler.run_mcmc(Qpos, max_nsteps, progress = True)  #run sampler from initial position "pos" for "max_nsteps" steps
@@ -615,15 +621,19 @@ if T_flag ==1:
     # Now we'll sample for up to max_n steps
     for sample in Tsampler.sample(Tpos, iterations=max_nsteps, progress=True):
         # Only check convergence every 100 steps
-        if Tsampler.iteration % 1000:
+        if Tsampler.iteration % 1000 and Tsampler.iteration > 20000:
             continue
 
         # Compute the autocorrelation time so far
         # Using tol=0 means that we'll always get an estimate even
         # if it isn't trustworthy
-        tau = Tsampler.get_autocorr_time(tol=0)
+        tau = Tsampler.get_autocorr_time(tol=0, discard=500)
         autocorr[index] = np.mean(tau)
         index += 1
+        print('\nIteration #: %i'%Tsampler.iteration)
+        print('Autocorrelation time [# of steps]: ')
+        print(Tsampler.get_autocorr_time(tol=0))
+        print('tau: %s'%tau)
         #
         # Check convergence
         converged = np.all( (tau * 100) < Tsampler.iteration)
@@ -632,6 +642,7 @@ if T_flag ==1:
             print('# of iterations: %i'%Tsampler.iteration)
             break
         old_tau = tau
+        print('converged_check (percent) = %s'%coverged_check)
     #
     # Tsampler.run_mcmc(Tpos, max_nsteps, progress = True)  #run sampler from initial position "pos" for "max_nsteps" steps
     #
